@@ -1,0 +1,115 @@
+.sticky-top {
+  position: sticky;
+  top: 20px;
+  z-index: 1020;
+}
+
+.shadow-sm {
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075) !important;
+}
+
+.list-unstyled {
+  padding-left: 0;
+  list-style: none;
+}
+
+.list-unstyled li {
+  margin-bottom: 0.5rem;
+}
+
+.bi {
+  margin-right: 0.5rem;
+}
+/* Navbar styles */
+.navbar {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+  backdrop-filter: blur(10px);
+}
+
+/* Add padding to body for fixed navbar */
+body {
+  padding-top: 76px;
+}
+
+/* Footer Styles */
+footer {
+  margin-top: auto;
+}
+
+footer a {
+  transition: color 0.3s ease;
+}
+
+footer a:hover {
+  color: #fff !important;
+  opacity: 0.8;
+}
+
+footer .social-links a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+}
+
+footer .social-links a:hover {
+  transform: translateY(-3px);
+  background: rgba(255, 255, 255, 0.2);
+}
+
+footer hr {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+/* Feature Section Styles */
+.feature-icon {
+  width: 80px;
+  height: 80px;
+  background-color: rgba(13, 110, 253, 0.1);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.5rem;
+  transition: all 0.3s ease;
+}
+
+.feature-icon svg {
+  width: 40px;
+  height: 40px;
+  color: var(--bs-primary);
+}
+
+.feature-card {
+  padding: 2rem;
+  transition: all 0.3s ease;
+}
+
+.feature-card:hover .feature-icon {
+  transform: translateY(-5px);
+  background-color: var(--bs-primary);
+}
+
+.feature-card:hover .feature-icon svg {
+  color: white;
+}
+/* Add these styles at the top of App.css */
+* {
+  -webkit-user-select: none;  /* Safari */
+  -moz-user-select: none;     /* Firefox */
+  -ms-user-select: none;      /* IE/Edge */
+  user-select: none;          /* Standard syntax */
+}
+
+/* Allow selection for specific input elements */
+input, textarea {
+  -webkit-user-select: text;  /* Safari */
+  -moz-user-select: text;     /* Firefox */
+  -ms-user-select: text;      /* IE/Edge */
+  user-select: text;          /* Standard syntax */
+}
+
+/* ...existing code... */
