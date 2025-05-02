@@ -1,4 +1,5 @@
-import { Route, Navigate, Outlet } from "react-router-dom";
+import { Route, Navigate, Outlet, useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 import DashboardAdmin from "../pages/Admin/DashboardAdmin";
 import ItemListAdmin from "../pages/Admin/ItemListAdmin";
 import AddKosAdmin from "../pages/Admin/AddKosAdmin";
@@ -9,11 +10,26 @@ import AdminNavbar from "../components/AdminNavbar";
 
 // Define AdminGuard component first
 const AdminGuard = ({ children }) => {
-  const isAdmin = localStorage.getItem("userType") === "admin";
+  const userType = localStorage.getItem("userType");
+  const isAdmin = localStorage.getItem("isAdmin") === "true";
   const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!isLoggedIn || !isAdmin) {
+      console.log("Admin access denied - clearing session");
+      localStorage.clear();
+      navigate("/login", {
+        replace: true,
+        state: {
+          message: "Anda harus login sebagai admin untuk mengakses halaman ini",
+        },
+      });
+    }
+  }, [isLoggedIn, isAdmin, navigate]);
 
   if (!isLoggedIn || !isAdmin) {
-    return <Navigate to="/login" replace />;
+    return null;
   }
 
   return children;
@@ -50,7 +66,7 @@ const AdminRoutes = [
     <Route path="kos/edit/:id" element={<EditKosAdmin />} />
     <Route path="payments" element={<PaymentsAdmin />} />
     <Route path="users" element={<ManageUsers />} />
-  </Route>
+  </Route>,
 ];
 
 export default AdminRoutes;

@@ -53,6 +53,15 @@ const DashboardUser = () => {
     navigate("/search");
   };
 
+  useEffect(() => {
+    const isAdmin = localStorage.getItem("isAdmin") === "true";
+    const userType = localStorage.getItem("userType");
+
+    if (isAdmin && userType === "admin") {
+      navigate("/admin/dashboard", { replace: true });
+    }
+  }, [navigate]);
+
   if (loading) {
     return (
       <Container className="py-5 text-center">
@@ -120,7 +129,6 @@ const DashboardUser = () => {
                 <div className="text-white text-center">
                   <h1 className="display-4 fw-bold mb-3">{slide.title}</h1>
                   <p className="lead mb-4">{slide.description}</p>
-                 
                 </div>
               </Container>
             </div>

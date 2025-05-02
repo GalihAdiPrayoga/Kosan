@@ -8,9 +8,12 @@ import {
   Alert,
   Badge,
   Spinner,
+  Pagination,
 } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import { API } from "../../api/config";
+
+const ITEMS_PER_PAGE = 9;
 
 const SearchUser = () => {
   const [kosList, setKosList] = useState([]);
@@ -23,28 +26,24 @@ const SearchUser = () => {
     facilities: [],
     sortBy: "price_asc",
   });
+  const [currentPage, setCurrentPage] = useState(1);
 
-  // Modify fetchKos to handle the response data safely
   const fetchKos = async () => {
     try {
       setLoading(true);
       setError(null);
-
       const response = await API.get("/db.json");
-      // Safely access kos array with fallback to empty array
       setKosList(response.data?.kos || []);
     } catch (err) {
       setError("Failed to fetch kos data: " + err.message);
-      setKosList([]); // Reset to empty array on error
+      setKosList([]);
     } finally {
       setLoading(false);
     }
   };
 
-  // Move filtered logic into useMemo for better performance
   const filteredKos = React.useMemo(() => {
     return kosList.filter((kos) => {
-      // Location search filter
       if (filters.location && filters.location.trim() !== "") {
         const searchTerm = filters.location.toLowerCase().trim();
         if (
@@ -55,12 +54,10 @@ const SearchUser = () => {
         }
       }
 
-      // Type filter
       if (filters.type !== "all" && kos?.type !== filters.type) {
         return false;
       }
 
-      // Price range filter
       if (filters.priceRange) {
         const price = parseInt(kos?.price || 0);
         switch (filters.priceRange) {
@@ -73,10 +70,11 @@ const SearchUser = () => {
           case "3":
             if (price <= 2000000) return false;
             break;
+          default:
+            break;
         }
       }
 
-      // Facilities filter
       if (filters.facilities.length > 0) {
         return filters.facilities.every((facility) =>
           kos?.facilities?.includes(facility)
@@ -87,9 +85,8 @@ const SearchUser = () => {
     });
   }, [kosList, filters]);
 
-  // Sort results with null checks
-  const sortedKos = React.useMemo(() => {
-    return [...filteredKos].sort((a, b) => {
+  const paginatedKos = React.useMemo(() => {
+    const sorted = [...filteredKos].sort((a, b) => {
       const priceA = parseInt(a?.price || 0);
       const priceB = parseInt(b?.price || 0);
 
@@ -102,16 +99,26 @@ const SearchUser = () => {
           return 0;
       }
     });
-  }, [filteredKos, filters.sortBy]);
 
-  // Update useEffect untuk memperbarui pencarian saat filter berubah
+    // Calculate pagination
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const endIndex = startIndex + ITEMS_PER_PAGE;
+    return sorted.slice(startIndex, endIndex);
+  }, [filteredKos, filters.sortBy, currentPage]);
+
+  const totalPages = Math.ceil(filteredKos.length / ITEMS_PER_PAGE);
+
   useEffect(() => {
     const timer = setTimeout(() => {
       fetchKos();
-    }, 300); // Reduced debounce time for better responsiveness
-
+    }, 300);
     return () => clearTimeout(timer);
-  }, [filters.location]); // Only trigger on location changes
+  }, [filters.location]);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filters]);
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
@@ -130,10 +137,74 @@ const SearchUser = () => {
     }));
   };
 
+  const renderPagination = () => {
+    let items = [];
+    const maxVisiblePages = 5;
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+    if (endPage - startPage + 1 < maxVisiblePages) {
+      startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+
+    items.push(
+      <Pagination.First
+        key="first"
+        disabled={currentPage === 1}
+        onClick={() => setCurrentPage(1)}
+      />
+    );
+    items.push(
+      <Pagination.Prev
+        key="prev"
+        disabled={currentPage === 1}
+        onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+      />
+    );
+
+    if (startPage > 1) {
+      items.push(<Pagination.Ellipsis key="ellipsis-start" />);
+    }
+
+    for (let number = startPage; number <= endPage; number++) {
+      items.push(
+        <Pagination.Item
+          key={number}
+          active={number === currentPage}
+          onClick={() => setCurrentPage(number)}
+        >
+          {number}
+        </Pagination.Item>
+      );
+    }
+
+    if (endPage < totalPages) {
+      items.push(<Pagination.Ellipsis key="ellipsis-end" />);
+    }
+
+    items.push(
+      <Pagination.Next
+        key="next"
+        disabled={currentPage === totalPages}
+        onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+      />
+    );
+    items.push(
+      <Pagination.Last
+        key="last"
+        disabled={currentPage === totalPages}
+        onClick={() => setCurrentPage(totalPages)}
+      />
+    );
+
+    return <Pagination>{items}</Pagination>;
+  };
+
   return (
     <Container className="py-5">
       {error && <Alert variant="danger">{error}</Alert>}
       <Row>
+        {/* Filter sidebar */}
         <Col md={3}>
           <Card className="mb-4 shadow-sm sticky-top" style={{ top: "20px" }}>
             <Card.Body>
@@ -209,7 +280,8 @@ const SearchUser = () => {
             <div>
               <h4>Hasil Pencarian</h4>
               <p className="text-muted mb-0">
-                Ditemukan {sortedKos.length} kos
+                Ditemukan {filteredKos.length} kos (Halaman {currentPage} dari{" "}
+                {totalPages})
               </p>
             </div>
             <Form.Select
@@ -230,67 +302,76 @@ const SearchUser = () => {
               </Spinner>
             </div>
           ) : (
-            <Row>
-              {sortedKos.map((kos) => (
-                <Col md={4} key={kos.id} className="mb-4">
-                  <Card
-                    as={Link}
-                    to={`/kos/${kos.id}`}
-                    className="text-decoration-none h-100 shadow-sm hover-shadow"
-                  >
-                    <div style={{ position: "relative" }}>
-                      <Card.Img
-                        variant="top"
-                        src={kos.images[0]}
-                        style={{ height: "200px", objectFit: "cover" }}
-                      />
-                      <Badge
-                        bg={
-                          kos.type === "Putra"
-                            ? "primary"
-                            : kos.type === "Putri"
-                            ? "danger"
-                            : "success"
-                        }
-                        style={{
-                          position: "absolute",
-                          top: "10px",
-                          right: "10px",
-                          padding: "8px 12px",
-                        }}
-                      >
-                        {kos.type}
-                      </Badge>
-                    </div>
-                    <Card.Body>
-                      <Card.Title className="h5 mb-3">{kos.name}</Card.Title>
-                      <Card.Text className="text-muted mb-2">
-                        <i className="bi bi-geo-alt-fill me-2"></i>
-                        {kos.location}
-                      </Card.Text>
-                      <div className="mb-2">
-                        {kos.facilities.slice(0, 3).map((facility, index) => (
-                          <Badge
-                            bg="light"
-                            text="dark"
-                            className="me-2 mb-2"
-                            key={index}
-                          >
-                            {facility}
-                          </Badge>
-                        ))}
+            <>
+              <Row>
+                {paginatedKos.map((kos) => (
+                  <Col md={4} key={kos.id} className="mb-4">
+                    <Card
+                      as={Link}
+                      to={`/kos/${kos.id}`}
+                      className="text-decoration-none h-100 shadow-sm hover-shadow"
+                    >
+                      <div style={{ position: "relative" }}>
+                        <Card.Img
+                          variant="top"
+                          src={kos.images[0]}
+                          style={{ height: "200px", objectFit: "cover" }}
+                        />
+                        <Badge
+                          bg={
+                            kos.type === "Putra"
+                              ? "primary"
+                              : kos.type === "Putri"
+                              ? "danger"
+                              : "success"
+                          }
+                          style={{
+                            position: "absolute",
+                            top: "10px",
+                            right: "10px",
+                            padding: "8px 12px",
+                          }}
+                        >
+                          {kos.type}
+                        </Badge>
                       </div>
-                      <div className="mt-3">
-                        <span className="h5 text-primary mb-0">
-                          Rp {new Intl.NumberFormat("id-ID").format(kos.price)}
-                        </span>
-                        <span className="text-muted">/bulan</span>
-                      </div>
-                    </Card.Body>
-                  </Card>
-                </Col>
-              ))}
-            </Row>
+                      <Card.Body>
+                        <Card.Title className="h5 mb-3">{kos.name}</Card.Title>
+                        <Card.Text className="text-muted mb-2">
+                          <i className="bi bi-geo-alt-fill me-2"></i>
+                          {kos.location}
+                        </Card.Text>
+                        <div className="mb-2">
+                          {kos.facilities.slice(0, 3).map((facility, index) => (
+                            <Badge
+                              bg="light"
+                              text="dark"
+                              className="me-2 mb-2"
+                              key={index}
+                            >
+                              {facility}
+                            </Badge>
+                          ))}
+                        </div>
+                        <div className="mt-3">
+                          <span className="h5 text-primary mb-0">
+                            Rp{" "}
+                            {new Intl.NumberFormat("id-ID").format(kos.price)}
+                          </span>
+                          <span className="text-muted">/bulan</span>
+                        </div>
+                      </Card.Body>
+                    </Card>
+                  </Col>
+                ))}
+              </Row>
+
+              {filteredKos.length > 0 && (
+                <div className="d-flex justify-content-center mt-4">
+                  {renderPagination()}
+                </div>
+              )}
+            </>
           )}
         </Col>
       </Row>

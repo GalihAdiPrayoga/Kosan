@@ -46,11 +46,11 @@ const AuthModals = ({ showLogin, showRegister, handleClose, handleSwitch }) => {
       );
 
       if (!user) {
-        throw new Error("Invalid email or password");
+        throw new Error("Email atau password salah");
       }
 
       if (user.status !== "active") {
-        throw new Error("Account is not active");
+        throw new Error("Akun tidak aktif");
       }
 
       // Set user data in localStorage
@@ -58,11 +58,18 @@ const AuthModals = ({ showLogin, showRegister, handleClose, handleSwitch }) => {
       localStorage.setItem("userId", user.id);
       localStorage.setItem("userName", user.name);
       localStorage.setItem("userType", user.role);
+      localStorage.setItem("isAdmin", user.role === "admin" ? "true" : "false");
 
       handleClose();
-      window.location.reload(); // Refresh to update UI
+
+      // Redirect based on role
+      if (user.role === "admin") {
+        window.location.href = "/admin/dashboard";
+      } else {
+        window.location.href = "/";
+      }
     } catch (err) {
-      setError(err.message || "Login failed");
+      setError(err.message || "Login gagal");
     } finally {
       setLoading(false);
     }

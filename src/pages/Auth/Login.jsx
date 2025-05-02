@@ -12,7 +12,7 @@ import {
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { FaEnvelope, FaLock, FaUserCircle } from "react-icons/fa";
 import { CSSTransition } from "react-transition-group";
-import { API } from "../../api/config";
+import { loginUser } from "../../api/auth";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -27,41 +27,37 @@ const Login = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // Tambahkan fungsi clearSession
+  const clearSession = () => {
+    localStorage.clear();
+    console.log("Session cleared");
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setLoading(true);
 
+    clearSession();
+
     try {
-      const response = await API.get("/db.json");
-      const users = response.data.users;
+      const user = await loginUser(formData.email, formData.password);
 
-      const user = users.find(
-        (u) => u.email === formData.email && u.password === formData.password
-      );
-
-      if (!user) {
-        setError("Email atau password salah!");
-        return;
-      }
-
-      if (user.status !== "active") {
-        setError("Akun tidak aktif");
-        return;
-      }
-
+      // Set user data in localStorage
       localStorage.setItem("userType", user.role);
       localStorage.setItem("isLoggedIn", "true");
       localStorage.setItem("userId", user.id);
       localStorage.setItem("userName", user.name);
+      localStorage.setItem("isAdmin", user.role === "admin" ? "true" : "false");
 
+      // Redirect based on role
       if (user.role === "admin") {
         navigate("/admin/dashboard", { replace: true });
       } else {
         navigate(from, { replace: true });
       }
     } catch (err) {
-      setError("Terjadi kesalahan saat login");
+      setError(err.message || "Terjadi kesalahan saat login");
       console.error("Login error:", err);
     } finally {
       setLoading(false);
