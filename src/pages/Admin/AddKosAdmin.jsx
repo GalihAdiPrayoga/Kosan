@@ -20,10 +20,21 @@ const AddKosAdmin = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await API.post("/kos", formData);
+      const adminId = localStorage.getItem("userId");
+      if (!adminId) {
+        throw new Error("Admin ID not found");
+      }
+
+      const kosData = {
+        ...formData,
+        adminId: adminId,
+        createdAt: new Date().toISOString()
+      };
+
+      await API.post("/kos", kosData);
       navigate("/admin/kos");
     } catch (err) {
-      setError("Failed to add kos");
+      setError(err.message || "Failed to add kos");
     }
   };
 

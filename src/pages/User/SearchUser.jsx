@@ -24,59 +24,85 @@ const SearchUser = () => {
     sortBy: "price_asc",
   });
 
-  // Apply client-side filters and search
-  const filteredKos = kosList.filter((kos) => {
-    // Location search filter 
-    if (filters.location && filters.location.trim() !== '') {
-      const searchTerm = filters.location.toLowerCase().trim();
-      if (!kos.location.toLowerCase().includes(searchTerm) &&
-          !kos.name.toLowerCase().includes(searchTerm)) {
+  // Modify fetchKos to handle the response data safely
+  const fetchKos = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const response = await API.get("/db.json");
+      // Safely access kos array with fallback to empty array
+      setKosList(response.data?.kos || []);
+    } catch (err) {
+      setError("Failed to fetch kos data: " + err.message);
+      setKosList([]); // Reset to empty array on error
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Move filtered logic into useMemo for better performance
+  const filteredKos = React.useMemo(() => {
+    return kosList.filter((kos) => {
+      // Location search filter
+      if (filters.location && filters.location.trim() !== "") {
+        const searchTerm = filters.location.toLowerCase().trim();
+        if (
+          !kos?.location?.toLowerCase().includes(searchTerm) &&
+          !kos?.name?.toLowerCase().includes(searchTerm)
+        ) {
+          return false;
+        }
+      }
+
+      // Type filter
+      if (filters.type !== "all" && kos?.type !== filters.type) {
         return false;
       }
-    }
 
-    // Type filter
-    if (filters.type !== 'all' && kos.type !== filters.type) {
-      return false; 
-    }
-
-    // Price range filter
-    if (filters.priceRange) {
-      const price = parseInt(kos.price);
-      switch (filters.priceRange) {
-        case "1":
-          if (price >= 1000000) return false;
-          break;
-        case "2":
-          if (price < 1000000 || price > 2000000) return false;
-          break;
-        case "3":
-          if (price <= 2000000) return false;
-          break;
+      // Price range filter
+      if (filters.priceRange) {
+        const price = parseInt(kos?.price || 0);
+        switch (filters.priceRange) {
+          case "1":
+            if (price >= 1000000) return false;
+            break;
+          case "2":
+            if (price < 1000000 || price > 2000000) return false;
+            break;
+          case "3":
+            if (price <= 2000000) return false;
+            break;
+        }
       }
-    }
 
-    // Facilities filter
-    if (filters.facilities.length > 0) {
-      return filters.facilities.every((facility) =>
-        kos.facilities.includes(facility)
-      );
-    }
+      // Facilities filter
+      if (filters.facilities.length > 0) {
+        return filters.facilities.every((facility) =>
+          kos?.facilities?.includes(facility)
+        );
+      }
 
-    return true;
-  });
+      return true;
+    });
+  }, [kosList, filters]);
 
-  // Sort results
-  const sortedKos = [...filteredKos].sort((a, b) => {
-    switch (filters.sortBy) {
-      case 'price_asc':
-        return a.price - b.price;
-      case 'price_desc':
-        return b.price - a.price;
-      default:
-        return 0;
-    }
-  });
+  // Sort results with null checks
+  const sortedKos = React.useMemo(() => {
+    return [...filteredKos].sort((a, b) => {
+      const priceA = parseInt(a?.price || 0);
+      const priceB = parseInt(b?.price || 0);
+
+      switch (filters.sortBy) {
+        case "price_asc":
+          return priceA - priceB;
+        case "price_desc":
+          return priceB - priceA;
+        default:
+          return 0;
+      }
+    });
+  }, [filteredKos, filters.sortBy]);
 
   // Update useEffect untuk memperbarui pencarian saat filter berubah
   useEffect(() => {
@@ -86,21 +112,6 @@ const SearchUser = () => {
 
     return () => clearTimeout(timer);
   }, [filters.location]); // Only trigger on location changes
-
-  const fetchKos = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      const response = await API.get("/db.json");
-      // Access the kos array from response.data
-      setKosList(response.data.kos);
-    } catch (err) {
-      setError("Failed to fetch kos data: " + err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;

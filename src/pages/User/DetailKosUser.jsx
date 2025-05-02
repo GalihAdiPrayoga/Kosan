@@ -7,6 +7,7 @@ import {
   Button,
   Carousel,
   Alert,
+  Badge,
 } from "react-bootstrap";
 import { useParams, Link } from "react-router-dom";
 import { API } from "../../api/config";
@@ -14,6 +15,7 @@ import { API } from "../../api/config";
 const DetailKosUser = () => {
   const { id } = useParams();
   const [kos, setKos] = useState(null);
+  const [admin, setAdmin] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -33,7 +35,13 @@ const DetailKosUser = () => {
         throw new Error("Kos not found");
       }
 
+      // Find admin data
+      const adminData = response.data.users.find(
+        (user) => user.id === String(kosData.adminId) && user.role === "admin"
+      );
+
       setKos(kosData);
+      setAdmin(adminData);
     } catch (err) {
       setError(err.message || "Failed to fetch kos detail");
     } finally {
@@ -126,10 +134,29 @@ const DetailKosUser = () => {
                 <strong>Lokasi:</strong> {kos.location}
               </p>
               <Link to={`/booking/${kos.id}`}>
-                <Button variant="primary" className="w-100">
+                <Button variant="primary" className="w-100 mb-3">
                   Booking Sekarang
                 </Button>
               </Link>
+              
+              {/* Add admin information */}
+              {admin && (
+                <div className="mt-3 p-3 bg-light rounded">
+                  <h6 className="mb-2">Informasi Pemilik Kos:</h6>
+                  <p className="mb-1">
+                    <strong>Nama:</strong> {admin.name}
+                  </p>
+                  <p className="mb-1">
+                    <strong>Email:</strong> {admin.email}
+                  </p>
+                  <p className="mb-0">
+                    <strong>Status:</strong>{" "}
+                    <Badge bg={admin.status === "active" ? "success" : "warning"}>
+                      {admin.status}
+                    </Badge>
+                  </p>
+                </div>
+              )}
             </Card.Body>
           </Card>
         </Col>

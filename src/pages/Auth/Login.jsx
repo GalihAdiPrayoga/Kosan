@@ -1,7 +1,8 @@
 import React, { useState } from "react";
-import { Container, Row, Col, Card, Form, Button } from "react-bootstrap";
+import { Container, Row, Col, Card, Form, Button, Alert } from "react-bootstrap";
 import { Link, useNavigate } from "react-router-dom";
 import { FaEnvelope, FaLock, FaUserCircle } from "react-icons/fa";
+import { API } from "../../api/config";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -9,42 +10,51 @@ const Login = () => {
     email: "",
     password: "",
   });
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  // Dummy user credentials
-  const dummyCredentials = {
-    user: {
-      email: "user@gmail.com",
-      password: "user123",
-    },
-    admin: {
-      email: "admin@gmail.com",
-      password: "admin123",
-    },
-  };
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setError("");
+    setLoading(true);
 
-    // Check credentials
-    if (
-      formData.email === dummyCredentials.admin.email &&
-      formData.password === dummyCredentials.admin.password
-    ) {
-      // Admin login
-      localStorage.setItem("userType", "admin");
+    try {
+      const response = await API.get("/db.json");
+      const users = response.data.users;
+
+      const user = users.find(
+        (u) => u.email === formData.email && u.password === formData.password
+      );
+
+      if (!user) {
+        setError("Email atau password salah!");
+        return;
+      }
+
+      // Check user role and status
+      if (user.status !== "active") {
+        setError("Akun tidak aktif");
+        return;
+      }
+
+      // Set user data in localStorage
+      localStorage.setItem("userType", user.role);
       localStorage.setItem("isLoggedIn", "true");
-      navigate("/admin/dashboard");
-    } else if (
-      formData.email === dummyCredentials.user.email &&
-      formData.password === dummyCredentials.user.password
-    ) {
-      // User login
-      localStorage.setItem("userType", "user");
-      localStorage.setItem("isLoggedIn", "true");
-      navigate("/");
-    } else {
-      // Invalid credentials
-      alert("Email atau password salah!");
+      localStorage.setItem("userId", user.id);
+      localStorage.setItem("userName", user.name);
+
+      // Redirect based on role
+      if (user.role === "admin") {
+        navigate("/admin/dashboard");
+      } else {
+        navigate("/");
+      }
+
+    } catch (err) {
+      setError("Terjadi kesalahan saat login");
+      console.error("Login error:", err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -63,6 +73,8 @@ const Login = () => {
 
             <Card className="border-0 shadow-lg rounded-lg">
               <Card.Body className="p-8">
+                {error && <Alert variant="danger">{error}</Alert>}
+                
                 <Form onSubmit={handleSubmit}>
                   <Form.Group className="mb-4 relative">
                     <div className="flex items-center bg-gray-50 border rounded-lg px-3 focus-within:ring-2 focus-within:ring-blue-500">
@@ -100,8 +112,9 @@ const Login = () => {
                     variant="primary"
                     type="submit"
                     className="w-100 py-3 mb-4 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 transition-all duration-200 rounded-lg font-semibold"
+                    disabled={loading}
                   >
-                    Sign In
+                    {loading ? "Signing in..." : "Sign In"}
                   </Button>
 
                   <div className="text-center">
@@ -124,11 +137,11 @@ const Login = () => {
                     <div className="space-y-1">
                       <p className="text-sm text-gray-600">
                         <span className="font-semibold">User:</span>{" "}
-                        user@gmail.com / user123
+                        sarah@example.com / sarah123
                       </p>
                       <p className="text-sm text-gray-600">
                         <span className="font-semibold">Admin:</span>{" "}
-                        admin@gmail.com / admin123
+                        admin@example.com / admin123
                       </p>
                     </div>
                   </div>

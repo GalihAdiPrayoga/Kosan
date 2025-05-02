@@ -112,4 +112,57 @@ input, textarea {
   user-select: text;          /* Standard syntax */
 }
 
-/* ...existing code... */
+/* Admin Layout Styles */
+.admin-layout {
+  padding-top: 76px; /* Height of navbar + some padding */
+  min-height: 100vh;
+  background-color: #f8f9fa;
+}
+
+.admin-content {
+  padding: 20px;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 0 15px rgba(0,0,0,0.05);
+}
+
+/* Admin Navigation Styles */
+.admin-nav {
+  z-index: 1030;
+}
+
+.admin-nav .nav-link {
+  color: #fff;
+  padding: 0.75rem 1.25rem;
+  transition: all 0.3s ease;
+}
+
+.admin-nav .nav-link:hover,
+.admin-nav .nav-link.active {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.admin-nav .navbar-brand {
+  font-weight: 600;
+  font-size: 1.25rem;
+}
+
+/* Admin Cards and Tables */
+.admin-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.admin-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.admin-table {
+  white-space: nowrap;
+}
+
+.admin-table th {
+  background-color: #f8f9fa;
+  font-weight: 600;
+}

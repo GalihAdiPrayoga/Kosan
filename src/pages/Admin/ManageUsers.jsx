@@ -13,8 +13,8 @@ const ManageUsers = () => {
 
   const fetchUsers = async () => {
     try {
-      const response = await API.get("/users");
-      setUsers(response.data);
+      const response = await API.get("/db.json");
+      setUsers(response.data.users);
     } catch (err) {
       setError("Failed to fetch users");
       console.error("Error fetching users:", err);
