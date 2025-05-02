@@ -93,19 +93,19 @@ const DashboardUser = () => {
   return (
     <div className="dashboard-container">
       {/* Hero Carousel Section */}
-      <Carousel fade interval={3000} indicators={false} className="carousel-fullscreen">
+      <Carousel fade interval={3000} indicators={false}>
         {heroSlides.map((slide, index) => (
           <Carousel.Item key={index}>
             <div
               style={{
                 backgroundImage: `url(${slide.image})`,
-                backgroundSize: "contain",
+                backgroundSize: "cover", 
                 backgroundPosition: "center",
                 backgroundRepeat: "no-repeat",
                 backgroundColor: "#f8f9fa",
-                height: "100vh", // Changed to viewport height
+                height: "100vh",
                 width: "100%",
-                marginTop: "70px", // Add margin to account for navbar height
+                marginTop: "0", 
               }}
             />
           </Carousel.Item>

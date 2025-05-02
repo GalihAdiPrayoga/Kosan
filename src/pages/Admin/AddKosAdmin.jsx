@@ -16,6 +16,25 @@ const AddKosAdmin = () => {
     rules: [],
     images: [],
   });
+  const [uploadedImages, setUploadedImages] = useState([]);
+  const [imagePreview, setImagePreview] = useState([]);
+
+  const handleImageUpload = (e) => {
+    const files = Array.from(e.target.files);
+    setUploadedImages([...uploadedImages, ...files]);
+
+    // Create preview URLs
+    const newPreviews = files.map((file) => URL.createObjectURL(file));
+    setImagePreview([...imagePreview, ...newPreviews]);
+  };
+
+  const removeImage = (index) => {
+    const newImages = uploadedImages.filter((_, i) => i !== index);
+    const newPreviews = imagePreview.filter((_, i) => i !== index);
+
+    setUploadedImages(newImages);
+    setImagePreview(newPreviews);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -25,13 +44,27 @@ const AddKosAdmin = () => {
         throw new Error("Admin ID not found");
       }
 
-      const kosData = {
-        ...formData,
-        adminId: adminId,
-        createdAt: new Date().toISOString()
-      };
+      // Create FormData to handle file uploads
+      const formDataToSend = new FormData();
+      formDataToSend.append("name", formData.name);
+      formDataToSend.append("location", formData.location);
+      formDataToSend.append("price", formData.price);
+      formDataToSend.append("type", formData.type);
+      formDataToSend.append("description", formData.description);
+      formDataToSend.append("adminId", adminId);
+      formDataToSend.append("createdAt", new Date().toISOString());
 
-      await API.post("/kos", kosData);
+      // Append each image
+      uploadedImages.forEach((image, index) => {
+        formDataToSend.append(`images`, image);
+      });
+
+      await API.post("/kos", formDataToSend, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
       navigate("/admin/kos");
     } catch (err) {
       setError(err.message || "Failed to add kos");
@@ -107,6 +140,42 @@ const AddKosAdmin = () => {
                 }
                 required
               />
+            </Form.Group>
+
+            <Form.Group className="mb-3">
+              <Form.Label>Upload Gambar</Form.Label>
+              <Form.Control
+                type="file"
+                multiple
+                accept="image/*"
+                onChange={handleImageUpload}
+                required
+              />
+              <div className="mt-3 d-flex flex-wrap gap-2">
+                {imagePreview.map((preview, index) => (
+                  <div key={index} className="position-relative">
+                    <img
+                      src={preview}
+                      alt={`Preview ${index + 1}`}
+                      style={{
+                        width: "100px",
+                        height: "100px",
+                        objectFit: "cover",
+                        borderRadius: "4px",
+                      }}
+                    />
+                    <Button
+                      variant="danger"
+                      size="sm"
+                      className="position-absolute top-0 end-0"
+                      onClick={() => removeImage(index)}
+                      style={{ margin: "4px" }}
+                    >
+                      ×
+                    </Button>
+                  </div>
+                ))}
+              </div>
             </Form.Group>
 
             <Button type="submit" variant="primary">

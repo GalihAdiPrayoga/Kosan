@@ -1,43 +1,10 @@
-import React, { useState, useEffect } from "react";
-import {
-  Container,
-  Row,
-  Col,
-  Form,
-  Card,
-  Button,
-  Alert,
-} from "react-bootstrap";
+import React, { useState } from "react";
+import { Container, Row, Col, Form, Card, Button } from "react-bootstrap";
 import { useParams, useNavigate } from "react-router-dom";
 
 const BookingKosUser = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
-
-  // Add useEffect to check login status
-  useEffect(() => {
-    if (!isLoggedIn) {
-      navigate("/login", {
-        replace: true,
-        state: {
-          from: `/booking/${id}`,
-          message: "Silakan login terlebih dahulu untuk melakukan pemesanan",
-        },
-      });
-    }
-  }, [isLoggedIn, navigate, id]);
-
-  // If not logged in, don't render the form
-  if (!isLoggedIn) {
-    return (
-      <Container className="py-5">
-        <Alert variant="warning">
-          Anda harus login terlebih dahulu untuk melakukan pemesanan.
-        </Alert>
-      </Container>
-    );
-  }
 
   const [bookingData, setBookingData] = useState({
     startDate: "",

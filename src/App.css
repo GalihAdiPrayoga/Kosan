@@ -1,3 +1,24 @@
+/* Base Styles */
+* {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+input,
+textarea {
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+  user-select: text;
+}
+
+body {
+  padding-top: 76px;
+}
+
+/* Utility Classes */
 .sticky-top {
   position: sticky;
   top: 20px;
@@ -20,18 +41,185 @@
 .bi {
   margin-right: 0.5rem;
 }
-/* Navbar styles */
+
+/* Navbar Styles */
 .navbar {
   background-color: rgba(255, 255, 255, 0.95) !important;
   backdrop-filter: blur(10px);
 }
 
-/* Add padding to body for fixed navbar */
-body {
+/* Admin Layout Styles */
+.admin-layout {
   padding-top: 76px;
+  min-height: 100vh;
+  background-color: #f8f9fa;
 }
 
-/* Footer Styles */
+.admin-content {
+  padding: 20px;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.05);
+}
+
+.admin-nav {
+  z-index: 1030;
+}
+
+.admin-nav .nav-link {
+  color: #fff;
+  padding: 0.75rem 1.25rem;
+  transition: all 0.3s ease;
+}
+
+.admin-nav .nav-link:hover,
+.admin-nav .nav-link.active {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.admin-nav .navbar-brand {
+  font-weight: 600;
+  font-size: 1.25rem;
+}
+
+/* Admin Components */
+.admin-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.admin-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.admin-table {
+  white-space: nowrap;
+}
+
+.admin-table th {
+  background-color: #f8f9fa;
+  font-weight: 600;
+}
+
+/* Auth Pages Styles */
+.auth-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0d6efd 0%, #084298 100%);
+  padding: 2rem 0;
+  display: flex;
+  align-items: center;
+}
+
+.auth-card {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border: none;
+  transition: all 0.3s ease;
+}
+
+.auth-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 30px rgba(13, 110, 253, 0.2);
+}
+
+.auth-icon {
+  font-size: 3rem;
+  color: #0d6efd;
+  margin-bottom: 0.5rem;
+}
+
+.auth-input-group {
+  position: relative;
+  margin-bottom: 1.5rem;
+}
+
+.auth-input-group .input-group-text {
+  background: transparent;
+  border-right: none;
+  color: #0d6efd;
+}
+
+.auth-input-group .form-control {
+  border-left: none;
+  padding-left: 0;
+}
+
+.auth-input-group .form-control:focus {
+  box-shadow: none;
+  border-color: #ced4da;
+}
+
+.auth-btn {
+  padding: 0.8rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  background: linear-gradient(135deg, #0d6efd 0%, #084298 100%);
+  border: none;
+}
+
+.auth-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(13, 110, 253, 0.3);
+}
+
+/* Auth Animations */
+.auth-page-enter {
+  opacity: 0;
+  transform: scale(0.9);
+}
+
+.auth-page-enter-active {
+  opacity: 1;
+  transform: scale(1);
+  transition: opacity 300ms, transform 300ms;
+}
+
+.auth-page-exit {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.auth-page-exit-active {
+  opacity: 0;
+  transform: scale(0.9);
+  transition: opacity 300ms, transform 300ms;
+}
+
+/* Feature Section */
+.feature-icon {
+  width: 80px;
+  height: 80px;
+  background-color: rgba(13, 110, 253, 0.1);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.5rem;
+  transition: all 0.3s ease;
+}
+
+.feature-icon svg {
+  width: 40px;
+  height: 40px;
+  color: #0d6efd;
+}
+
+.feature-card {
+  padding: 2rem;
+  transition: all 0.3s ease;
+}
+
+.feature-card:hover .feature-icon {
+  transform: translateY(-5px);
+  background-color: #0d6efd;
+}
+
+.feature-card:hover .feature-icon svg {
+  color: white;
+}
+
+/* Footer */
 footer {
   margin-top: auto;
 }
@@ -64,105 +252,37 @@ footer .social-links a:hover {
 footer hr {
   border-color: rgba(255, 255, 255, 0.1);
 }
-/* Feature Section Styles */
-.feature-icon {
-  width: 80px;
-  height: 80px;
-  background-color: rgba(13, 110, 253, 0.1);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto 1.5rem;
-  transition: all 0.3s ease;
+
+/* Modal Styles */
+.modal-content {
+  border: none;
+  border-radius: 12px;
+  overflow: hidden;
 }
 
-.feature-icon svg {
-  width: 40px;
-  height: 40px;
-  color: var(--bs-primary);
+.modal-header {
+  background: linear-gradient(135deg, #0d6efd 0%, #084298 100%);
+  padding: 2rem 1rem;
 }
 
-.feature-card {
-  padding: 2rem;
-  transition: all 0.3s ease;
-}
-
-.feature-card:hover .feature-icon {
-  transform: translateY(-5px);
-  background-color: var(--bs-primary);
-}
-
-.feature-card:hover .feature-icon svg {
+.modal-header .modal-title {
   color: white;
 }
-/* Add these styles at the top of App.css */
-* {
-  -webkit-user-select: none;  /* Safari */
-  -moz-user-select: none;     /* Firefox */
-  -ms-user-select: none;      /* IE/Edge */
-  user-select: none;          /* Standard syntax */
+
+.modal-header .btn-close {
+  color: white;
+  opacity: 0.8;
 }
 
-/* Allow selection for specific input elements */
-input, textarea {
-  -webkit-user-select: text;  /* Safari */
-  -moz-user-select: text;     /* Firefox */
-  -ms-user-select: text;      /* IE/Edge */
-  user-select: text;          /* Standard syntax */
+.modal-body {
+  padding: 2rem;
 }
 
-/* Admin Layout Styles */
-.admin-layout {
-  padding-top: 76px; /* Height of navbar + some padding */
-  min-height: 100vh;
-  background-color: #f8f9fa;
+/* Links */
+a.text-primary {
+  color: #0d6efd !important;
 }
 
-.admin-content {
-  padding: 20px;
-  background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 0 15px rgba(0,0,0,0.05);
-}
-
-/* Admin Navigation Styles */
-.admin-nav {
-  z-index: 1030;
-}
-
-.admin-nav .nav-link {
-  color: #fff;
-  padding: 0.75rem 1.25rem;
-  transition: all 0.3s ease;
-}
-
-.admin-nav .nav-link:hover,
-.admin-nav .nav-link.active {
-  background-color: rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
-}
-
-.admin-nav .navbar-brand {
-  font-weight: 600;
-  font-size: 1.25rem;
-}
-
-/* Admin Cards and Tables */
-.admin-card {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.admin-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-}
-
-.admin-table {
-  white-space: nowrap;
-}
-
-.admin-table th {
-  background-color: #f8f9fa;
-  font-weight: 600;
+a.text-primary:hover {
+  color: #084298 !important;
 }
