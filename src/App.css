@@ -16,6 +16,8 @@ textarea {
 
 body {
   padding-top: 76px;
+  background: #f8f9fa;
+  background-image: linear-gradient(120deg, #fdfbfb 0%, #ebedee 100%);
 }
 
 /* Utility Classes */
@@ -44,20 +46,22 @@ body {
 
 /* Navbar Styles */
 .navbar {
-  background-color: rgba(255, 255, 255, 0.95) !important;
+  background: rgba(255, 255, 255, 0.95) !important;
   backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 /* Admin Layout Styles */
 .admin-layout {
   padding-top: 76px;
   min-height: 100vh;
-  background-color: #f8f9fa;
+  background: linear-gradient(135deg, #f5f7fa 0%, #e4e7eb 100%);
 }
 
 .admin-content {
   padding: 20px;
-  background-color: #fff;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
   border-radius: 8px;
   box-shadow: 0 0 15px rgba(0, 0, 0, 0.05);
 }
@@ -105,10 +109,32 @@ body {
 /* Auth Pages Styles */
 .auth-container {
   min-height: 100vh;
-  background: linear-gradient(135deg, #0d6efd 0%, #084298 100%);
+  background: linear-gradient(135deg, #0a2463 0%, #1e3d59 100%);
   padding: 2rem 0;
   display: flex;
   align-items: center;
+  position: relative;
+  overflow: hidden;
+  animation: blurIn 0.8s ease-out;
+}
+
+.auth-container::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+      45deg,
+      rgba(255, 255, 255, 0.1) 25%,
+      transparent 25%
+    ),
+    linear-gradient(-45deg, rgba(255, 255, 255, 0.1) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, rgba(255, 255, 255, 0.1) 75%),
+    linear-gradient(-45deg, transparent 75%, rgba(255, 255, 255, 0.1) 75%);
+  background-size: 20px 20px;
+  background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
 }
 
 .auth-card {
@@ -116,6 +142,7 @@ body {
   backdrop-filter: blur(10px);
   border: none;
   transition: all 0.3s ease;
+  animation: blurIn 1s ease-out;
 }
 
 .auth-card:hover {
@@ -132,6 +159,8 @@ body {
 .auth-input-group {
   position: relative;
   margin-bottom: 1.5rem;
+  opacity: 0;
+  animation: elementFadeIn 0.5s ease-out forwards;
 }
 
 .auth-input-group .input-group-text {
@@ -150,12 +179,24 @@ body {
   border-color: #ced4da;
 }
 
+.auth-input-group:nth-child(1) {
+  animation-delay: 0.3s;
+}
+.auth-input-group:nth-child(2) {
+  animation-delay: 0.5s;
+}
+.auth-input-group:nth-child(3) {
+  animation-delay: 0.7s;
+}
+
 .auth-btn {
   padding: 0.8rem;
   font-weight: 600;
   transition: all 0.3s ease;
   background: linear-gradient(135deg, #0d6efd 0%, #084298 100%);
   border: none;
+  opacity: 0;
+  animation: elementFadeIn 0.5s ease-out 0.9s forwards;
 }
 
 .auth-btn:hover {
@@ -208,6 +249,9 @@ body {
 .feature-card {
   padding: 2rem;
   transition: all 0.3s ease;
+  background: linear-gradient(145deg, #ffffff, #f5f5f5);
+  border-radius: 15px;
+  box-shadow: 5px 5px 10px #e6e6e6, -5px -5px 10px #ffffff;
 }
 
 .feature-card:hover .feature-icon {
@@ -222,6 +266,8 @@ body {
 /* Footer */
 footer {
   margin-top: auto;
+  background: linear-gradient(to right, #1a1c20, #2d3238);
+  color: #fff;
 }
 
 footer a {
@@ -258,6 +304,7 @@ footer hr {
   border: none;
   border-radius: 12px;
   overflow: hidden;
+  background: linear-gradient(145deg, #ffffff, #f5f5f5);
 }
 
 .modal-header {
@@ -286,3 +333,329 @@ a.text-primary {
 a.text-primary:hover {
   color: #084298 !important;
 }
+/* Add to App.css */
+.carousel-item {
+  transition: transform 0.6s ease-in-out;
+}
+
+.carousel-caption {
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.carousel-indicators {
+  margin-bottom: 1rem;
+}
+
+.carousel-indicators [data-bs-target] {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+/* Fade In Animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Pulse Animation */
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Bounce Animation */
+@keyframes bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/* Rotate Animation */
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Shake Animation */
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  10%,
+  30%,
+  50%,
+  70%,
+  90% {
+    transform: translateX(-5px);
+  }
+  20%,
+  40%,
+  60%,
+  80% {
+    transform: translateX(5px);
+  }
+}
+
+/* Aplikasikan animasi ke elemen-elemen */
+.card {
+  animation: fadeIn 0.5s ease-out;
+  border: none !important; /* Menghapus border */
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+}
+
+.feature-icon:hover {
+  animation: pulse 1s infinite;
+}
+
+.auth-icon {
+  animation: bounce 2s infinite;
+}
+
+.navbar-brand {
+  animation: blurIn 0.8s ease-out;
+}
+
+.spinner-border {
+  animation: rotate 1s linear infinite;
+}
+
+.alert {
+  animation: shake 0.5s ease-in-out;
+}
+
+/* Hover Effects dengan Transisi */
+.nav-link {
+  transition: color 0.3s ease, transform 0.3s ease;
+}
+
+.nav-link:hover {
+  transform: translateY(-2px);
+  color: #0d6efd !important;
+}
+
+.btn {
+  transition: all 0.3s ease;
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.btn-primary {
+  background: linear-gradient(145deg, #0d6efd, #0b5ed7);
+  border: none;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(145deg, #0b5ed7, #0a58ca);
+}
+
+/* Card Hover Animation */
+.card {
+  transition: all 0.3s ease;
+  border: none !important; /* Menghapus border */
+}
+
+.card:hover {
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.card:hover .card-img-top {
+  transform: none !important;
+}
+
+/* Image Hover Effect */
+.card-img-top {
+  transition: transform 0.5s ease;
+}
+
+.card:hover .card-img-top {
+  transform: none !important;
+}
+
+/* Badge Animation */
+.badge {
+  transition: all 0.3s ease;
+  background: linear-gradient(145deg, #0d6efd, #0b5ed7);
+  border: none;
+}
+
+.badge:hover {
+  transform: scale(1.1);
+}
+
+/* Footer Link Animation */
+.footer a {
+  transition: all 0.3s ease;
+}
+
+.footer a:hover {
+  transform: translateY(-2px);
+  color: #0d6efd !important;
+}
+
+/* Social Media Icons Animation */
+.social-link {
+  transition: all 0.3s ease;
+}
+
+.social-link:hover {
+  transform: rotate(360deg) scale(1.2);
+}
+
+/* Loading Spinner Enhancement */
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.spinner-border {
+  animation: spin 1s linear infinite;
+}
+
+/* Modal Animation */
+.modal.show .modal-dialog {
+  animation: blurIn 0.5s ease-out;
+}
+
+/* Search Bar Animation */
+.form-control {
+  transition: all 0.3s ease;
+  background-color: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.form-control:focus {
+  transform: scale(1.02);
+  box-shadow: 0 0 15px rgba(13, 110, 253, 0.2);
+}
+
+/* Menghapus hover shadow */
+.hover-shadow:hover {
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+/* Tambahkan style untuk container */
+.container {
+  position: relative;
+  z-index: 1;
+}
+
+/* Ubah background section */
+.bg-light {
+  background: linear-gradient(135deg, #f5f7fa 0%, #e4e7eb 100%) !important;
+}
+
+/* Tambahkan pattern subtle */
+.dashboard-container::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.4;
+  z-index: 0;
+  pointer-events: none;
+  background-image: radial-gradient(#000 0.5px, transparent 0.5px),
+    radial-gradient(#000 0.5px, transparent 0.5px);
+  background-size: 20px 20px;
+  background-position: 0 0, 10px 10px;
+}
+
+/* Tambahkan efek glass morphism */
+.glass-effect {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(5px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+}
+
+/* Ubah style search bar */
+.search-container {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 10px;
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+}
+
+/* Tambahkan animasi untuk auth pages */
+@keyframes authFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes cardFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes elementFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Hapus animasi slideIn yang lama dan ganti dengan blurIn */
+@keyframes blurIn {
+  from {
+    opacity: 0;
+    filter: blur(20px);
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: scale(1);
+  }
+}
+

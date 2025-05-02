@@ -49,7 +49,8 @@ const UserNavbar = () => {
           </Navbar.Brand>
           <Navbar.Toggle aria-controls="basic-navbar-nav" />
           <Navbar.Collapse id="basic-navbar-nav">
-            <Nav className="me-auto">
+            {/* Changed from me-auto to mx-auto for center alignment */}
+            <Nav className="mx-auto">
               <Nav.Link as={Link} to="/" className="px-3">
                 Beranda
               </Nav.Link>
@@ -60,6 +61,7 @@ const UserNavbar = () => {
                 Hubungi Kami
               </Nav.Link>
             </Nav>
+            {/* User dropdown remains on the right */}
             <Nav>
               {isLoggedIn ? (
                 <NavDropdown

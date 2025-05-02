@@ -13,8 +13,12 @@ import {
 } from "react-bootstrap";
 import { Link, useNavigate } from "react-router-dom";
 import { API, getFeaturedKos } from "../../api/config";
-import heroImage from "../../assets/hero1.jpg";
 import { FaShieldAlt, FaMoneyBillWave, FaMapMarkerAlt } from "react-icons/fa";
+
+// Import hero images
+import hero1 from "../../assets/hero1.jpeg";
+import hero2 from "../../assets/hero2.jpeg";
+import hero3 from "../../assets/hero3.jpeg";
 
 const DashboardUser = () => {
   const navigate = useNavigate();
@@ -78,36 +82,48 @@ const DashboardUser = () => {
 
   const heroSlides = [
     {
-      image: heroImage,
+      image: hero1,
       title: "Temukan Kos Impianmu",
       description:
         "Berbagai pilihan kos dengan fasilitas terbaik untuk kenyamanan Anda",
     },
     {
-      image: heroImage,
+      image: hero2,
       title: "Lokasi Strategis",
       description: "Dekat dengan kampus dan pusat kota",
+    },
+    {
+      image: hero3,
+      title: "Harga Terjangkau",
+      description: "Berbagai pilihan harga sesuai budget Anda",
     },
   ];
 
   return (
     <div className="dashboard-container">
       {/* Hero Carousel Section */}
-      <Carousel fade interval={3000} indicators={false}>
+      <Carousel fade interval={3000} indicators={true}>
         {heroSlides.map((slide, index) => (
           <Carousel.Item key={index}>
             <div
               style={{
-                backgroundImage: `url(${slide.image})`,
-                backgroundSize: "cover", 
+                backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url(${slide.image})`,
+                backgroundSize: "cover",
                 backgroundPosition: "center",
                 backgroundRepeat: "no-repeat",
-                backgroundColor: "#f8f9fa",
-                height: "100vh",
+                height: "50vh",
                 width: "100%",
-                marginTop: "0", 
+                marginTop: "0",
               }}
-            />
+            >
+              <Container className="h-100 d-flex align-items-center justify-content-center">
+                <div className="text-white text-center">
+                  <h1 className="display-4 fw-bold mb-3">{slide.title}</h1>
+                  <p className="lead mb-4">{slide.description}</p>
+                 
+                </div>
+              </Container>
+            </div>
           </Carousel.Item>
         ))}
       </Carousel>
