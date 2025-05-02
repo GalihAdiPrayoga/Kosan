@@ -171,11 +171,43 @@ const DashboardUser = () => {
           <Button
             as={Link}
             to="/search"
-            variant="outline-primary"
-            className="d-flex align-items-center gap-2"
+            className="d-flex align-items-center gap-2 bg-primary text-white border-0 transition-all duration-300 px-4 py-2 rounded-pill shadow-sm"
+            style={{
+              transform: "translateY(0)",
+              transition: "all 0.3s ease",
+              background: "linear-gradient(to right, #4e73df, #224abe)",
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.transform = "translateY(-2px)";
+              e.currentTarget.style.boxShadow =
+                "0 4px 12px rgba(78, 115, 223, 0.25)";
+              e.currentTarget.style.background =
+                "linear-gradient(to right, #224abe, #1a3891)";
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.transform = "translateY(0)";
+              e.currentTarget.style.boxShadow =
+                "0 2px 4px rgba(78, 115, 223, 0.1)";
+              e.currentTarget.style.background =
+                "linear-gradient(to right, #4e73df, #224abe)";
+            }}
           >
-            Lihat Semua
-            <i className="bi bi-arrow-right"></i>
+            <span>Lihat Semua</span>
+            <svg
+              className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              style={{ width: "16px", height: "16px" }}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M13 7l5 5m0 0l-5 5m5-5H6"
+              />
+            </svg>
           </Button>
         </div>
 
