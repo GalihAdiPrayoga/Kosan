@@ -12,6 +12,7 @@ import {
 } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import { API } from "../../api/config";
+import { FaSearchMinus } from "react-icons/fa";
 
 const ITEMS_PER_PAGE = 9;
 
@@ -21,7 +22,8 @@ const SearchUser = () => {
   const [error, setError] = useState(null);
   const [filters, setFilters] = useState({
     location: "",
-    priceRange: "",
+    minPrice: "",
+    maxPrice: "",
     type: "all",
     facilities: [],
     sortBy: "price_asc",
@@ -44,6 +46,7 @@ const SearchUser = () => {
 
   const filteredKos = React.useMemo(() => {
     return kosList.filter((kos) => {
+      // Location filter
       if (filters.location && filters.location.trim() !== "") {
         const searchTerm = filters.location.toLowerCase().trim();
         if (
@@ -54,27 +57,21 @@ const SearchUser = () => {
         }
       }
 
+      // Type filter
       if (filters.type !== "all" && kos?.type !== filters.type) {
         return false;
       }
 
-      if (filters.priceRange) {
-        const price = parseInt(kos?.price || 0);
-        switch (filters.priceRange) {
-          case "1":
-            if (price >= 1000000) return false;
-            break;
-          case "2":
-            if (price < 1000000 || price > 2000000) return false;
-            break;
-          case "3":
-            if (price <= 2000000) return false;
-            break;
-          default:
-            break;
-        }
+      // Price range filter
+      const price = parseInt(kos?.price || 0);
+      if (filters.minPrice && price < parseInt(filters.minPrice)) {
+        return false;
+      }
+      if (filters.maxPrice && price > parseInt(filters.maxPrice)) {
+        return false;
       }
 
+      // Facilities filter
       if (filters.facilities.length > 0) {
         return filters.facilities.every((facility) =>
           kos?.facilities?.includes(facility)
@@ -122,6 +119,28 @@ const SearchUser = () => {
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
+
+    if ((name === "minPrice" || name === "maxPrice") && value !== "") {
+      const numValue = parseInt(value);
+      if (numValue < 0) return;
+
+      if (
+        name === "minPrice" &&
+        filters.maxPrice &&
+        numValue > parseInt(filters.maxPrice)
+      ) {
+        return;
+      }
+
+      if (
+        name === "maxPrice" &&
+        filters.minPrice &&
+        numValue < parseInt(filters.minPrice)
+      ) {
+        return;
+      }
+    }
+
     setFilters((prev) => ({
       ...prev,
       [name]: value,
@@ -135,6 +154,61 @@ const SearchUser = () => {
         ? prev.facilities.filter((f) => f !== facility)
         : [...prev.facilities, facility],
     }));
+  };
+
+  const handlePriceChange = (e) => {
+    const { name, value } = e.target;
+
+    // Remove non-numeric characters and dots
+    const numericValue = value.replace(/[^\d]/g, "");
+
+    // Early return if empty
+    if (numericValue === "") {
+      setFilters((prev) => ({
+        ...prev,
+        [name]: "",
+      }));
+      return;
+    }
+
+    const numValue = parseInt(numericValue);
+
+    // Basic validation
+    if (numValue < 0) return;
+
+    // Update the value while preserving the other price input
+    setFilters((prev) => ({
+      ...prev,
+      [name]: numericValue,
+      // Keep the other price value unchanged
+      ...(name === "minPrice"
+        ? { maxPrice: prev.maxPrice }
+        : { minPrice: prev.minPrice }),
+    }));
+
+    // Additional validation after setting the value
+    if (
+      name === "maxPrice" &&
+      filters.minPrice &&
+      numValue < parseInt(filters.minPrice)
+    ) {
+      // Show optional warning or handle invalid range
+      console.log("Maximum price cannot be less than minimum price");
+    }
+
+    if (
+      name === "minPrice" &&
+      filters.maxPrice &&
+      numValue > parseInt(filters.maxPrice)
+    ) {
+      // Show optional warning or handle invalid range
+      console.log("Minimum price cannot be greater than maximum price");
+    }
+  };
+
+  const formatPrice = (price) => {
+    if (!price) return "";
+    return new Intl.NumberFormat("id-ID").format(price);
   };
 
   const renderPagination = () => {
@@ -223,16 +297,55 @@ const SearchUser = () => {
 
                 <Form.Group className="mb-3">
                   <Form.Label>Range Harga</Form.Label>
-                  <Form.Select
-                    name="priceRange"
-                    value={filters.priceRange}
-                    onChange={handleFilterChange}
-                  >
-                    <option value="">Semua Harga</option>
-                    <option value="1">&lt; Rp 1.000.000</option>
-                    <option value="2">Rp 1.000.000 - Rp 2.000.000</option>
-                    <option value="3">&gt; Rp 2.000.000</option>
-                  </Form.Select>
+                  <div className="d-flex gap-2 align-items-center">
+                    <div className="flex-1 position-relative">
+                      <div
+                        className="position-absolute start-0 ps-2 text-muted"
+                        style={{ top: "50%", transform: "translateY(-50%)" }}
+                      >
+                        Rp
+                      </div>
+                      <Form.Control
+                        type="text"
+                        name="minPrice"
+                        placeholder="  Minimum"
+                        value={
+                          filters.minPrice ? formatPrice(filters.minPrice) : ""
+                        }
+                        onChange={handlePriceChange}
+                        className="ps-4"
+                      />
+                    </div>
+                    <span>-</span>
+                    <div className="flex-1 position-relative">
+                      <div
+                        className="position-absolute start-0 ps-2 text-muted"
+                        style={{ top: "50%", transform: "translateY(-50%)" }}
+                      >
+                        Rp
+                      </div>
+                      <Form.Control
+                        type="text"
+                        name="maxPrice"
+                        placeholder="  Maximum"
+                        value={
+                          filters.maxPrice ? formatPrice(filters.maxPrice) : ""
+                        }
+                        onChange={handlePriceChange}
+                        className="ps-4"
+                      />
+                    </div>
+                  </div>
+                  <div className="mt-2 text-muted small">
+                    {filters.minPrice && filters.maxPrice ? (
+                      <span>
+                        Range: Rp {formatPrice(filters.minPrice)} - Rp{" "}
+                        {formatPrice(filters.maxPrice)}
+                      </span>
+                    ) : (
+                      <span></span>
+                    )}
+                  </div>
                 </Form.Group>
 
                 <Form.Group className="mb-3">
@@ -270,6 +383,25 @@ const SearchUser = () => {
                     ))}
                   </div>
                 </Form.Group>
+
+                <div className="mt-3">
+                  <button
+                    type="button"
+                    className="btn btn-outline-secondary btn-sm w-100"
+                    onClick={() => {
+                      setFilters({
+                        location: "",
+                        minPrice: "",
+                        maxPrice: "",
+                        type: "all",
+                        facilities: [],
+                        sortBy: "price_asc",
+                      });
+                    }}
+                  >
+                    Reset Filter
+                  </button>
+                </div>
               </Form>
             </Card.Body>
           </Card>
@@ -300,6 +432,16 @@ const SearchUser = () => {
               <Spinner animation="border" role="status">
                 <span className="visually-hidden">Loading...</span>
               </Spinner>
+            </div>
+          ) : filteredKos.length === 0 ? (
+            <div className="text-center py-5">
+              <div className="d-flex flex-column align-items-center">
+                <FaSearchMinus size={64} className="text-muted mb-4" />
+                <h5 className="text-muted mb-2">Data Tidak Ditemukan</h5>
+                <p className="text-muted mb-0">
+                  Coba sesuaikan filter pencarian Anda
+                </p>
+              </div>
             </div>
           ) : (
             <>

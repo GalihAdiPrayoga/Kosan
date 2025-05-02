@@ -111,7 +111,13 @@ const DashboardUser = () => {
   return (
     <div className="dashboard-container">
       {/* Hero Carousel Section */}
-      <Carousel fade interval={3000} indicators={true}>
+      <Carousel
+        fade
+        interval={3000} // 3000ms = 3 detik
+        indicators={true}
+        controls={false}
+        className="hero-carousel"
+      >
         {heroSlides.map((slide, index) => (
           <Carousel.Item key={index}>
             <div
