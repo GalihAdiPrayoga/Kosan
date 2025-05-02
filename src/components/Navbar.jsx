@@ -1,18 +1,18 @@
-import React from 'react';
-import { Navbar, Container, Nav, NavDropdown, Button } from 'react-bootstrap';
-import { Link, useNavigate } from 'react-router-dom';
+import React from "react";
+import { Navbar, Container, Nav, NavDropdown, Button } from "react-bootstrap";
+import { Link, useNavigate } from "react-router-dom";
 
 const UserNavbar = () => {
   const navigate = useNavigate();
-  const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-  const userName = localStorage.getItem('userName');
+  const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
+  const userName = localStorage.getItem("userName");
 
   const handleLogout = () => {
-    localStorage.removeItem('userType');
-    localStorage.removeItem('isLoggedIn');
-    localStorage.removeItem('userId');
-    localStorage.removeItem('userName');
-    navigate('/login');
+    localStorage.removeItem("userType");
+    localStorage.removeItem("isLoggedIn");
+    localStorage.removeItem("userId");
+    localStorage.removeItem("userName");
+    navigate("/login");
   };
 
   return (
@@ -30,13 +30,13 @@ const UserNavbar = () => {
             <Nav.Link as={Link} to="/search" className="mx-2">
               Cari Kos
             </Nav.Link>
-            <Nav.Link as={Link} to="/about" className="mx-2">
-              Tentang Kami
+            <Nav.Link as={Link} to="/contact" className="mx-2">
+              Hubungi Kami
             </Nav.Link>
           </Nav>
           <Nav>
             {isLoggedIn ? (
-              <NavDropdown 
+              <NavDropdown
                 title={
                   <span>
                     <i className="bi bi-person-circle me-1"></i>
@@ -61,22 +61,26 @@ const UserNavbar = () => {
                 </NavDropdown.Item>
               </NavDropdown>
             ) : (
-              <div className="d-flex gap-2">
-                <Button 
-                  as={Link} 
-                  to="/login" 
-                  variant="outline-primary"
-                >
+              <NavDropdown
+                title={
+                  <span>
+                    <i className="bi bi-person-circle me-1"></i>
+                    Account
+                  </span>
+                }
+                id="auth-dropdown"
+                align="end"
+              >
+                <NavDropdown.Item as={Link} to="/login">
+                  <i className="bi bi-box-arrow-in-right me-2"></i>
                   Login
-                </Button>
-                <Button 
-                  as={Link} 
-                  to="/register" 
-                  variant="primary"
-                >
+                </NavDropdown.Item>
+                <NavDropdown.Divider />
+                <NavDropdown.Item as={Link} to="/register">
+                  <i className="bi bi-person-plus me-2"></i>
                   Register
-                </Button>
-              </div>
+                </NavDropdown.Item>
+              </NavDropdown>
             )}
           </Nav>
         </Navbar.Collapse>

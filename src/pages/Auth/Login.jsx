@@ -1,11 +1,23 @@
 import React, { useState } from "react";
-import { Container, Row, Col, Card, Form, Button, Alert } from "react-bootstrap";
-import { Link, useNavigate } from "react-router-dom";
+import {
+  Container,
+  Row,
+  Col,
+  Card,
+  Form,
+  Button,
+  Alert,
+} from "react-bootstrap";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { FaEnvelope, FaLock, FaUserCircle } from "react-icons/fa";
 import { API } from "../../api/config";
 
 const Login = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const from = location.state?.from || "/";
+  const message = location.state?.message;
+
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -31,7 +43,6 @@ const Login = () => {
         return;
       }
 
-      // Check user role and status
       if (user.status !== "active") {
         setError("Akun tidak aktif");
         return;
@@ -43,13 +54,12 @@ const Login = () => {
       localStorage.setItem("userId", user.id);
       localStorage.setItem("userName", user.name);
 
-      // Redirect based on role
+      // Redirect based on role or return to previous page
       if (user.role === "admin") {
-        navigate("/admin/dashboard");
+        navigate("/admin/dashboard", { replace: true });
       } else {
-        navigate("/");
+        navigate(from, { replace: true });
       }
-
     } catch (err) {
       setError("Terjadi kesalahan saat login");
       console.error("Login error:", err);
@@ -59,30 +69,39 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-vh-100 bg-light py-5">
       <Container>
         <Row className="justify-content-center">
           <Col md={6} lg={5}>
-            <div className="text-center mb-8">
-              <FaUserCircle className="mx-auto text-blue-600 text-5xl mb-4" />
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                Welcome Back!
-              </h1>
-              <p className="text-gray-600">Please sign in to your account</p>
+            <div className="text-center mb-4">
+              <FaUserCircle
+                className="text-primary"
+                style={{ fontSize: "3rem" }}
+              />
+              <h2 className="mt-3">Selamat Datang Kembali!</h2>
+              <p className="text-muted">Silakan masuk ke akun Anda</p>
             </div>
 
-            <Card className="border-0 shadow-lg rounded-lg">
-              <Card.Body className="p-8">
+            {message && (
+              <Alert variant="info" className="mb-4">
+                {message}
+              </Alert>
+            )}
+
+            <Card className="shadow-sm">
+              <Card.Body className="p-4">
                 {error && <Alert variant="danger">{error}</Alert>}
-                
+
                 <Form onSubmit={handleSubmit}>
-                  <Form.Group className="mb-4 relative">
-                    <div className="flex items-center bg-gray-50 border rounded-lg px-3 focus-within:ring-2 focus-within:ring-blue-500">
-                      <FaEnvelope className="text-gray-400 mr-2" />
+                  <Form.Group className="mb-3">
+                    <Form.Label>Email</Form.Label>
+                    <div className="input-group">
+                      <span className="input-group-text">
+                        <FaEnvelope />
+                      </span>
                       <Form.Control
                         type="email"
-                        placeholder="Enter your email"
-                        className="border-0 bg-transparent focus:ring-0 focus:outline-none py-3"
+                        placeholder="Masukkan email Anda"
                         value={formData.email}
                         onChange={(e) =>
                           setFormData({ ...formData, email: e.target.value })
@@ -93,12 +112,14 @@ const Login = () => {
                   </Form.Group>
 
                   <Form.Group className="mb-4">
-                    <div className="flex items-center bg-gray-50 border rounded-lg px-3 focus-within:ring-2 focus-within:ring-blue-500">
-                      <FaLock className="text-gray-400 mr-2" />
+                    <Form.Label>Password</Form.Label>
+                    <div className="input-group">
+                      <span className="input-group-text">
+                        <FaLock />
+                      </span>
                       <Form.Control
                         type="password"
-                        placeholder="Enter your password"
-                        className="border-0 bg-transparent focus:ring-0 focus:outline-none py-3"
+                        placeholder="Masukkan password Anda"
                         value={formData.password}
                         onChange={(e) =>
                           setFormData({ ...formData, password: e.target.value })
@@ -111,43 +132,25 @@ const Login = () => {
                   <Button
                     variant="primary"
                     type="submit"
-                    className="w-100 py-3 mb-4 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 transition-all duration-200 rounded-lg font-semibold"
+                    className="w-100 mb-3"
                     disabled={loading}
                   >
-                    {loading ? "Signing in..." : "Sign In"}
+                    {loading ? "Memproses..." : "Masuk"}
                   </Button>
 
                   <div className="text-center">
-                    <p className="text-gray-600">
-                      Don't have an account?{" "}
-                      <Link
-                        to="/register"
-                        className="text-blue-600 hover:text-blue-700 font-semibold"
-                      >
-                        Sign Up
+                    <p className="mb-0">
+                      Belum punya akun?{" "}
+                      <Link to="/register" className="text-decoration-none">
+                        Daftar
                       </Link>
                     </p>
-                  </div>
-
-                  {/* Demo Credentials */}
-                  <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-100">
-                    <p className="text-sm text-gray-600 font-medium mb-2">
-                      Demo Credentials:
-                    </p>
-                    <div className="space-y-1">
-                      <p className="text-sm text-gray-600">
-                        <span className="font-semibold">User:</span>{" "}
-                        sarah@example.com / sarah123
-                      </p>
-                      <p className="text-sm text-gray-600">
-                        <span className="font-semibold">Admin:</span>{" "}
-                        admin@example.com / admin123
-                      </p>
-                    </div>
                   </div>
                 </Form>
               </Card.Body>
             </Card>
+
+           
           </Col>
         </Row>
       </Container>
