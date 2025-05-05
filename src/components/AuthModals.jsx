@@ -60,12 +60,18 @@ const AuthModals = ({ showLogin, showRegister, handleClose, handleSwitch }) => {
       localStorage.setItem("userName", user.name);
       localStorage.setItem("userType", user.role);
       localStorage.setItem("isAdmin", user.role === "admin" ? "true" : "false");
+      localStorage.setItem(
+        "isPemilik",
+        user.role === "pemilik" ? "true" : "false"
+      );
 
       handleClose();
 
       // Redirect based on role
       if (user.role === "admin") {
         window.location.href = "/admin/dashboard";
+      } else if (user.role === "pemilik") {
+        window.location.href = "/pemilik/dashboard";
       } else {
         window.location.href = "/";
       }

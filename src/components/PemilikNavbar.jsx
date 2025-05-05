@@ -19,7 +19,7 @@ const PemilikNavbar = () => {
     const confirmLogout = window.confirm("Apakah Anda yakin ingin keluar?");
     if (confirmLogout) {
       localStorage.clear();
-      navigate("/login");
+      navigate("/");
     }
   };
 

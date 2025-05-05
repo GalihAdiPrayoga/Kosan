@@ -55,10 +55,13 @@ const DashboardUser = () => {
 
   useEffect(() => {
     const isAdmin = localStorage.getItem("isAdmin") === "true";
+    const isPemilik = localStorage.getItem("isPemilik") === "true";
     const userType = localStorage.getItem("userType");
 
     if (isAdmin && userType === "admin") {
       navigate("/admin/dashboard", { replace: true });
+    } else if (isPemilik && userType === "pemilik") {
+      navigate("/pemilik/dashboard", { replace: true });
     }
   }, [navigate]);
 
