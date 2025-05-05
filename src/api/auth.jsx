@@ -17,8 +17,19 @@ export const loginUser = async (email, password) => {
       throw new Error("Akun tidak aktif");
     }
 
-    // Log untuk debugging
-    console.log("Logged in user:", user);
+    // Validate role-specific conditions
+    if (user.role === "pemilik") {
+      // Add any pemilik-specific validation here if needed
+      console.log("Pemilik login detected");
+    }
+
+    // Log successful login
+    console.log("Login successful:", {
+      id: user.id,
+      name: user.name,
+      role: user.role,
+      status: user.status,
+    });
 
     return user;
   } catch (error) {

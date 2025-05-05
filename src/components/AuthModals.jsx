@@ -16,6 +16,7 @@ const AuthModals = ({ showLogin, showRegister, handleClose, handleSwitch }) => {
     email: "",
     password: "",
     confirmPassword: "",
+    role: "user", // Default role
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -97,7 +98,6 @@ const AuthModals = ({ showLogin, showRegister, handleClose, handleSwitch }) => {
       const newUser = {
         id: Date.now().toString(),
         ...registerData,
-        role: "user",
         status: "active",
         createdAt: new Date().toISOString(),
       };
@@ -299,6 +299,24 @@ const AuthModals = ({ showLogin, showRegister, handleClose, handleSwitch }) => {
                 />
               </div>
             </div>
+
+            <Form.Group className="auth-input-group">
+              <div className="input-group">
+                <span className="input-group-text">
+                  <FaUserCircle />
+                </span>
+                <Form.Select
+                  name="role"
+                  value={registerData.role}
+                  onChange={(e) =>
+                    setRegisterData({ ...registerData, role: e.target.value })
+                  }
+                >
+                  <option value="user">Pencari Kos</option>
+                  <option value="pemilik">Pemilik Kos</option>
+                </Form.Select>
+              </div>
+            </Form.Group>
 
             <Button
               type="submit"

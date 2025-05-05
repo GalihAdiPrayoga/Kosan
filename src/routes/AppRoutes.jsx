@@ -1,6 +1,7 @@
 import { Routes } from "react-router-dom";
 import UserRoutes from "./UserRoutes";
 import AdminRoutes from "./AdminRoutes";
+import PemilikRoutes from "./PemilikRoutes";
 import NavbarManager from "../components/NavbarManager";
 
 const AppRoutes = () => {
@@ -13,6 +14,9 @@ const AppRoutes = () => {
 
         {/* Admin Routes */}
         {AdminRoutes}
+
+        {PemilikRoutes}
+
       </Routes>
     </>
   );

@@ -9,9 +9,14 @@ import Contact from "../pages/User/Contact";
 const UserGuard = ({ children }) => {
   const userType = localStorage.getItem("userType");
   const isAdmin = localStorage.getItem("isAdmin") === "true";
+  const isPemilik = localStorage.getItem("isPemilik") === "true";
 
   if (isAdmin && userType === "admin") {
     return <Navigate to="/admin/dashboard" replace />;
+  }
+
+  if (isPemilik && userType === "pemilik") {
+    return <Navigate to="/pemilik/dashboard" replace />;
   }
 
   return children;

@@ -43,18 +43,33 @@ const Login = () => {
     try {
       const user = await loginUser(formData.email, formData.password);
 
-      // Set user data in localStorage
+      // Set user data in localStorage with role-specific flags
       localStorage.setItem("userType", user.role);
       localStorage.setItem("isLoggedIn", "true");
       localStorage.setItem("userId", user.id);
       localStorage.setItem("userName", user.name);
       localStorage.setItem("isAdmin", user.role === "admin" ? "true" : "false");
+      localStorage.setItem(
+        "isPemilik",
+        user.role === "pemilik" ? "true" : "false"
+      );
 
-      // Redirect based on role
-      if (user.role === "admin") {
-        navigate("/admin/dashboard", { replace: true });
-      } else {
-        navigate(from, { replace: true });
+      // Redirect based on role with success message
+      switch (user.role) {
+        case "admin":
+          navigate("/admin/dashboard", {
+            state: { message: "Selamat datang, Admin!" },
+          });
+          break;
+        case "pemilik":
+          navigate("/pemilik/dashboard", {
+            state: { message: "Selamat datang, Pemilik Kos!" },
+          });
+          break;
+        default:
+          navigate("/", {
+            state: { message: "Login berhasil!" },
+          });
       }
     } catch (err) {
       setError(err.message || "Terjadi kesalahan saat login");

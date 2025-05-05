@@ -12,12 +12,13 @@ import {
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { API } from "../../api/config";
 import AuthModals from "../../components/AuthModals";
+import { FaUserCircle, FaWhatsapp } from "react-icons/fa";
 
 const DetailKosUser = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [kos, setKos] = useState(null);
-  const [admin, setAdmin] = useState(null);
+  const [pemilik, setPemilik] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showLogin, setShowLogin] = useState(false);
@@ -41,13 +42,13 @@ const DetailKosUser = () => {
         throw new Error("Kos not found");
       }
 
-      // Find admin data
-      const adminData = response.data.users.find(
-        (user) => user.id === String(kosData.adminId) && user.role === "admin"
+      const pemilikData = response.data.users.find(
+        (user) =>
+          user.id === String(kosData.pemilikId) && user.role === "pemilik"
       );
 
       setKos(kosData);
-      setAdmin(adminData);
+      setPemilik(pemilikData);
     } catch (err) {
       setError(err.message || "Failed to fetch kos detail");
     } finally {
@@ -76,6 +77,14 @@ const DetailKosUser = () => {
       return;
     }
     navigate(`/booking/${kos.id}`);
+  };
+
+  const handleWhatsAppClick = () => {
+    const message = `Halo, saya tertarik dengan ${kos.name} di ${kos.location}. Apakah masih tersedia?`;
+    const whatsappURL = `https://wa.me/${
+      pemilik.phone
+    }?text=${encodeURIComponent(message)}`;
+    window.open(whatsappURL, "_blank");
   };
 
   if (loading) {
@@ -148,6 +157,18 @@ const DetailKosUser = () => {
                     <li key={index}>{rule}</li>
                   ))}
                 </ul>
+
+                {pemilik && (
+                  <div className="mt-4 p-3 bg-light rounded">
+                    <div className="d-flex align-items-center mb-3">
+                      <FaUserCircle size={24} className="text-primary me-3" />
+                      <div>
+                        <h6 className="mb-0">Pemilik Kos</h6>
+                        <p className="mb-0 text-muted">{pemilik.name}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </Card.Body>
             </Card>
           </Col>
@@ -171,37 +192,42 @@ const DetailKosUser = () => {
                   {isLoggedIn ? "Booking Sekarang" : "Login untuk Booking"}
                 </Button>
 
-                {!isLoggedIn && (
-                  <p className="text-center text-muted small">
-                    Belum punya akun?{" "}
-                    <Button
-                      variant="link"
-                      className="p-0"
-                      onClick={() => setShowRegister(true)}
-                    >
-                      Daftar di sini
-                    </Button>
-                  </p>
+                {pemilik && (
+                  <Button
+                    variant="success"
+                    className="w-100 d-flex align-items-center justify-content-center gap-2 mb-3"
+                    onClick={handleWhatsAppClick}
+                  >
+                    <FaWhatsapp size={20} />
+                    <span>Hubungi Pemilik</span>
+                  </Button>
                 )}
 
-                {/* Admin information section */}
-                {admin && (
-                  <div className="mt-3 p-3 bg-light rounded">
-                    <h6 className="mb-2">Informasi Pemilik Kos:</h6>
-                    <p className="mb-1">
-                      <strong>Nama:</strong> {admin.name}
-                    </p>
-                    <p className="mb-1">
-                      <strong>Email:</strong> {admin.email}
-                    </p>
-                    <p className="mb-0">
-                      <strong>Status:</strong>{" "}
-                      <Badge
-                        bg={admin.status === "active" ? "success" : "warning"}
-                      >
-                        {admin.status}
-                      </Badge>
-                    </p>
+                {!isLoggedIn && (
+                  <div className="text-center">
+                    <p className="text-muted mb-2">Belum punya akun?</p>
+                    <Button
+                      variant="link"
+                      className="text-decoration-none p-2 w-100 rounded-pill border border-primary"
+                      style={{
+                        background: "transparent",
+                        transition: "all 0.3s ease",
+                        color: "#4e73df",
+                      }}
+                      onClick={() => setShowRegister(true)}
+                      onMouseOver={(e) => {
+                        e.currentTarget.style.background = "#4e73df";
+                        e.currentTarget.style.color = "white";
+                        e.currentTarget.style.transform = "translateY(-2px)";
+                      }}
+                      onMouseOut={(e) => {
+                        e.currentTarget.style.background = "transparent";
+                        e.currentTarget.style.color = "#4e73df";
+                        e.currentTarget.style.transform = "translateY(0)";
+                      }}
+                    >
+                      ✨ Daftar Sekarang
+                    </Button>
                   </div>
                 )}
               </Card.Body>
