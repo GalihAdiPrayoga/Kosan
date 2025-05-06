@@ -21,7 +21,7 @@ const Login = () => {
   const message = location.state?.message;
 
   const [formData, setFormData] = useState({
-    email: "",
+    identifier: "", // Changed from email to identifier
     password: "",
   });
   const [error, setError] = useState("");
@@ -41,7 +41,7 @@ const Login = () => {
     clearSession();
 
     try {
-      const user = await loginUser(formData.email, formData.password);
+      const user = await loginUser(formData.identifier, formData.password);
 
       // Set user data in localStorage with role-specific flags
       localStorage.setItem("userType", user.role);
@@ -108,11 +108,14 @@ const Login = () => {
                           <FaEnvelope />
                         </span>
                         <Form.Control
-                          type="email"
-                          placeholder="Masukkan email Anda"
-                          value={formData.email}
+                          type="text"
+                          placeholder="Email atau Username"
+                          value={formData.identifier}
                           onChange={(e) =>
-                            setFormData({ ...formData, email: e.target.value })
+                            setFormData({
+                              ...formData,
+                              identifier: e.target.value.trim(),
+                            })
                           }
                           required
                           disabled={loading}

@@ -154,8 +154,8 @@ const AuthModals = ({ showLogin, showRegister, handleClose, handleSwitch }) => {
                   <FaEnvelope />
                 </span>
                 <Form.Control
-                  type="email"
-                  placeholder="Email Address"
+                  type="text"
+                  placeholder="Email Address or username"
                   value={loginData.email}
                   onChange={(e) =>
                     setLoginData({ ...loginData, email: e.target.value })
