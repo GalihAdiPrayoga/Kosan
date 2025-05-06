@@ -1,10 +1,11 @@
 import React, { useState } from "react";
-import { Container, Form, Button, Card, Row, Col } from "react-bootstrap";
+import { Container, Form, Button, Card, Row, Col, Alert } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import { API } from "../../api/config";
 
 const AddKos = () => {
   const navigate = useNavigate();
+  const [error, setError] = useState(null);
   const [formData, setFormData] = useState({
     name: "",
     location: "",
@@ -12,9 +13,11 @@ const AddKos = () => {
     type: "Putra",
     description: "",
     facilities: [],
+    rules: [],
     images: [],
-    rules: [""],
   });
+  const [uploadedImages, setUploadedImages] = useState([]);
+  const [imagePreview, setImagePreview] = useState([]);
 
   const facilityOptions = [
     "AC",
@@ -29,19 +32,49 @@ const AddKos = () => {
     "Kasur",
   ];
 
+  const handleImageUpload = (e) => {
+    const files = Array.from(e.target.files);
+    setUploadedImages([...uploadedImages, ...files]);
+
+    // Create preview URLs
+    const newPreviews = files.map((file) => URL.createObjectURL(file));
+    setImagePreview([...imagePreview, ...newPreviews]);
+  };
+
+  const removeImage = (index) => {
+    const newImages = uploadedImages.filter((_, i) => i !== index);
+    const newPreviews = imagePreview.filter((_, i) => i !== index);
+    setUploadedImages(newImages);
+    setImagePreview(newPreviews);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       const userId = localStorage.getItem("userId");
-      const newKos = {
-        ...formData,
-        adminId: userId,
-        price: parseInt(formData.price),
-      };
+      if (!userId) {
+        throw new Error("User ID not found");
+      }
 
-      await API.post("/kos", newKos);
+      const formDataToSend = new FormData();
+      formDataToSend.append("name", formData.name);
+      formDataToSend.append("location", formData.location);
+      formDataToSend.append("price", formData.price);
+      formDataToSend.append("type", formData.type);
+      formDataToSend.append("description", formData.description);
+      formDataToSend.append("pemilikId", userId);
+      formDataToSend.append("facilities", JSON.stringify(formData.facilities));
+      formDataToSend.append("rules", JSON.stringify(formData.rules));
+
+      // Append images
+      uploadedImages.forEach((image) => {
+        formDataToSend.append("images", image);
+      });
+
+      await API.post("/kos", formDataToSend);
       navigate("/pemilik/kos");
     } catch (err) {
+      setError(err.message || "Gagal menambahkan kos");
       console.error("Failed to add kos:", err);
     }
   };
@@ -60,6 +93,7 @@ const AddKos = () => {
       <Card className="shadow-sm">
         <Card.Body>
           <h2 className="mb-4">Tambah Kos Baru</h2>
+          {error && <Alert variant="danger" className="mb-4">{error}</Alert>}
 
           <Form onSubmit={handleSubmit}>
             <Row>
@@ -151,19 +185,55 @@ const AddKos = () => {
                     type="file"
                     multiple
                     accept="image/*"
-                    onChange={(e) => {
-                      // Handle image upload
-                    }}
+                    onChange={handleImageUpload}
+                  />
+                  <div className="mt-3 d-flex flex-wrap gap-2">
+                    {imagePreview.map((preview, index) => (
+                      <div key={index} className="position-relative">
+                        <img
+                          src={preview}
+                          alt={`Preview ${index + 1}`}
+                          style={{
+                            width: "100px",
+                            height: "100px",
+                            objectFit: "cover",
+                            borderRadius: "4px",
+                          }}
+                        />
+                        <Button
+                          variant="danger"
+                          size="sm"
+                          className="position-absolute top-0 end-0"
+                          onClick={() => removeImage(index)}
+                          style={{ margin: "4px" }}
+                        >
+                          ×
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </Form.Group>
+
+                <Form.Group className="mb-3">
+                  <Form.Label>Peraturan Kos</Form.Label>
+                  <Form.Control
+                    as="textarea"
+                    rows={3}
+                    value={formData.rules.join("\n")}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        rules: e.target.value.split("\n").filter(Boolean),
+                      })
+                    }
+                    placeholder="Masukkan peraturan kos (satu baris per peraturan)"
                   />
                 </Form.Group>
               </Col>
             </Row>
 
             <div className="d-flex justify-content-end gap-2 mt-4">
-              <Button
-                variant="secondary"
-                onClick={() => navigate("/pemilik/kos")}
-              >
+              <Button variant="secondary" onClick={() => navigate("/pemilik/kos")}>
                 Batal
               </Button>
               <Button type="submit" variant="primary">
