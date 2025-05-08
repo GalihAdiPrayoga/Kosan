@@ -12,16 +12,16 @@ import {
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { FaEnvelope, FaLock, FaUserCircle } from "react-icons/fa";
 import { CSSTransition } from "react-transition-group";
-import { loginUser } from "../../api/auth";
+import axios from "axios";
 
 const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const from = location.state?.from || "/";
-  const message = location.state?.message;
+  const message = location.state?.message;4
 
   const [formData, setFormData] = useState({
-    identifier: "", // Changed from email to identifier
+    email: "",
     password: "",
   });
   const [error, setError] = useState("");
@@ -35,49 +35,19 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
-    setLoading(true);
-
-    clearSession();
 
     try {
-      const user = await loginUser(formData.identifier, formData.password);
-
-      // Set user data in localStorage with role-specific flags
-      localStorage.setItem("userType", user.role);
-      localStorage.setItem("isLoggedIn", "true");
-      localStorage.setItem("userId", user.id);
-      localStorage.setItem("userName", user.name);
-      localStorage.setItem("isAdmin", user.role === "admin" ? "true" : "false");
-      localStorage.setItem(
-        "isPemilik",
-        user.role === "pemilik" ? "true" : "false"
-      );
-
-      // Redirect based on role with success message
-      switch (user.role) {
-        case "admin":
-          navigate("/admin/dashboard", {
-            state: { message: "Selamat datang, Admin!" },
-          });
-          break;
-        case "pemilik":
-          navigate("/pemilik/dashboard", {
-            state: { message: "Selamat datang, Pemilik Kos!" },
-          });
-          break;
-        default:
-          navigate("/", {
-            state: { message: "Login berhasil!" },
-          });
+      const res = await axios.post(`${import.meta.env.VITE_API_URL}/login`, {formData}) 
+      console.log("SUCCESS LOGIN", res);
+      if (res.data.status === "success") {
+        const { token, user } = res.data;
+        localStorage.setItem("token", token);
       }
-    } catch (err) {
-      setError(err.message || "Terjadi kesalahan saat login");
-      console.error("Login error:", err);
-    } finally {
-      setLoading(false);
+      navigate("/dashboard/user")
+    } catch (error) {
+      console.log(error);
     }
-  };
+  }
 
   return (
     <CSSTransition in={true} appear={true} timeout={300} classNames="auth-page">
@@ -110,11 +80,11 @@ const Login = () => {
                         <Form.Control
                           type="text"
                           placeholder="Email atau Username"
-                          value={formData.identifier}
+                          value={formData.email}
                           onChange={(e) =>
                             setFormData({
                               ...formData,
-                              identifier: e.target.value.trim(),
+                              email: e.target.value.trim(),
                             })
                           }
                           required

@@ -13,6 +13,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { FaEnvelope, FaLock, FaUser, FaUserPlus } from "react-icons/fa";
 import { CSSTransition } from "react-transition-group";
 import { API } from "../../api/config";
+import axios from "axios";
 
 const Register = () => {
   const navigate = useNavigate();
@@ -29,41 +30,48 @@ const Register = () => {
     e.preventDefault();
     setLoading(true);
     setError("");
-
+  
     try {
+      // Validasi manual
       if (formData.password !== formData.confirmPassword) {
         throw new Error("Password tidak cocok");
       }
-
+  
       if (formData.password.length < 6) {
         throw new Error("Password minimal 6 karakter");
       }
-
-      const response = await API.get("/db.json");
-      const users = response.data.users;
-
-      if (users.some((user) => user.email === formData.email)) {
-        throw new Error("Email sudah terdaftar");
-      }
-
-      const newUser = {
-        id: Date.now().toString(),
-        ...formData,
-        role: "user",
-        status: "active",
-        createdAt: new Date().toISOString(),
+  
+      // Kirim data yang diperlukan saja
+      const payload = {
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
       };
-
-      console.log("Register attempt:", newUser);
-      navigate("/login", {
-        state: { message: "Registrasi berhasil! Silakan login." },
-      });
+  
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_URL}/register`,
+        payload
+      );
+  
+      console.log(response);
+      
+      // Misalnya response.data.status === 'success'
+      if (response.data.status === "success") {
+        console.log("Registrasi berhasil:", response.data);
+        navigate("/login", {
+          state: { message: "Registrasi berhasil! Silakan login." },
+        });
+      } else {
+        throw new Error(response.data.message || "Registrasi gagal");
+      }
+  
     } catch (err) {
       setError(err.message || "Gagal mendaftar");
     } finally {
       setLoading(false);
     }
   };
+  
 
   return (
     <CSSTransition in={true} appear={true} timeout={300} classNames="auth-page">
