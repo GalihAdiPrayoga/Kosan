@@ -1,30 +1,63 @@
 import axios from "axios";
 
+// Create axios instance with base config
 export const API = axios.create({
-  baseURL: "https://galihadiprayoga.github.io/kosan-app",
+  baseURL: import.meta.env.VITE_API_URL,
   timeout: 10000,
   headers: {
     "Content-Type": "application/json",
+    Accept: "application/json",
   },
+  withCredentials: true,
 });
 
+// Add request interceptor to inject auth token
+API.interceptors.request.use((config) => {
+  const token = localStorage.getItem("token");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// Add response interceptor to handle auth errors
+API.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.clear();
+      window.location.href = "/login";
+    }
+
+    // Handle registration specific errors
+    if (error.response?.status === 422) {
+      const message = error.response.data?.message || "Validation error";
+      error.message = message;
+    }
+
+    return Promise.reject(error);
+  }
+);
+
+// Fetch kos data with proper error handling
 export const fetchKosData = async (adminId = null) => {
   try {
-    const response = await API.get("/db.json");
-    
-    if (!response.data || !response.data.kos) {
-      throw new Error("Invalid data format received from server");
+    const response = await API.get("/kosans");
+
+    if (!response.data?.data) {
+      throw new Error("Invalid response format");
     }
 
-    // If adminId is provided, filter kos by adminId
+    const kosData = response.data.data;
+
     if (adminId) {
-      return response.data.kos.filter(kos => String(kos.adminId) === String(adminId));
+      return kosData.filter((kos) => String(kos.admin_id) === String(adminId));
     }
 
-    return response.data.kos;
+    return kosData;
   } catch (error) {
-    console.error("Raw error:", error);
-    throw new Error(`Failed to fetch kos data: ${error.message}`);
+    console.error("Failed to fetch kos data:", error);
+    throw error;
   }
 };
 
@@ -35,7 +68,8 @@ export const getFeaturedKos = async () => {
       console.warn("No kos data available");
       return [];
     }
-    // Create a new array before sorting to avoid mutating the original
+
+    // Urutkan berdasarkan harga tertinggi
     return [...kosData].sort((a, b) => b.price - a.price).slice(0, 3);
   } catch (error) {
     console.error("Error in getFeaturedKos:", error);
@@ -45,18 +79,18 @@ export const getFeaturedKos = async () => {
 
 export const deleteKos = async (id) => {
   try {
-    const response = await API.delete(`/kos/${id}`);
+    const response = await API.delete(`/kosans/${id}`);
     return response.data;
   } catch (error) {
+    console.error("Failed to delete kos:", error);
     throw new Error("Failed to delete kos");
   }
 };
 
-export const checkAdminAuth = async (userId) => {
+export const checkAdminAuth = async () => {
   try {
-    const response = await API.get("/db.json");
-    const user = response.data.users.find(u => u.id === userId);
-    return user && user.role === "admin" && user.status === "active";
+    const response = await API.get("/auth/check-admin");
+    return response.data?.is_admin === true;
   } catch (error) {
     console.error("Admin auth check failed:", error);
     return false;

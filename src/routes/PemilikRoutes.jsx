@@ -4,6 +4,7 @@ import ManageKos from "../pages/Pemilik/ManageKos";
 import AddKos from "../pages/Pemilik/AddKos";
 import EditKos from "../pages/Pemilik/EditKos";
 import BookingList from "../pages/Pemilik/BookingList";
+import PaymentHistory from "../pages/Pemilik/PaymentHistory";
 
 
 const PemilikGuard = ({ children }) => {
@@ -60,6 +61,15 @@ const PemilikRoutes = [
     element={
       <PemilikGuard>
         <BookingList />
+      </PemilikGuard>
+    }
+  />,
+  <Route
+    key="pemilik-payments"
+    path="/pemilik/payments"
+    element={
+      <PemilikGuard>
+        <PaymentHistory />
       </PemilikGuard>
     }
   />,

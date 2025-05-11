@@ -1,8 +1,11 @@
-import { Routes } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import UserRoutes from "./UserRoutes";
 import AdminRoutes from "./AdminRoutes";
 import PemilikRoutes from "./PemilikRoutes";
 import NavbarManager from "../components/NavbarManager";
+import PaymentsAdmin from "../pages/Admin/PaymentsAdmin";
+import PaymentHistory from "../pages/Pemilik/PaymentHistory";
+import ProtectedRoute from "../components/ProtectedRoute";
 
 const AppRoutes = () => {
   return (
@@ -17,6 +20,23 @@ const AppRoutes = () => {
 
         {PemilikRoutes}
 
+        <Route
+          path="/admin/payments"
+          element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <PaymentsAdmin />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/pemilik/payments"
+          element={
+            <ProtectedRoute allowedRoles={["pemilik"]}>
+              <PaymentHistory />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
     </>
   );

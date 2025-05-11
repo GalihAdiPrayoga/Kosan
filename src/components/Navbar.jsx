@@ -11,6 +11,7 @@ const UserNavbar = () => {
 
   const [showLogin, setShowLogin] = useState(false);
   const [showRegister, setShowRegister] = useState(false);
+  const [expanded, setExpanded] = useState(false);
 
   const handleClose = () => {
     setShowLogin(false);
@@ -35,6 +36,11 @@ const UserNavbar = () => {
     navigate("/");
   };
 
+  // Add this function to handle navigation
+  const handleNavigation = () => {
+    setExpanded(false);
+  };
+
   return (
     <>
       <Navbar
@@ -42,22 +48,43 @@ const UserNavbar = () => {
         expand="lg"
         fixed="top"
         className="shadow-sm navbar-custom"
+        expanded={expanded}
+        onToggle={(value) => setExpanded(value)}
       >
         <Container fluid="lg">
-          <Navbar.Brand as={Link} to="/" className="fw-bold fs-4 py-2">
+          <Navbar.Brand
+            as={Link}
+            to="/"
+            onClick={handleNavigation}
+            className="fw-bold fs-4 py-2"
+          >
             KosApp
           </Navbar.Brand>
           <Navbar.Toggle aria-controls="basic-navbar-nav" />
           <Navbar.Collapse id="basic-navbar-nav">
-            {/* Changed from me-auto to mx-auto for center alignment */}
             <Nav className="mx-auto">
-              <Nav.Link as={Link} to="/" className="px-3">
+              <Nav.Link
+                as={Link}
+                to="/"
+                onClick={handleNavigation}
+                className="px-3"
+              >
                 Beranda
               </Nav.Link>
-              <Nav.Link as={Link} to="/search" className="px-3">
+              <Nav.Link
+                as={Link}
+                to="/search"
+                onClick={handleNavigation}
+                className="px-3"
+              >
                 Cari Kos
               </Nav.Link>
-              <Nav.Link as={Link} to="/contact" className="px-3">
+              <Nav.Link
+                as={Link}
+                to="/contact"
+                onClick={handleNavigation}
+                className="px-3"
+              >
                 Hubungi Kami
               </Nav.Link>
             </Nav>

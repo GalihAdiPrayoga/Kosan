@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Navbar, Container, Nav, NavDropdown } from "react-bootstrap";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import {
@@ -11,6 +11,7 @@ import {
 } from "react-icons/fa";
 
 const AdminNavbar = () => {
+  const [expanded, setExpanded] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const adminName = localStorage.getItem("userName") || "Admin";
@@ -27,17 +28,24 @@ const AdminNavbar = () => {
     return location.pathname.startsWith(`/admin/${path}`) ? "active" : "";
   };
 
+  const handleNavigation = () => {
+    setExpanded(false);
+  };
+
   return (
     <Navbar
       bg="dark"
       variant="dark"
       expand="lg"
       className="admin-nav shadow fixed-top"
+      expanded={expanded}
+      onToggle={(value) => setExpanded(value)}
     >
       <Container>
         <Navbar.Brand
           as={Link}
           to="/admin/dashboard"
+          onClick={handleNavigation}
           className="d-flex align-items-center"
         >
           <FaHome className="me-2" size={24} />
@@ -50,6 +58,7 @@ const AdminNavbar = () => {
             <Nav.Link
               as={Link}
               to="/admin/dashboard"
+              onClick={handleNavigation}
               className={`nav-link px-3 ${isActive("dashboard")}`}
             >
               <FaChartBar className="me-2" />
@@ -58,6 +67,7 @@ const AdminNavbar = () => {
             <Nav.Link
               as={Link}
               to="/admin/kos"
+              onClick={handleNavigation}
               className={`nav-link px-3 ${isActive("kos")}`}
             >
               <FaHome className="me-2" />
@@ -66,6 +76,7 @@ const AdminNavbar = () => {
             <Nav.Link
               as={Link}
               to="/admin/payments"
+              onClick={handleNavigation}
               className={`nav-link px-3 ${isActive("payments")}`}
             >
               <FaMoneyBillWave className="me-2" />
@@ -74,6 +85,7 @@ const AdminNavbar = () => {
             <Nav.Link
               as={Link}
               to="/admin/users"
+              onClick={handleNavigation}
               className={`nav-link px-3 ${isActive("users")}`}
             >
               <FaUsers className="me-2" />

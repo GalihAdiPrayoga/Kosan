@@ -30,48 +30,60 @@ const Register = () => {
     e.preventDefault();
     setLoading(true);
     setError("");
-  
+
     try {
-      // Validasi manual
+      // Client-side validation
+      if (!formData.name || !formData.email || !formData.password) {
+        throw new Error("Semua field harus diisi");
+      }
+
       if (formData.password !== formData.confirmPassword) {
         throw new Error("Password tidak cocok");
       }
-  
+
       if (formData.password.length < 6) {
         throw new Error("Password minimal 6 karakter");
       }
-  
-      // Kirim data yang diperlukan saja
+
+      // Email validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email)) {
+        throw new Error("Format email tidak valid");
+      }
+
       const payload = {
-        name: formData.name,
-        email: formData.email,
+        name: formData.name.trim(),
+        email: formData.email.toLowerCase().trim(),
         password: formData.password,
       };
-  
-      const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/register`,
-        payload
-      );
-  
-      console.log(response);
-      
-      // Misalnya response.data.status === 'success'
-      if (response.data.status === "success") {
-        console.log("Registrasi berhasil:", response.data);
-        navigate("/login", {
-          state: { message: "Registrasi berhasil! Silakan login." },
+
+      const response = await API.post("/register", payload);
+
+      if (response.data?.token && response.data?.user) {
+        // Simpan token ke localStorage
+        localStorage.setItem("token", response.data.token);
+
+        // Redirect ke halaman sebelumnya atau dashboard
+        navigate(-1, {
+          replace: true,
+          state: { message: "Registrasi berhasil!" },
         });
       } else {
-        throw new Error(response.data.message || "Registrasi gagal");
+        throw new Error("Registrasi gagal, coba lagi");
       }
-  
     } catch (err) {
-      setError(err.message || "Gagal mendaftar");
+      // Handle specific API errors
+      if (err.response?.data?.message) {
+        setError(err.response.data.message);
+      } else if (err.message) {
+        setError(err.message);
+      } else {
+        setError("Terjadi kesalahan, silakan coba lagi");
+      }
     } finally {
       setLoading(false);
     }
   };
-  
 
   return (
     <CSSTransition in={true} appear={true} timeout={300} classNames="auth-page">

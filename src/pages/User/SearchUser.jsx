@@ -34,10 +34,14 @@ const SearchUser = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await API.get("/db.json");
-      setKosList(response.data?.kos || []);
+      const response = await API.get("/kosans"); // Menggunakan endpoint /kosans
+      if (response.data?.data) {
+        setKosList(response.data.data);
+      } else {
+        throw new Error("Data tidak valid");
+      }
     } catch (err) {
-      setError("Failed to fetch kos data: " + err.message);
+      setError("Gagal mengambil data kos: " + err.message);
       setKosList([]);
     } finally {
       setLoading(false);
@@ -106,11 +110,8 @@ const SearchUser = () => {
   const totalPages = Math.ceil(filteredKos.length / ITEMS_PER_PAGE);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      fetchKos();
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [filters.location]);
+    fetchKos(); // Langsung memanggil fetchKos tanpa delay
+  }, []); // Hanya dipanggil sekali saat komponen dimount
 
   // Reset page when filters change
   useEffect(() => {
@@ -456,7 +457,7 @@ const SearchUser = () => {
                       <div style={{ position: "relative" }}>
                         <Card.Img
                           variant="top"
-                          src={kos.images[0]}
+                          src={kos.image_url || kos.images?.[0]} // Sesuaikan dengan struktur API
                           style={{ height: "200px", objectFit: "cover" }}
                         />
                         <Badge
@@ -481,24 +482,29 @@ const SearchUser = () => {
                         <Card.Title className="h5 mb-3">{kos.name}</Card.Title>
                         <Card.Text className="text-muted mb-2">
                           <i className="bi bi-geo-alt-fill me-2"></i>
-                          {kos.location}
+                          {kos.location || kos.alamat} // Sesuaikan dengan field
+                          API
                         </Card.Text>
                         <div className="mb-2">
-                          {kos.facilities.slice(0, 3).map((facility, index) => (
-                            <Badge
-                              bg="light"
-                              text="dark"
-                              className="me-2 mb-2"
-                              key={index}
-                            >
-                              {facility}
-                            </Badge>
-                          ))}
+                          {(kos.facilities || kos.fasilitas || [])
+                            .slice(0, 3)
+                            .map((facility, index) => (
+                              <Badge
+                                bg="light"
+                                text="dark"
+                                className="me-2 mb-2"
+                                key={index}
+                              >
+                                {facility}
+                              </Badge>
+                            ))}
                         </div>
                         <div className="mt-3">
                           <span className="h5 text-primary mb-0">
                             Rp{" "}
-                            {new Intl.NumberFormat("id-ID").format(kos.price)}
+                            {new Intl.NumberFormat("id-ID").format(
+                              kos.price || kos.harga
+                            )}
                           </span>
                           <span className="text-muted">/bulan</span>
                         </div>
@@ -507,7 +513,6 @@ const SearchUser = () => {
                   </Col>
                 ))}
               </Row>
-
               {filteredKos.length > 0 && (
                 <div className="d-flex justify-content-center mt-4">
                   {renderPagination()}

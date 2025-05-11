@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Navbar, Container, Nav, NavDropdown } from "react-bootstrap";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import {
@@ -11,6 +11,7 @@ import {
 } from "react-icons/fa";
 
 const PemilikNavbar = () => {
+  const [expanded, setExpanded] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const pemilikName = localStorage.getItem("userName") || "Pemilik";
@@ -27,17 +28,24 @@ const PemilikNavbar = () => {
     return location.pathname.startsWith(`/pemilik/${path}`) ? "active" : "";
   };
 
+  const handleNavigation = () => {
+    setExpanded(false);
+  };
+
   return (
     <Navbar
       bg="primary"
       variant="dark"
       expand="lg"
       className="shadow fixed-top"
+      expanded={expanded}
+      onToggle={(value) => setExpanded(value)}
     >
       <Container>
         <Navbar.Brand
           as={Link}
           to="/pemilik/dashboard"
+          onClick={handleNavigation}
           className="d-flex align-items-center"
         >
           <FaHome className="me-2" size={24} />
@@ -50,6 +58,7 @@ const PemilikNavbar = () => {
             <Nav.Link
               as={Link}
               to="/pemilik/dashboard"
+              onClick={handleNavigation}
               className={`nav-link px-3 ${isActive("dashboard")}`}
             >
               <FaTachometerAlt className="me-2" />
@@ -58,6 +67,7 @@ const PemilikNavbar = () => {
             <Nav.Link
               as={Link}
               to="/pemilik/kos"
+              onClick={handleNavigation}
               className={`nav-link px-3 ${isActive("kos")}`}
             >
               <FaHome className="me-2" />
@@ -66,6 +76,7 @@ const PemilikNavbar = () => {
             <Nav.Link
               as={Link}
               to="/pemilik/bookings"
+              onClick={handleNavigation}
               className={`nav-link px-3 ${isActive("bookings")}`}
             >
               <FaClipboardList className="me-2" />
@@ -74,6 +85,7 @@ const PemilikNavbar = () => {
             <Nav.Link
               as={Link}
               to="/pemilik/payments"
+              onClick={handleNavigation}
               className={`nav-link px-3 ${isActive("payments")}`}
             >
               <FaMoneyBillWave className="me-2" />

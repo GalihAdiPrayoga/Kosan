@@ -9,7 +9,13 @@ import {
 } from "react-icons/fa";
 import { API } from "../api/config";
 
-const AuthModals = ({ showLogin, showRegister, handleClose, handleSwitch }) => {
+const AuthModals = ({
+  showLogin,
+  showRegister,
+  handleClose,
+  handleSwitch,
+  onLoginSuccess, // Add this prop
+}) => {
   const [loginData, setLoginData] = useState({ email: "", password: "" });
   const [registerData, setRegisterData] = useState({
     name: "",
@@ -33,98 +39,91 @@ const AuthModals = ({ showLogin, showRegister, handleClose, handleSwitch }) => {
     return true;
   };
 
-  const handleLoginSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      setLoading(true);
-      setError("");
+ const handleLoginSubmit = async (e) => {
+  e.preventDefault();
+  try {
+    setLoading(true);
+    setError("");
 
-      const response = await API.get("/db.json");
-      const users = response.data.users;
+    const response = await API.post("/login", {
+      email: loginData.email,
+      password: loginData.password,
+    });
 
-      const user = users.find(
-        (u) => u.email === loginData.email && u.password === loginData.password
-      );
+    const user = response.data.user;
+    const token = response.data.token;
 
-      if (!user) {
-        throw new Error("Email atau password salah");
-      }
+    // Simpan token dan data user
+    localStorage.setItem("isLoggedIn", "true");
+    localStorage.setItem("userId", user.id);
+    localStorage.setItem("userName", user.name);
+    localStorage.setItem("userType", user.role);
+    localStorage.setItem("token", token);
 
-      if (user.status !== "active") {
-        throw new Error("Akun tidak aktif");
-      }
+    // Set token ke header Authorization
+    API.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 
-      // Set user data in localStorage
-      localStorage.setItem("isLoggedIn", "true");
-      localStorage.setItem("userId", user.id);
-      localStorage.setItem("userName", user.name);
-      localStorage.setItem("userType", user.role);
-      localStorage.setItem("isAdmin", user.role === "admin" ? "true" : "false");
-      localStorage.setItem(
-        "isPemilik",
-        user.role === "pemilik" ? "true" : "false"
-      );
-
-      handleClose();
-
-      // Redirect based on role
-      if (user.role === "admin") {
-        window.location.href = "/admin/dashboard";
-      } else if (user.role === "pemilik") {
-        window.location.href = "/pemilik/dashboard";
-      } else {
-        window.location.href = "/";
-      }
-    } catch (err) {
-      setError(err.message || "Login gagal");
-    } finally {
-      setLoading(false);
+    handleClose();
+    if (onLoginSuccess) {
+      onLoginSuccess();
     }
-  };
 
-  const handleRegisterSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      if (!validateRegisterData()) {
-        return;
-      }
+    // Jika ingin reload UI setelah login:
+    // window.location.reload();
 
-      setLoading(true);
-      setError("");
-
-      // Check if email already exists
-      const response = await API.get("/db.json");
-      const users = response.data.users;
-
-      if (users.some((user) => user.email === registerData.email)) {
-        throw new Error("Email already registered");
-      }
-
-      // Create new user object
-      const newUser = {
-        id: Date.now().toString(),
-        ...registerData,
-        status: "active",
-        createdAt: new Date().toISOString(),
-      };
-
-      // In a real app, you would make a POST request here
-      console.log("New user registration:", newUser);
-
-      // Auto login after successful registration
-      localStorage.setItem("isLoggedIn", "true");
-      localStorage.setItem("userId", newUser.id);
-      localStorage.setItem("userName", newUser.name);
-      localStorage.setItem("userType", "user");
-
-      handleClose();
-      window.location.reload();
-    } catch (err) {
-      setError(err.message || "Registration failed");
-    } finally {
-      setLoading(false);
+  } catch (err) {
+    if (err.response?.status === 401) {
+      setError("Invalid credentials, please try again.");
+    } else {
+      setError(err.response?.data?.message || err.message || "Login failed");
     }
-  };
+  } finally {
+    setLoading(false);
+  }
+};
+
+ const handleRegisterSubmit = async (e) => {
+  e.preventDefault();
+  try {
+    if (!validateRegisterData()) return;
+
+    setLoading(true);
+    setError("");
+
+    const response = await API.post("/register", {
+      name: registerData.name,
+      email: registerData.email,
+      password: registerData.password,
+      password_confirmation: registerData.confirmPassword,
+      role: registerData.role,
+    });
+
+    const user = response.data.user;
+    const token = response.data.token;
+
+    // Simpan data user dan token
+    localStorage.setItem("isLoggedIn", "true");
+    localStorage.setItem("userId", user.id);
+    localStorage.setItem("userName", user.name);
+    localStorage.setItem("userType", user.role);
+    localStorage.setItem("token", token); // untuk request yang butuh auth
+
+    handleClose();
+    window.location.reload(); // reload untuk update UI
+  } catch (err) {
+    // Tangkap pesan error dari backend
+    if (err.response?.status === 422) {
+      // Laravel validation error
+      const errors = err.response.data.errors;
+      const firstError = errors[Object.keys(errors)[0]][0];
+      setError(firstError);
+    } else {
+      setError(err.response?.data?.message || err.message || "Registration failed");
+    }
+  } finally {
+    setLoading(false);
+  }
+};
 
   const resetError = () => {
     setError("");
@@ -221,7 +220,7 @@ const AuthModals = ({ showLogin, showRegister, handleClose, handleSwitch }) => {
         <Modal.Header closeButton className="border-0">
           <Modal.Title className="w-100 text-center">
             <FaUserPlus className="auth-icon" />
-            <h4>Create Account</h4>
+            <h4>Create an Account</h4>
           </Modal.Title>
         </Modal.Header>
         <Modal.Body>

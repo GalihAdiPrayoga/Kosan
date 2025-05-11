@@ -60,3 +60,25 @@ export const loginUser = async (identifier, password) => {
     throw error;
   }
 };
+
+export const registerUser = async (userData) => {
+  try {
+    const response = await API.post("/register", userData);
+
+    if (response.data?.token && response.data?.user) {
+      // Log successful registration
+      console.log("Registration successful:", {
+        id: response.data.user.id,
+        name: response.data.user.name,
+        email: response.data.user.email,
+      });
+
+      return response.data;
+    }
+
+    throw new Error("Invalid registration response");
+  } catch (error) {
+    console.error("Registration error:", error);
+    throw error;
+  }
+};
