@@ -137,7 +137,10 @@ const SearchUser = () => {
       // Perbaikan logika untuk tipe kos
       const matchType =
         debouncedFilters.type === "all" ||
-        kos.type?.toLowerCase().includes(debouncedFilters.type.toLowerCase());
+        kos.type?.toLowerCase() === debouncedFilters.type.toLowerCase() ||
+        (debouncedFilters.type === "Kos Campur" &&
+          (kos.type?.toLowerCase().includes("campur") ||
+            kos.type?.toLowerCase().includes("campuran")));
 
       const matchFacilities =
         debouncedFilters.facilities.length === 0 ||
@@ -360,7 +363,7 @@ const SearchUser = () => {
                     <option value="all">Semua Tipe</option>
                     <option value="Kos Putri">Kos Putri</option>
                     <option value="Kos Putra">Kos Putra</option>
-                    <option value="Kos Campur">Kos Campuran</option>
+                    <option value="Kos Campur">Kos Campur</option>
                   </Form.Select>
                 </Form.Group>
 
@@ -368,11 +371,15 @@ const SearchUser = () => {
                   <Form.Label>Fasilitas</Form.Label>
                   <div className="d-flex flex-wrap gap-2">
                     {[
-                      "AC",
                       "WiFi",
+                      "AC",
                       "Kamar Mandi Dalam",
-                      "Laundry",
-                      "Parkir",
+                      "Parkir Motor",
+                      "Parkir Mobil",
+                      "Dapur",
+                      "Lemari",
+                      "Meja",
+                      "Kasur",
                     ].map((facility) => (
                       <Form.Check
                         key={facility}

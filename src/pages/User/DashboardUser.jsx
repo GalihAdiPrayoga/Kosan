@@ -83,7 +83,7 @@ const DashboardUser = () => {
           };
         });
 
-        const featuredData = transformedData.slice(0, 6);
+        const featuredData = transformedData.slice(0, 3); // Changed from 6 to 3
         setFeaturedKos(featuredData);
       } else {
         throw new Error("Data tidak valid");
@@ -209,7 +209,7 @@ const DashboardUser = () => {
       {/* Featured Kos Section */}
       <Container className="py-5">
         <div className="d-flex justify-content-between align-items-center mb-4">
-          <h2 className="mb-0">Kos Populer</h2>
+          <h2 className="mb-0">Kos Terbaru</h2>
           <Button
             as={Link}
             to="/search"
