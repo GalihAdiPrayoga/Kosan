@@ -12,7 +12,9 @@ import {
 } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import { API } from "../../api/config";
-import { FaSearchMinus } from "react-icons/fa";
+import { FaSearchMinus, FaMapMarkerAlt } from "react-icons/fa";
+import { getImageUrl } from "../../utils/imageUtils";
+import ImageWithFallback from "../../components/ImageWithFallback";
 
 const ITEMS_PER_PAGE = 9;
 
@@ -35,7 +37,9 @@ const SearchUser = () => {
       setLoading(true);
       setError(null);
 
-      const response = await API.get("/kosans");
+      // Changed the endpoint to fetch public kos
+      const response = await API.get("/kosans/public");
+      console.log("Raw API Response:", response.data);
 
       if (!response.data?.data) {
         throw new Error("Data tidak valid");
@@ -45,28 +49,29 @@ const SearchUser = () => {
         id: kos.id,
         name: kos.nama_kosan,
         location: kos.alamat,
-        price: kos.harga_per_bulan,
-        // Perbaikan akses data kategori
-        type: kos.kategori?.nama_kategori || kos.kategori?.nama || "Tidak Ada",
-        facilities: kos.fasilitas
-          ? typeof kos.fasilitas === "string"
-            ? kos.fasilitas.split(",").map((f) => f.trim())
-            : kos.fasilitas
+        price: Number(kos.harga_per_bulan), // Ensure price is a number
+        type: kos.kategori?.nama_kategori || "Tidak Ada",
+        facilities: Array.isArray(kos.fasilitas)
+          ? kos.fasilitas.map((f) => f.nama_fasilitas)
+          : kos.fasilitas
+          ? [kos.fasilitas].map((f) => f.nama_fasilitas)
           : [],
-        images: kos.galeri
-          ? typeof kos.galeri === "string"
-            ? JSON.parse(kos.galeri)
-            : kos.galeri
+        images: Array.isArray(kos.galeri)
+          ? kos.galeri.map((img) => getImageUrl(img))
+          : kos.galeri
+          ? [getImageUrl(kos.galeri)]
           : [],
+        available_rooms: Number(kos.jumlah_kamar) || 0, // Add available rooms info
       }));
 
-      console.log("Raw API Response:", response.data.data); // untuk debug
-      console.log("Transformed Data:", transformedData); // untuk debug
-
+      console.log("Transformed Data:", transformedData);
       setKosList(transformedData);
     } catch (err) {
       console.error("Error fetching kos:", err);
-      setError(err.response?.data?.message || "Gagal mengambil data kos");
+      setError(
+        err.response?.data?.message ||
+          "Gagal mengambil data kos. Silakan coba lagi nanti."
+      );
     } finally {
       setLoading(false);
     }
@@ -175,6 +180,68 @@ const SearchUser = () => {
     );
   };
 
+  // Update Card.Img component
+  const renderKosCard = (kos) => (
+    <Card
+      as={Link}
+      to={`/kos/${kos.id}`}
+      className="text-decoration-none h-100 shadow-sm hover-shadow"
+    >
+      <div style={{ position: "relative" }}>
+        <ImageWithFallback
+          src={kos.images[0]}
+          fallbackSrc="/images/default-kos.jpg"
+          style={{
+            height: "200px",
+            width: "100%",
+            objectFit: "cover",
+            borderTopLeftRadius: "calc(0.375rem - 1px)",
+            borderTopRightRadius: "calc(0.375rem - 1px)",
+          }}
+          alt={kos.name}
+        />
+        <Badge
+          bg={
+            kos.type?.toLowerCase().includes("putra")
+              ? "primary"
+              : kos.type?.toLowerCase().includes("putri")
+              ? "danger"
+              : "success"
+          }
+          className="position-absolute"
+          style={{
+            top: "10px",
+            right: "10px",
+            padding: "8px 12px",
+          }}
+        >
+          {kos.type}
+        </Badge>
+      </div>
+      <Card.Body>
+        <Card.Title className="h5 mb-3">{kos.name}</Card.Title>
+        <Card.Text className="text-muted mb-2 d-flex align-items-center">
+          <FaMapMarkerAlt className="me-2" />
+          {kos.location}
+        </Card.Text>
+        <div className="mb-2">
+          {kos.facilities?.slice(0, 3).map((facility, index) => (
+            <Badge key={index} bg="light" text="dark" className="me-2 mb-2">
+              {facility}
+            </Badge>
+          ))}
+        </div>
+        <div className="mt-3">
+          <span className="h5 text-primary mb-0">
+            Rp {new Intl.NumberFormat("id-ID").format(kos.price)}
+          </span>
+          <span className="text-muted">/bulan</span>
+        </div>
+      </Card.Body>
+    </Card>
+  );
+
+  // Update the results section
   return (
     <Container className="py-5">
       {error && <Alert variant="danger">{error}</Alert>}
@@ -313,8 +380,11 @@ const SearchUser = () => {
             <div>
               <h4>Hasil Pencarian</h4>
               <p className="text-muted mb-0">
-                Ditemukan {filteredKos.length} kos (Halaman {currentPage} dari{" "}
-                {Math.ceil(filteredKos.length / ITEMS_PER_PAGE)})
+                Ditemukan {filteredKos.length} kos
+                {filteredKos.length > 0 &&
+                  ` (Halaman ${currentPage} dari ${Math.ceil(
+                    filteredKos.length / ITEMS_PER_PAGE
+                  )})`}
               </p>
             </div>
             <Form.Select
@@ -330,85 +400,26 @@ const SearchUser = () => {
 
           {loading ? (
             <div className="text-center py-5">
-              <Spinner animation="border" role="status">
-                <span className="visually-hidden">Loading...</span>
-              </Spinner>
+              <Spinner animation="border" variant="primary" />
             </div>
           ) : filteredKos.length === 0 ? (
             <div className="text-center py-5">
-              <div className="d-flex flex-column align-items-center">
-                <FaSearchMinus size={64} className="text-muted mb-4" />
-                <h5 className="text-muted mb-2">Data Tidak Ditemukan</h5>
-                <p className="text-muted mb-0">
-                  Coba sesuaikan filter pencarian Anda
-                </p>
-              </div>
+              <FaSearchMinus size={64} className="text-muted mb-4" />
+              <h5 className="text-muted mb-2">Data Tidak Ditemukan</h5>
+              <p className="text-muted mb-0">
+                Coba sesuaikan filter pencarian Anda
+              </p>
             </div>
           ) : (
             <>
               <Row>
                 {paginatedKos.map((kos) => (
                   <Col md={4} key={kos.id} className="mb-4">
-                    <Card
-                      as={Link}
-                      to={`/kos/${kos.id}`}
-                      className="text-decoration-none h-100 shadow-sm hover-shadow"
-                    >
-                      <div style={{ position: "relative" }}>
-                        <Card.Img
-                          variant="top"
-                          src={kos.images?.[0] || "/default-kos-image.jpg"} // Tambahkan default image
-                          style={{ height: "200px", objectFit: "cover" }}
-                        />
-                        <Badge
-                          bg={
-                            kos.type?.toLowerCase().includes("putra")
-                              ? "primary"
-                              : kos.type?.toLowerCase().includes("putri")
-                              ? "danger"
-                              : "success"
-                          }
-                          style={{
-                            position: "absolute",
-                            top: "10px",
-                            right: "10px",
-                            padding: "8px 12px",
-                          }}
-                        >
-                          {kos.type}
-                        </Badge>
-                      </div>
-                      <Card.Body>
-                        <Card.Title className="h5 mb-3">{kos.name}</Card.Title>
-                        <Card.Text className="text-muted mb-2">
-                          <i className="bi bi-geo-alt-fill me-2"></i>
-                          {kos.location}
-                        </Card.Text>
-                        <div className="mb-2">
-                          {kos.facilities.slice(0, 3).map((facility, index) => (
-                            <Badge
-                              bg="light"
-                              text="dark"
-                              className="me-2 mb-2"
-                              key={index}
-                            >
-                              {facility}
-                            </Badge>
-                          ))}
-                        </div>
-                        <div className="mt-3">
-                          <span className="h5 text-primary mb-0">
-                            Rp{" "}
-                            {new Intl.NumberFormat("id-ID").format(kos.price)}
-                          </span>
-                          <span className="text-muted">/bulan</span>
-                        </div>
-                      </Card.Body>
-                    </Card>
+                    {renderKosCard(kos)}
                   </Col>
                 ))}
               </Row>
-              {filteredKos.length > 0 && (
+              {filteredKos.length > ITEMS_PER_PAGE && (
                 <div className="d-flex justify-content-center mt-4">
                   {renderPagination()}
                 </div>

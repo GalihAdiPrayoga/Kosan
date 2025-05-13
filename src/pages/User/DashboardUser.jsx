@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import axios from "axios";
 import {
   Container,
   Row,
@@ -12,8 +13,8 @@ import {
   Carousel,
 } from "react-bootstrap";
 import { Link, useNavigate } from "react-router-dom";
-import { API, getFeaturedKos } from "../../api/config";
 import { FaShieldAlt, FaMoneyBillWave, FaMapMarkerAlt } from "react-icons/fa";
+import { getImageUrl } from "../../utils/imageUtils";
 
 // Import hero images
 import hero1 from "../../assets/hero1.jpeg";
@@ -36,48 +37,59 @@ const DashboardUser = () => {
       setLoading(true);
       setError(null);
 
-      const response = await API.get("/kosans");
+      const response = await axios.get(
+        `${import.meta.env.VITE_API_URL}/kosans/public`
+      );
 
-      if (!response.data?.data) {
+      if (response?.data?.data) {
+        const transformedData = response.data.data.map((kos) => ({
+          ...kos,
+          galeri: Array.isArray(kos.galeri) ? kos.galeri : [kos.galeri],
+          fasilitas: Array.isArray(kos.fasilitas) ? kos.fasilitas : [],
+          harga_per_bulan: Number(kos.harga_per_bulan),
+        }));
+
+        const featuredData = transformedData.slice(0, 6);
+        setFeaturedKos(featuredData);
+      } else {
         throw new Error("Data tidak valid");
       }
-
-      const transformedData = response.data.data.map((kos) => ({
-        id: kos.id,
-        name: kos.nama_kosan,
-        location: kos.alamat,
-        price: kos.harga_per_bulan,
-        type: kos.kategori?.nama_kategori || kos.kategori?.nama || "Tidak Ada",
-        facilities: kos.fasilitas
-          ? typeof kos.fasilitas === "string"
-            ? kos.fasilitas.split(",").map((f) => f.trim())
-            : kos.fasilitas
-          : [],
-        images: kos.galeri
-          ? typeof kos.galeri === "string"
-            ? JSON.parse(kos.galeri)
-            : kos.galeri
-          : [],
-      }));
-
-      // Get top 6 kos for featured section
-      const featuredData = transformedData.slice(0, 6);
-      setFeaturedKos(featuredData);
     } catch (err) {
-      console.error("Error fetching featured kos:", err);
+      console.error("Error fetching kos:", err);
       setError(err.response?.data?.message || "Gagal memuat data kos unggulan");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleRetry = () => {
-    setRetryCount((prev) => prev + 1);
-  };
+  if (loading) {
+    return (
+      <Container
+        className="d-flex justify-content-center align-items-center"
+        style={{ minHeight: "60vh" }}
+      >
+        <Spinner animation="border" variant="primary" />
+      </Container>
+    );
+  }
 
-  const handleSearchClick = () => {
-    navigate("/search");
-  };
+  if (error) {
+    return (
+      <Container className="py-5">
+        <Alert variant="danger">
+          {error}
+          <Button
+            variant="outline-danger"
+            size="sm"
+            className="ms-3"
+            onClick={() => setRetryCount((prev) => prev + 1)}
+          >
+            Coba Lagi
+          </Button>
+        </Alert>
+      </Container>
+    );
+  }
 
   const heroSlides = [
     {
@@ -148,7 +160,7 @@ const DashboardUser = () => {
               type="text"
               placeholder="Cari kos berdasarkan lokasi..."
               className="flex-grow-1"
-              onClick={handleSearchClick}
+              onClick={() => navigate("/search")}
               style={{ cursor: "pointer" }}
             />
             <Link to="/search">
@@ -164,95 +176,57 @@ const DashboardUser = () => {
       <Container className="py-5">
         <div className="d-flex justify-content-between align-items-center mb-4">
           <h2 className="mb-0">Kos Populer</h2>
-          <Button
-            as={Link}
-            to="/search"
-            className="d-flex align-items-center gap-2 bg-primary text-white border-0 transition-all duration-300 px-4 py-2 rounded-pill shadow-sm"
-            style={{
-              transform: "translateY(0)",
-              transition: "all 0.3s ease",
-              background: "linear-gradient(to right, #4e73df, #224abe)",
-            }}
-            onMouseOver={(e) => {
-              e.currentTarget.style.transform = "translateY(-2px)";
-              e.currentTarget.style.boxShadow =
-                "0 4px 12px rgba(78, 115, 223, 0.25)";
-              e.currentTarget.style.background =
-                "linear-gradient(to right, #224abe, #1a3891)";
-            }}
-            onMouseOut={(e) => {
-              e.currentTarget.style.transform = "translateY(0)";
-              e.currentTarget.style.boxShadow =
-                "0 2px 4px rgba(78, 115, 223, 0.1)";
-              e.currentTarget.style.background =
-                "linear-gradient(to right, #4e73df, #224abe)";
-            }}
-          >
-            <span>Lihat Semua</span>
-            <svg
-              className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              style={{ width: "16px", height: "16px" }}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M13 7l5 5m0 0l-5 5m5-5H6"
-              />
-            </svg>
+          <Button as={Link} to="/search" className="btn-gradient-primary">
+            Lihat Semua
           </Button>
         </div>
 
         <Row>
           {featuredKos.map((kos) => (
             <Col md={4} key={kos.id} className="mb-4">
-              <Card
-                as={Link}
-                to={`/kos/${kos.id}`}
-                className="text-decoration-none h-100 shadow-sm hover-shadow border-0"
-                style={{
-                  cursor: "pointer",
-                }}
-                onMouseOver={(e) => {
-                  e.currentTarget.style.transform = "translateY(-5px)";
-                  e.currentTarget.style.boxShadow =
-                    "0 .5rem 1rem rgba(0,0,0,.15)";
-                }}
-                onMouseOut={(e) => {
-                  e.currentTarget.style.transform = "translateY(0)";
-                  e.currentTarget.style.boxShadow =
-                    "0 .125rem .25rem rgba(0,0,0,.075)";
-                }}
-              >
+              <Card as={Link} to={`/kos/${kos.id}`} className="kos-card">
                 <div style={{ position: "relative" }}>
                   <Card.Img
                     variant="top"
                     src={
-                      kos.images && kos.images.length > 0
-                        ? kos.images[0]
+                      kos.galeri?.[0]
+                        ? getImageUrl(kos.galeri[0])
                         : "/images/default-kos.jpg"
                     }
-                    onError={(e) => {
-                      e.target.onerror = null;
-                      e.target.src = "/images/default-kos.jpg";
-                    }}
                     style={{
                       height: "200px",
                       objectFit: "cover",
+                      backgroundColor: "#f8f9fa",
                       borderTopLeftRadius: "0.375rem",
                       borderTopRightRadius: "0.375rem",
                     }}
-                    alt={`${kos.name} thumbnail`}
+                    onError={(e) => {
+                      console.log("Failed to load image:", e.target.src);
+                      const currentIndex = kos.galeri.findIndex(
+                        (img) => getImageUrl(img) === e.target.src
+                      );
+                      if (
+                        currentIndex >= 0 &&
+                        currentIndex < kos.galeri.length - 1
+                      ) {
+                        e.target.src = getImageUrl(
+                          kos.galeri[currentIndex + 1]
+                        );
+                      } else {
+                        e.target.src = "/images/default-kos.jpg";
+                      }
+                    }}
+                    alt={`${kos.nama_kosan} thumbnail`}
                   />
                   <Badge
                     bg={
-                      kos.type?.toLowerCase().includes("putra")
+                      kos.kategori?.nama_kategori
+                        ?.toLowerCase()
+                        .includes("putra")
                         ? "primary"
-                        : kos.type?.toLowerCase().includes("putri")
+                        : kos.kategori?.nama_kategori
+                            ?.toLowerCase()
+                            .includes("putri")
                         ? "danger"
                         : "success"
                     }
@@ -264,31 +238,35 @@ const DashboardUser = () => {
                       zIndex: 1,
                     }}
                   >
-                    {kos.type}
+                    {kos.kategori?.nama_kategori || "Campur"}
                   </Badge>
                 </div>
                 <Card.Body>
-                  <Card.Title className="h5 mb-3">{kos.name}</Card.Title>
+                  <Card.Title className="h5 mb-3">{kos.nama_kosan}</Card.Title>
                   <Card.Text className="text-muted mb-2">
                     <i className="bi bi-geo-alt-fill me-2"></i>
-                    {kos.location}
+                    {kos.alamat}
                   </Card.Text>
                   <div className="mb-2">
-                    {kos.facilities &&
-                      kos.facilities.slice(0, 3).map((facility, index) => (
+                    {kos.fasilitas &&
+                      Array.isArray(kos.fasilitas) &&
+                      kos.fasilitas.slice(0, 3).map((facility, index) => (
                         <Badge
                           bg="light"
                           text="dark"
                           className="me-2 mb-2"
                           key={index}
                         >
-                          {facility}
+                          {facility.nama_fasilitas}
                         </Badge>
                       ))}
                   </div>
                   <div className="mt-3">
                     <span className="h5 text-primary mb-0">
-                      Rp {new Intl.NumberFormat("id-ID").format(kos.price)}
+                      Rp{" "}
+                      {new Intl.NumberFormat("id-ID").format(
+                        kos.harga_per_bulan
+                      )}
                     </span>
                     <span className="text-muted">/bulan</span>
                   </div>
