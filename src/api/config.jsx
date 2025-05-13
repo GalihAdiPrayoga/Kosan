@@ -3,47 +3,22 @@ import axios from "axios";
 // Create axios instance with base config
 export const API = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
-  timeout: 10000,
   headers: {
     "Content-Type": "application/json",
     Accept: "application/json",
   },
-  withCredentials: true,
 });
 
 // Add request interceptor to inject auth token
-API.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  // Remove Content-Type if sending FormData
-  if (config.headers["Content-Type"] === "multipart/form-data") {
-    delete config.headers["Content-Type"];
-  }
-  return config;
-});
-
-// Add response interceptor to handle auth errors
-API.interceptors.response.use(
-  (response) => response,
+API.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
   (error) => {
-    if (error.response?.status === 401) {
-      localStorage.clear();
-      window.location.href = "/login";
-    }
-
-    // Handle validation errors
-    if (error.response?.status === 422) {
-      const message = error.response.data?.message || "Validation error";
-      error.message = message;
-    }
-
-    // Handle other errors
-    if (!error.response) {
-      error.message = "Network error or server is down.";
-    }
-
     return Promise.reject(error);
   }
 );
@@ -64,22 +39,24 @@ export const getFeaturedKos = async () => {
   try {
     const response = await API.get("/kosans");
     const kosData = response.data.data;
-    
+
     if (!Array.isArray(kosData)) {
       console.warn("Invalid kos data format");
       return [];
     }
 
-    const processedKosData = kosData.map(kos => ({
+    const processedKosData = kosData.map((kos) => ({
       id: kos.id,
       name: kos.nama_kosan,
-      type: kos.kategori?.nama || 'Unknown', // Get kategori name
+      type: kos.kategori?.nama || "Unknown", // Get kategori name
       location: kos.alamat,
       price: kos.harga_per_bulan,
-      facilities: kos.deskripsi ? kos.deskripsi.split(',').map(f => f.trim()) : [],
+      facilities: kos.deskripsi
+        ? kos.deskripsi.split(",").map((f) => f.trim())
+        : [],
       images: kos.galeri ? JSON.parse(kos.galeri) : [],
       kategori: kos.kategori, // Add full kategori object
-      deskripsi: kos.deskripsi
+      deskripsi: kos.deskripsi,
     }));
 
     return processedKosData;

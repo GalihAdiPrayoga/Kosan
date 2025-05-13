@@ -12,6 +12,8 @@ import {
 import { Link } from "react-router-dom";
 import { FaPlus, FaEllipsisV, FaMapMarkerAlt } from "react-icons/fa";
 import { API } from "../../api/config"; // Pastikan API ini dikonfigurasi dengan benar
+import { getImageUrl } from "../../utils/imageUtils";
+import ImageWithFallback from "../../components/ImageWithFallback";
 
 const ManageKos = () => {
   const [kosList, setKosList] = useState([]);
@@ -22,25 +24,61 @@ const ManageKos = () => {
   const ITEMS_PER_PAGE = 6; // Show 6 items per page
 
   useEffect(() => {
+    const userId = localStorage.getItem("userId");
+    if (!userId) {
+      setError("Silakan login terlebih dahulu");
+      setLoading(false);
+      return;
+    }
+
     fetchKosList();
   }, []);
 
+  useEffect(() => {
+    // Add right after fetchKosList();
+    console.log("KosList:", kosList);
+  }, [kosList]);
+
+  useEffect(() => {
+    if (kosList.length > 0) {
+      kosList.forEach((kos) => {
+        if (kos.galeri?.length > 0) {
+          console.log("Debug Path:", {
+            asli: kos.galeri[0],
+            dibersihkan: kos.galeri[0].replace(/^kosans\//, ""),
+            hasil: getImageUrl(kos.galeri[0]),
+          });
+        }
+      });
+    }
+  }, [kosList]);
+
+  // Update the fetchKosList function first to properly transform the data
   const fetchKosList = async () => {
     try {
       const userId = localStorage.getItem("userId");
+      if (!userId) {
+        setError("User ID tidak ditemukan. Silakan login kembali.");
+        setLoading(false);
+        return;
+      }
 
-      // Gantilah URL API dengan URL API yang sesuai dengan API kosans
-      const response = await API.get("/kosans");  // Sesuaikan dengan endpoint yang benar
+      const response = await API.get(`/kosans/owner/${userId}`);
+      console.log("Raw API Response:", response.data);
 
-      // Pastikan API kosans memberikan data dalam format yang benar
-      const ownerKos = response.data.filter(
-        (kos) => kos.pemilikId.toString() === userId
-      );
-
-      setKosList(ownerKos);
+      if (response?.data?.data) {
+        const transformedData = response.data.data.map((kos) => ({
+          ...kos,
+          // Ensure galeri paths are properly formatted
+          galeri: Array.isArray(kos.galeri) ? kos.galeri : [kos.galeri],
+        }));
+        console.log("Transformed Data:", transformedData);
+        setKosList(transformedData);
+      }
       setLoading(false);
     } catch (err) {
-      setError("Gagal memuat daftar kos");
+      console.error("Error fetching kos list:", err);
+      setError(err.response?.data?.message || "Gagal memuat daftar kos");
       setLoading(false);
     }
   };
@@ -51,14 +89,15 @@ const ManageKos = () => {
         const userId = localStorage.getItem("userId");
         const kosToDelete = kosList.find((kos) => kos.id === id);
 
-        // Verifikasi kepemilikan sebelum menghapus
-        if (kosToDelete.pemilikId.toString() !== userId) {
+        // Verify ownership
+        if (!kosToDelete || kosToDelete.user_id.toString() !== userId) {
           throw new Error("Anda tidak memiliki izin untuk menghapus kos ini");
         }
 
-        // Gantilah URL API dengan URL API untuk menghapus data kos
-        await API.delete(`/kosans/${id}`);  // Sesuaikan dengan endpoint penghapusan yang benar
-        setKosList(kosList.filter((kos) => kos.id !== id));
+        await API.delete(`/kosans/${id}`);
+
+        // Update list after successful deletion
+        setKosList((prevList) => prevList.filter((kos) => kos.id !== id));
       } catch (err) {
         setError(err.message || "Gagal menghapus kos");
       }
@@ -120,25 +159,49 @@ const ManageKos = () => {
             </Button>
           </div>
 
-          {error && <Alert variant="danger" className="mb-4">{error}</Alert>}
+          {error && (
+            <Alert variant="danger" className="mb-4">
+              {error}
+            </Alert>
+          )}
 
           {kosList.length === 0 ? (
             <Alert variant="info" className="text-center py-4">
               <h5 className="mb-2">Belum Ada Kos</h5>
-              <p className="mb-0">Anda belum memiliki kos yang terdaftar. Silakan tambah kos baru.</p>
+              <p className="mb-0">
+                Anda belum memiliki kos yang terdaftar. Silakan tambah kos baru.
+              </p>
             </Alert>
           ) : (
             <Row className="g-4">
-              {currentItems.map((kos) => (
-                <Col lg={3} md={4} sm={6} key={kos.id}>
+              {currentItems.map((kos, index) => (
+                <Col lg={3} md={4} sm={6} key={kos.id || index}>
                   <Card className="h-100 border hover-card">
                     <div style={{ position: "relative" }}>
                       <Card.Img
                         variant="top"
-                        src={kos.images?.[0]}
+                        src={
+                          kos.galeri?.[0] ? getImageUrl(kos.galeri[0]) : null
+                        }
                         style={{
                           height: "160px",
                           objectFit: "cover",
+                          backgroundColor: "#f8f9fa",
+                        }}
+                        onError={(e) => {
+                          console.log("Failed to load image:", e.target.src);
+                          // Try next image only once to prevent infinite loop
+                          const currentIndex = kos.galeri.findIndex(
+                            (img) => getImageUrl(img) === e.target.src
+                          );
+                          if (
+                            currentIndex >= 0 &&
+                            currentIndex < kos.galeri.length - 1
+                          ) {
+                            e.target.src = getImageUrl(
+                              kos.galeri[currentIndex + 1]
+                            );
+                          }
                         }}
                       />
                       <div
@@ -152,7 +215,11 @@ const ManageKos = () => {
                         <div className="position-relative">
                           <button
                             className="p-0 border-0 shadow-none"
-                            onClick={() => setActiveMenuId(activeMenuId === kos.id ? null : kos.id)}
+                            onClick={() =>
+                              setActiveMenuId(
+                                activeMenuId === kos.id ? null : kos.id
+                              )
+                            }
                             style={{
                               width: "28px",
                               height: "28px",
@@ -198,9 +265,10 @@ const ManageKos = () => {
                       </div>
                       <Badge
                         bg={
-                          kos.type === "Putra"
+                          kos.kategori?.nama_kategori?.toLowerCase() === "putra"
                             ? "primary"
-                            : kos.type === "Putri"
+                            : kos.kategori?.nama_kategori?.toLowerCase() ===
+                              "putri"
                             ? "danger"
                             : "success"
                         }
@@ -212,37 +280,51 @@ const ManageKos = () => {
                           fontSize: "0.85rem",
                         }}
                       >
-                        Kos {kos.type}
+                        {kos.kategori?.nama_kategori || "Campuran"}
                       </Badge>
                     </div>
                     <Card.Body className="p-3">
                       <Card.Title className="h6 mb-2 fw-bold text-truncate">
-                        {kos.name}
+                        {kos.nama_kosan || "Nama tidak tersedia"}
                       </Card.Title>
                       <div className="d-flex align-items-center mb-2 text-muted">
                         <FaMapMarkerAlt className="me-1" size={12} />
-                        <small className="text-truncate">{kos.location}</small>
+                        <small className="text-truncate">
+                          {kos.alamat || "Alamat tidak tersedia"}
+                        </small>
                       </div>
+
+                      {/* Facilities */}
                       <div className="mb-2">
-                        {kos.facilities?.slice(0, 2).map((facility, index) => (
-                          <Badge
-                            bg="light"
-                            text="dark"
-                            className="me-1 mb-1 py-1 px-2"
-                            key={index}
-                            style={{ fontSize: "0.7rem" }}
-                          >
-                            {facility}
-                          </Badge>
-                        ))}
+                        {kos.fasilitas &&
+                          Array.isArray(kos.fasilitas) &&
+                          kos.fasilitas.slice(0, 2).map((facility, index) => (
+                            <Badge
+                              bg="light"
+                              text="dark"
+                              className="me-1 mb-1 py-1 px-2"
+                              key={index}
+                              style={{ fontSize: "0.7rem" }}
+                            >
+                              {facility.nama_fasilitas}
+                            </Badge>
+                          ))}
                       </div>
+
+                      {/* Price */}
                       <div className="mt-2 pt-2 border-top">
                         <div className="d-flex justify-content-between align-items-center">
                           <div>
                             <span className="h6 text-primary mb-0">
-                              Rp {new Intl.NumberFormat("id-ID").format(kos.price)}
+                              Rp{" "}
+                              {new Intl.NumberFormat("id-ID").format(
+                                kos.harga_per_bulan || 0
+                              )}
                             </span>
-                            <span className="text-muted ms-1" style={{ fontSize: "0.8rem" }}>
+                            <span
+                              className="text-muted ms-1"
+                              style={{ fontSize: "0.8rem" }}
+                            >
                               /bulan
                             </span>
                           </div>
@@ -255,11 +337,7 @@ const ManageKos = () => {
             </Row>
           )}
 
-          {totalPages > 1 && (
-            <div className="mt-5">
-              {renderPagination()}
-            </div>
-          )}
+          {totalPages > 1 && <div className="mt-5">{renderPagination()}</div>}
         </Card.Body>
       </Card>
     </Container>

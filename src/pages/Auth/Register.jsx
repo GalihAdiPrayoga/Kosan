@@ -10,7 +10,13 @@ import {
   Spinner,
 } from "react-bootstrap";
 import { Link, useNavigate } from "react-router-dom";
-import { FaEnvelope, FaLock, FaUser, FaUserPlus } from "react-icons/fa";
+import {
+  FaEnvelope,
+  FaLock,
+  FaUser,
+  FaUserPlus,
+  FaPhone,
+} from "react-icons/fa";
 import { CSSTransition } from "react-transition-group";
 import { API } from "../../api/config";
 import axios from "axios";
@@ -23,6 +29,7 @@ const Register = () => {
     password: "",
     confirmPassword: "",
     role: "user", // Default role
+    nomor: "", // Add this line
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -52,11 +59,17 @@ const Register = () => {
         throw new Error("Format email tidak valid");
       }
 
+      // Add phone number validation
+      if (!formData.nomor.startsWith("62")) {
+        throw new Error("Nomor telepon harus diawali dengan 62");
+      }
+
       const response = await API.post("/register", {
         name: formData.name.trim(),
         email: formData.email.toLowerCase().trim(),
         password: formData.password,
         role: formData.role,
+        nomor: formData.nomor.trim(),
       });
 
       const { user, token, roles } = response.data;
@@ -88,7 +101,9 @@ const Register = () => {
         navigate("/");
       }
     } catch (err) {
-      setError(err.response?.data?.message || "Registrasi gagal");
+      setError(
+        err.response?.data?.message || err.message || "Registrasi gagal"
+      );
     } finally {
       setLoading(false);
     }
@@ -143,6 +158,31 @@ const Register = () => {
                           }
                           required
                           disabled={loading}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Add this after the email input group */}
+                    <div className="auth-input-group">
+                      <div className="input-group">
+                        <span className="input-group-text">
+                          <FaPhone />
+                        </span>
+                        <Form.Control
+                          type="tel"
+                          placeholder="Nomor Telepon (diawali 62)"
+                          value={formData.nomor}
+                          onChange={(e) => {
+                            let value = e.target.value.replace(/[^0-9]/g, "");
+                            if (!value.startsWith("62") && value.length > 0) {
+                              value = "62" + value;
+                            }
+                            setFormData({ ...formData, nomor: value });
+                          }}
+                          required
+                          disabled={loading}
+                          pattern="62[0-9]*"
+                          maxLength="15"
                         />
                       </div>
                     </div>

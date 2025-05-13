@@ -6,6 +6,7 @@ import {
   FaUser,
   FaUserPlus,
   FaUserCircle,
+  FaPhone, // Add this line
 } from "react-icons/fa";
 import { API } from "../api/config";
 import { useNavigate } from "react-router-dom";
@@ -25,6 +26,7 @@ const AuthModals = ({
     password: "",
     confirmPassword: "",
     role: "user", // Default role
+    nomor: "", // Add this line
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -38,6 +40,11 @@ const AuthModals = ({
       setError("Password must be at least 6 characters");
       return false;
     }
+    if (!registerData.nomor.startsWith("62")) {
+      setError("Nomor telepon harus diawali dengan 62");
+      return false;
+    }
+
     return true;
   };
 
@@ -70,14 +77,14 @@ const AuthModals = ({
         onLoginSuccess();
       }
 
-          // Redirect based on user role
-       if (user.role === "pemilik") {
-    navigate("/pemilik/dashboard");
-    } else if (user.role === "admin") {
-    navigate("/admin/dashboard");
-    } else {
-    navigate("/user/dashboard");
-    }
+      // Redirect based on user role
+      if (user.role === "pemilik") {
+        navigate("/pemilik/dashboard");
+      } else if (user.role === "admin") {
+        navigate("/admin/dashboard");
+      } else {
+        navigate("/user/dashboard");
+      }
     } catch (err) {
       if (err.response?.status === 401) {
         setError("Invalid credentials, please try again.");
@@ -103,6 +110,7 @@ const AuthModals = ({
         password: registerData.password,
         password_confirmation: registerData.confirmPassword,
         role: registerData.role,
+        nomor: registerData.nomor, // Add this line
       });
 
       const user = response.data.user;
@@ -124,7 +132,9 @@ const AuthModals = ({
         const firstError = errors[Object.keys(errors)[0]][0];
         setError(firstError);
       } else {
-        setError(err.response?.data?.message || err.message || "Registration failed");
+        setError(
+          err.response?.data?.message || err.message || "Registration failed"
+        );
       }
     } finally {
       setLoading(false);
@@ -136,7 +146,6 @@ const AuthModals = ({
   };
 
   const handleCloseAndReset = () => {
-    // Reset data when modal is closed
     setLoginData({ email: "", password: "" });
     setRegisterData({
       name: "",
@@ -144,6 +153,7 @@ const AuthModals = ({
       password: "",
       confirmPassword: "",
       role: "user",
+      nomor: "", // Add this line
     });
     handleClose();
   };
@@ -320,6 +330,30 @@ const AuthModals = ({
                   }
                   required
                   disabled={loading}
+                />
+              </div>
+            </div>
+
+            <div className="auth-input-group">
+              <div className="input-group">
+                <span className="input-group-text">
+                  <FaPhone />
+                </span>
+                <Form.Control
+                  type="tel"
+                  placeholder="Nomor Telepon (diawali 62)"
+                  value={registerData.nomor}
+                  onChange={(e) => {
+                    let value = e.target.value.replace(/[^0-9]/g, "");
+                    if (!value.startsWith("62") && value.length > 0) {
+                      value = "62" + value;
+                    }
+                    setRegisterData({ ...registerData, nomor: value });
+                  }}
+                  required
+                  disabled={loading}
+                  pattern="62[0-9]*"
+                  maxLength="15"
                 />
               </div>
             </div>
