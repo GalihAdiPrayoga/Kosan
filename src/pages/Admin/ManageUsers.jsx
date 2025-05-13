@@ -12,7 +12,7 @@ import {
   Row,
   Col,
 } from "react-bootstrap";
-import { FaEdit, FaTrash, FaSearch, FaFolder, FaEye } from "react-icons/fa";
+import { FaTrash, FaSearch, FaFolder, FaEye } from "react-icons/fa";
 import { API } from "../../api/config";
 
 const ManageUsers = () => {
@@ -20,18 +20,30 @@ const ManageUsers = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [selectedRole, setSelectedRole] = useState("all"); // New state for role filter
-  const [searchTerm, setSearchTerm] = useState(""); // New state for search
+  const [selectedRole, setSelectedRole] = useState("all");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filteredUsers, setFilteredUsers] = useState([]);
   const itemsPerPage = 5;
 
   useEffect(() => {
-    fetchUsers();
+    fetchUsers(); // Changed from fetchUser to fetchUsers
   }, []);
 
   const fetchUsers = async () => {
     try {
-      const response = await API.get("/db.json");
-      setUsers(response.data.users);
+      const response = await API.get("/users"); // Changed endpoint from /me to /users
+      // Filter out admin users and transform data
+      const filteredUsers = response.data
+        .filter((user) => user.role === "pemilik" || user.role === "user")
+        .map((user) => ({
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          phone: user.nomor || "-",
+          role: user.role,
+        }));
+
+      setUsers(filteredUsers);
       setLoading(false);
     } catch (err) {
       setError("Gagal memuat data pengguna");
@@ -54,18 +66,24 @@ const ManageUsers = () => {
     }
   };
 
-  // Filter users based on role and search term
-  const filteredUsers = users.filter((user) => {
-    // Filter out admin users first
-    if (user.role === "admin") return false;
+  useEffect(() => {
+    // Apply filters whenever users, selectedRole, or searchTerm changes
+    const filtered = users.filter((user) => {
+      const roleMatch =
+        selectedRole === "all"
+          ? user.role === "pemilik" || user.role === "user"
+          : user.role === selectedRole;
 
-    const matchesRole = selectedRole === "all" || user.role === selectedRole;
-    const matchesSearch =
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.phone?.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesRole && matchesSearch;
-  });
+      const searchMatch =
+        user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.phone.toLowerCase().includes(searchTerm.toLowerCase());
+
+      return roleMatch && searchMatch;
+    });
+
+    setFilteredUsers(filtered);
+  }, [users, selectedRole, searchTerm]);
 
   // Pagination
   const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
@@ -139,7 +157,7 @@ const ManageUsers = () => {
                   <h5 className="text-muted mb-1">Data Tidak Ditemukan</h5>
                   <p className="text-muted mb-0" style={{ fontSize: "0.9rem" }}>
                     {searchTerm
-                      ? `Tidak ada hasil untuk pencarian "${searchTerm}"`
+                      ? "Tidak ada pengguna yang sesuai dengan pencarian"
                       : "Tidak ada data pengguna yang tersedia"}
                   </p>
                 </div>
@@ -201,13 +219,6 @@ const ManageUsers = () => {
                       <td className="py-3 px-2">
                         <div className="d-flex gap-2">
                           <Button
-                            variant="outline-primary"
-                            size="sm"
-                            title="Edit"
-                          >
-                            <FaEdit />
-                          </Button>
-                          <Button
                             variant="outline-danger"
                             size="sm"
                             onClick={() => handleDelete(user.id)}
@@ -232,38 +243,6 @@ const ManageUsers = () => {
                   ))}
                 </tbody>
               </Table>
-
-              {totalPages > 1 && (
-                <div className="d-flex justify-content-center mt-4">
-                  <Pagination size="sm">
-                    <Pagination.First
-                      onClick={() => setCurrentPage(1)}
-                      disabled={currentPage === 1}
-                    />
-                    <Pagination.Prev
-                      onClick={() => setCurrentPage(currentPage - 1)}
-                      disabled={currentPage === 1}
-                    />
-                    {[...Array(totalPages)].map((_, idx) => (
-                      <Pagination.Item
-                        key={idx + 1}
-                        active={idx + 1 === currentPage}
-                        onClick={() => setCurrentPage(idx + 1)}
-                      >
-                        {idx + 1}
-                      </Pagination.Item>
-                    ))}
-                    <Pagination.Next
-                      onClick={() => setCurrentPage(currentPage + 1)}
-                      disabled={currentPage === totalPages}
-                    />
-                    <Pagination.Last
-                      onClick={() => setCurrentPage(totalPages)}
-                      disabled={currentPage === totalPages}
-                    />
-                  </Pagination>
-                </div>
-              )}
             </>
           )}
         </Card.Body>

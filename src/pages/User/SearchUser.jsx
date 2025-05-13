@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Container,
   Row,
@@ -8,7 +8,6 @@ import {
   Alert,
   Badge,
   Spinner,
-  Pagination,
 } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import { API } from "../../api/config";
@@ -17,6 +16,15 @@ import { getImageUrl } from "../../utils/imageUtils";
 import ImageWithFallback from "../../components/ImageWithFallback";
 
 const ITEMS_PER_PAGE = 9;
+
+// Tambahkan debounce untuk filter
+const debounce = (func, wait) => {
+  let timeout;
+  return (...args) => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func(...args), wait);
+  };
+};
 
 const SearchUser = () => {
   const [kosList, setKosList] = useState([]);
@@ -31,43 +39,61 @@ const SearchUser = () => {
     sortBy: "price_asc",
   });
   const [currentPage, setCurrentPage] = useState(1);
+  const [debouncedFilters, setDebouncedFilters] = useState(filters);
 
   const fetchKos = async () => {
     try {
       setLoading(true);
       setError(null);
-
-      // Changed the endpoint to fetch public kos
       const response = await API.get("/kosans/public");
-      console.log("Raw API Response:", response.data);
 
       if (!response.data?.data) {
         throw new Error("Data tidak valid");
       }
 
-      const transformedData = response.data.data.map((kos) => ({
-        id: kos.id,
-        name: kos.nama_kosan,
-        location: kos.alamat,
-        price: Number(kos.harga_per_bulan), // Ensure price is a number
-        type: kos.kategori?.nama_kategori || "Tidak Ada",
-        facilities: Array.isArray(kos.fasilitas)
-          ? kos.fasilitas.map((f) => f.nama_fasilitas)
-          : kos.fasilitas
-          ? [kos.fasilitas].map((f) => f.nama_fasilitas)
-          : [],
-        images: Array.isArray(kos.galeri)
-          ? kos.galeri.map((img) => getImageUrl(img))
-          : kos.galeri
-          ? [getImageUrl(kos.galeri)]
-          : [],
-        available_rooms: Number(kos.jumlah_kamar) || 0, // Add available rooms info
-      }));
+      const transformedData = response.data.data.map((kos) => {
+        let kosType = "Campur";
 
-      console.log("Transformed Data:", transformedData);
+        if (kos.kategori && typeof kos.kategori === "object") {
+          kosType = kos.kategori.nama_kategori;
+        } else if (kos.kategori_id) {
+          switch (kos.kategori_id) {
+            case 1:
+              kosType = "Kos Putra";
+              break;
+            case 2:
+              kosType = "Kos Putri";
+              break;
+            case 3:
+              kosType = "Kos Campur";
+              break;
+            default:
+              kosType = "Campur";
+          }
+        } else {
+          const kosName = kos.nama_kosan.toLowerCase();
+          if (kosName.includes("putri")) kosType = "Kos Putri";
+          else if (kosName.includes("putra")) kosType = "Kos Putra";
+        }
+
+        return {
+          id: kos.id,
+          name: kos.nama_kosan,
+          location: kos.alamat,
+          price: Number(kos.harga_per_bulan),
+          type: kosType,
+          facilities: Array.isArray(kos.fasilitas)
+            ? kos.fasilitas.map((f) => f.nama_fasilitas)
+            : [],
+          images: Array.isArray(kos.galeri)
+            ? kos.galeri.map((img) => getImageUrl(img))
+            : [],
+          available_rooms: Number(kos.jumlah_kamar) || 0,
+        };
+      });
+
       setKosList(transformedData);
     } catch (err) {
-      console.error("Error fetching kos:", err);
       setError(
         err.response?.data?.message ||
           "Gagal mengambil data kos. Silakan coba lagi nanti."
@@ -77,43 +103,58 @@ const SearchUser = () => {
     }
   };
 
-  const filteredKos = React.useMemo(() => {
+  // Gunakan useEffect untuk menerapkan debounce pada filter
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedFilters(filters);
+    }, 500);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [filters]);
+
+  // Update filteredKos untuk menggunakan debouncedFilters
+  const filteredKos = useMemo(() => {
     return kosList.filter((kos) => {
-      const matchLocation = kos.location
-        .toLowerCase()
-        .includes(filters.location.toLowerCase());
+      const matchLocation = debouncedFilters.location
+        ? kos.location
+            .toLowerCase()
+            .includes(debouncedFilters.location.toLowerCase()) ||
+          kos.name
+            .toLowerCase()
+            .includes(debouncedFilters.location.toLowerCase())
+        : true;
 
-      const matchPrice =
-        (!filters.minPrice || kos.price >= filters.minPrice) &&
-        (!filters.maxPrice || kos.price <= filters.maxPrice);
+      const min =
+        parseInt(debouncedFilters.minPrice.toString().replace(/\D/g, "")) || 0;
+      const max =
+        parseInt(debouncedFilters.maxPrice.toString().replace(/\D/g, "")) ||
+        Infinity;
 
+      const matchPrice = kos.price >= min && kos.price <= max;
+
+      // Perbaikan logika untuk tipe kos
       const matchType =
-        filters.type === "all" ||
-        kos.type.toLowerCase() === filters.type.toLowerCase();
+        debouncedFilters.type === "all" ||
+        kos.type?.toLowerCase().includes(debouncedFilters.type.toLowerCase());
 
       const matchFacilities =
-        filters.facilities.length === 0 ||
-        filters.facilities.every((facility) =>
-          kos.facilities
-            .map((f) => f.toLowerCase())
-            .includes(facility.toLowerCase())
+        debouncedFilters.facilities.length === 0 ||
+        debouncedFilters.facilities.every((facility) =>
+          kos.facilities.some((f) => f.toLowerCase() === facility.toLowerCase())
         );
 
       return matchLocation && matchPrice && matchType && matchFacilities;
     });
-  }, [kosList, filters]);
+  }, [kosList, debouncedFilters]);
 
-  const paginatedKos = React.useMemo(() => {
-    const sortedKos = [...filteredKos].sort((a, b) => {
-      if (filters.sortBy === "price_asc") {
-        return a.price - b.price;
-      } else {
-        return b.price - a.price;
-      }
-    });
-
-    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-    return sortedKos.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  const paginatedKos = useMemo(() => {
+    const sorted = [...filteredKos].sort((a, b) =>
+      filters.sortBy === "price_asc" ? a.price - b.price : b.price - a.price
+    );
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return sorted.slice(start, start + ITEMS_PER_PAGE);
   }, [filteredKos, filters.sortBy, currentPage]);
 
   useEffect(() => {
@@ -132,6 +173,15 @@ const SearchUser = () => {
     }));
   };
 
+  const handlePriceChange = (e) => {
+    const { name, value } = e.target;
+    const numeric = value.replace(/\D/g, "");
+    setFilters((prev) => ({
+      ...prev,
+      [name]: numeric,
+    }));
+  };
+
   const handleFacilityChange = (facility) => {
     setFilters((prev) => ({
       ...prev,
@@ -141,37 +191,24 @@ const SearchUser = () => {
     }));
   };
 
-  const handlePriceChange = (e) => {
-    const { name, value } = e.target;
-    const numericValue = value.replace(/[^0-9]/g, "");
-    setFilters((prev) => ({
-      ...prev,
-      [name]: numericValue,
-    }));
-  };
-
-  const formatPrice = (price) => {
-    return new Intl.NumberFormat("id-ID").format(price);
-  };
+  const formatPrice = (val) =>
+    new Intl.NumberFormat("id-ID").format(Number(val || 0));
 
   const renderPagination = () => {
-    const totalPages = Math.ceil(filteredKos.length / ITEMS_PER_PAGE);
-
+    const total = Math.ceil(filteredKos.length / ITEMS_PER_PAGE);
     return (
       <nav>
         <ul className="pagination">
-          {[...Array(totalPages)].map((_, index) => (
+          {[...Array(total)].map((_, i) => (
             <li
-              key={index + 1}
-              className={`page-item ${
-                currentPage === index + 1 ? "active" : ""
-              }`}
+              key={i}
+              className={`page-item ${currentPage === i + 1 ? "active" : ""}`}
             >
               <button
                 className="page-link"
-                onClick={() => setCurrentPage(index + 1)}
+                onClick={() => setCurrentPage(i + 1)}
               >
-                {index + 1}
+                {i + 1}
               </button>
             </li>
           ))}
@@ -180,7 +217,6 @@ const SearchUser = () => {
     );
   };
 
-  // Update Card.Img component
   const renderKosCard = (kos) => (
     <Card
       as={Link}
@@ -191,6 +227,7 @@ const SearchUser = () => {
         <ImageWithFallback
           src={kos.images[0]}
           fallbackSrc="/images/default-kos.jpg"
+          alt={kos.name}
           style={{
             height: "200px",
             width: "100%",
@@ -198,7 +235,6 @@ const SearchUser = () => {
             borderTopLeftRadius: "calc(0.375rem - 1px)",
             borderTopRightRadius: "calc(0.375rem - 1px)",
           }}
-          alt={kos.name}
         />
         <Badge
           bg={
@@ -209,11 +245,7 @@ const SearchUser = () => {
               : "success"
           }
           className="position-absolute"
-          style={{
-            top: "10px",
-            right: "10px",
-            padding: "8px 12px",
-          }}
+          style={{ top: "10px", right: "10px", padding: "8px 12px" }}
         >
           {kos.type}
         </Badge>
@@ -225,28 +257,38 @@ const SearchUser = () => {
           {kos.location}
         </Card.Text>
         <div className="mb-2">
-          {kos.facilities?.slice(0, 3).map((facility, index) => (
-            <Badge key={index} bg="light" text="dark" className="me-2 mb-2">
-              {facility}
+          {kos.facilities?.slice(0, 3).map((f, i) => (
+            <Badge key={i} bg="light" text="dark" className="me-2 mb-2">
+              {f}
             </Badge>
           ))}
         </div>
         <div className="mt-3">
-          <span className="h5 text-primary mb-0">
-            Rp {new Intl.NumberFormat("id-ID").format(kos.price)}
-          </span>
+          <span className="h5 text-primary">Rp {formatPrice(kos.price)}</span>
           <span className="text-muted">/bulan</span>
         </div>
       </Card.Body>
     </Card>
   );
 
-  // Update the results section
+  // Tambahkan fungsi untuk handle reset yang lebih smooth
+  const handleReset = () => {
+    setFilters({
+      location: "",
+      minPrice: "",
+      maxPrice: "",
+      type: "all",
+      facilities: [],
+      sortBy: "price_asc",
+    });
+    setCurrentPage(1);
+  };
+
+  // Update form pencarian dengan autocomplete off
   return (
     <Container className="py-5">
       {error && <Alert variant="danger">{error}</Alert>}
       <Row>
-        {/* Filter sidebar */}
         <Col md={3}>
           <Card className="mb-4 shadow-sm sticky-top" style={{ top: "20px" }}>
             <Card.Body>
@@ -257,9 +299,11 @@ const SearchUser = () => {
                   <Form.Control
                     type="text"
                     name="location"
-                    placeholder="Cari berdasarkan lokasi..."
+                    placeholder="Cari berdasarkan lokasi atau nama kos..."
                     value={filters.location}
                     onChange={handleFilterChange}
+                    autoComplete="off"
+                    className="search-input"
                   />
                 </Form.Group>
 
@@ -304,16 +348,6 @@ const SearchUser = () => {
                       />
                     </div>
                   </div>
-                  <div className="mt-2 text-muted small">
-                    {filters.minPrice && filters.maxPrice ? (
-                      <span>
-                        Range: Rp {formatPrice(filters.minPrice)} - Rp{" "}
-                        {formatPrice(filters.maxPrice)}
-                      </span>
-                    ) : (
-                      <span></span>
-                    )}
-                  </div>
                 </Form.Group>
 
                 <Form.Group className="mb-3">
@@ -324,9 +358,9 @@ const SearchUser = () => {
                     onChange={handleFilterChange}
                   >
                     <option value="all">Semua Tipe</option>
-                    <option value="Putra">Kos Putra</option>
-                    <option value="Putri">Kos Putri</option>
-                    <option value="Campur">Kos Campur</option>
+                    <option value="Kos Putri">Kos Putri</option>
+                    <option value="Kos Putra">Kos Putra</option>
+                    <option value="Kos Campur">Kos Campuran</option>
                   </Form.Select>
                 </Form.Group>
 
@@ -356,16 +390,7 @@ const SearchUser = () => {
                   <button
                     type="button"
                     className="btn btn-outline-secondary btn-sm w-100"
-                    onClick={() => {
-                      setFilters({
-                        location: "",
-                        minPrice: "",
-                        maxPrice: "",
-                        type: "all",
-                        facilities: [],
-                        sortBy: "price_asc",
-                      });
-                    }}
+                    onClick={handleReset}
                   >
                     Reset Filter
                   </button>
@@ -404,11 +429,15 @@ const SearchUser = () => {
             </div>
           ) : filteredKos.length === 0 ? (
             <div className="text-center py-5">
-              <FaSearchMinus size={64} className="text-muted mb-4" />
-              <h5 className="text-muted mb-2">Data Tidak Ditemukan</h5>
-              <p className="text-muted mb-0">
-                Coba sesuaikan filter pencarian Anda
-              </p>
+              <div className="d-flex flex-column align-items-center">
+                <FaSearchMinus size={64} className="text-muted" />
+                <div className="mt-4">
+                  <h5 className="text-muted mb-2">Data Tidak Ditemukan</h5>
+                  <p className="text-muted mb-0">
+                    Coba sesuaikan filter pencarian Anda
+                  </p>
+                </div>
+              </div>
             </div>
           ) : (
             <>
@@ -431,5 +460,18 @@ const SearchUser = () => {
     </Container>
   );
 };
+
+// Tambahkan CSS untuk input pencarian
+const styles = `
+.search-input:focus {
+  box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+  border-color: #80bdff;
+}
+`;
+
+// Tambahkan style tag ke head
+const styleSheet = document.createElement("style");
+styleSheet.innerText = styles;
+document.head.appendChild(styleSheet);
 
 export default SearchUser;

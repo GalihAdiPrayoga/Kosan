@@ -42,12 +42,46 @@ const DashboardUser = () => {
       );
 
       if (response?.data?.data) {
-        const transformedData = response.data.data.map((kos) => ({
-          ...kos,
-          galeri: Array.isArray(kos.galeri) ? kos.galeri : [kos.galeri],
-          fasilitas: Array.isArray(kos.fasilitas) ? kos.fasilitas : [],
-          harga_per_bulan: Number(kos.harga_per_bulan),
-        }));
+        const transformedData = response.data.data.map((kos) => {
+          // Get category from API response
+          let kosType = "Campur"; // default value
+
+          if (kos.kategori && typeof kos.kategori === "object") {
+            // If kategori is an object with nama_kategori
+            kosType = kos.kategori.nama_kategori;
+          } else if (kos.kategori_id) {
+            // If we have kategori_id but no kategori object
+            switch (kos.kategori_id) {
+              case 1:
+                kosType = "Kos Putra";
+                break;
+              case 2:
+                kosType = "Kos Putri";
+                break;
+              case 3:
+                kosType = "Kos Campur";
+                break;
+              default:
+                kosType = "Campur";
+            }
+          } else {
+            // Fallback to name-based detection
+            const kosName = kos.nama_kosan.toLowerCase();
+            if (kosName.includes("putri")) {
+              kosType = "Kos Putri";
+            } else if (kosName.includes("putra")) {
+              kosType = "Kos Putra";
+            }
+          }
+
+          return {
+            ...kos,
+            kategori: kosType,
+            galeri: Array.isArray(kos.galeri) ? kos.galeri : [kos.galeri],
+            fasilitas: Array.isArray(kos.fasilitas) ? kos.fasilitas : [],
+            harga_per_bulan: Number(kos.harga_per_bulan),
+          };
+        });
 
         const featuredData = transformedData.slice(0, 6);
         setFeaturedKos(featuredData);
@@ -176,7 +210,12 @@ const DashboardUser = () => {
       <Container className="py-5">
         <div className="d-flex justify-content-between align-items-center mb-4">
           <h2 className="mb-0">Kos Populer</h2>
-          <Button as={Link} to="/search" className="btn-gradient-primary">
+          <Button
+            as={Link}
+            to="/search"
+            className="btn-gradient-primary"
+            style={{ textDecoration: "none" }}
+          >
             Lihat Semua
           </Button>
         </div>
@@ -184,7 +223,12 @@ const DashboardUser = () => {
         <Row>
           {featuredKos.map((kos) => (
             <Col md={4} key={kos.id} className="mb-4">
-              <Card as={Link} to={`/kos/${kos.id}`} className="kos-card">
+              <Card
+                as={Link}
+                to={`/kos/${kos.id}`}
+                className="kos-card"
+                style={{ textDecoration: "none", color: "inherit" }}
+              >
                 <div style={{ position: "relative" }}>
                   <Card.Img
                     variant="top"
@@ -220,13 +264,9 @@ const DashboardUser = () => {
                   />
                   <Badge
                     bg={
-                      kos.kategori?.nama_kategori
-                        ?.toLowerCase()
-                        .includes("putra")
+                      kos.kategori?.toLowerCase().includes("putra")
                         ? "primary"
-                        : kos.kategori?.nama_kategori
-                            ?.toLowerCase()
-                            .includes("putri")
+                        : kos.kategori?.toLowerCase().includes("putri")
                         ? "danger"
                         : "success"
                     }
@@ -238,7 +278,7 @@ const DashboardUser = () => {
                       zIndex: 1,
                     }}
                   >
-                    {kos.kategori?.nama_kategori || "Campur"}
+                    {kos.kategori}
                   </Badge>
                 </div>
                 <Card.Body>

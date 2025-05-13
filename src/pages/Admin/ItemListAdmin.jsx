@@ -1,10 +1,19 @@
 import React, { useState, useEffect } from "react";
-import { Table, Button, Alert, Spinner, Badge, Card, Container } from "react-bootstrap";
-import { Link } from "react-router-dom";
-import { FaEdit, FaTrash, FaPlus, FaEye } from "react-icons/fa";
+import {
+  Table,
+  Button,
+  Alert,
+  Spinner,
+  Badge,
+  Card,
+  Container,
+} from "react-bootstrap";
+import { Link, useNavigate } from "react-router-dom";
+import { FaTrash, FaEye } from "react-icons/fa";
 import { API } from "../../api/config";
 
 const ItemListAdmin = () => {
+  const navigate = useNavigate();
   const [kos, setKos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -15,24 +24,23 @@ const ItemListAdmin = () => {
 
   const fetchAllKos = async () => {
     try {
-      const response = await API.get("/db.json");
-      const kosData = response.data.kos;
+      const response = await API.get("/kosans");
+      const kosData = response.data.data;
 
-      // Enrich kos data with owner information
-      const enrichedKosData = await Promise.all(
-        kosData.map(async (kos) => {
-          const owner = response.data.users.find(
-            (user) => user.id === kos.pemilikId.toString()
-          );
-          return {
-            ...kos,
-            ownerName: owner?.name || "Unknown",
-            ownerPhone: owner?.phone || "-",
-          };
-        })
-      );
+      // Transform the data to match the expected format
+      const transformedData = kosData.map((item) => ({
+        id: item.id,
+        name: item.nama_kosan,
+        location: item.alamat,
+        price: item.harga_per_bulan,
+        type: item.kategori.nama_kategori,
+        ownerName: item.user.name,
+        ownerPhone: item.user.nomor,
+        description: item.deskripsi,
+        totalRooms: item.jumlah_kamar,
+      }));
 
-      setKos(enrichedKosData);
+      setKos(transformedData);
       setLoading(false);
     } catch (err) {
       setError("Failed to fetch kos data");
@@ -45,14 +53,21 @@ const ItemListAdmin = () => {
     if (window.confirm("Apakah Anda yakin ingin menghapus kos ini?")) {
       try {
         setLoading(true);
-        await API.delete(`/kos/${id}`);
-        setKos(kos.filter((item) => item.id !== id));
-        setLoading(false);
+        await API.delete(`/kosans/${id}`);
+        // Refresh data after successful deletion
+        await fetchAllKos();
+        setError(null);
       } catch (err) {
         setError("Gagal menghapus data kos");
+        console.error("Error:", err);
+      } finally {
         setLoading(false);
       }
     }
+  };
+
+  const handleViewDetail = (id) => {
+    navigate(`/admin/kos/detail/${id}`);
   };
 
   if (loading) {
@@ -69,17 +84,13 @@ const ItemListAdmin = () => {
         <Card.Body>
           <div className="d-flex justify-content-between align-items-center mb-4">
             <h2 className="mb-0">Daftar Semua Kos</h2>
-            <Button
-              as={Link}
-              to="/admin/kos/add"
-              variant="primary"
-              className="d-flex align-items-center gap-2"
-            >
-              <FaPlus /> Tambah Kos
-            </Button>
           </div>
 
-          {error && <Alert variant="danger" className="mb-4">{error}</Alert>}
+          {error && (
+            <Alert variant="danger" className="mb-4">
+              {error}
+            </Alert>
+          )}
 
           {kos.length === 0 ? (
             <Alert variant="info">Belum ada data kos yang tersedia.</Alert>
@@ -94,7 +105,6 @@ const ItemListAdmin = () => {
                   <th>Lokasi</th>
                   <th>Harga</th>
                   <th>Tipe</th>
-                  <th>Status</th>
                   <th>Aksi</th>
                 </tr>
               </thead>
@@ -106,42 +116,31 @@ const ItemListAdmin = () => {
                     <td>{item.ownerName}</td>
                     <td>{item.ownerPhone}</td>
                     <td>{item.location}</td>
-                    <td>Rp {new Intl.NumberFormat("id-ID").format(item.price)}</td>
                     <td>
-                      <Badge bg={
-                        item.type === "Putra" 
-                          ? "primary" 
-                          : item.type === "Putri" 
-                            ? "danger" 
-                            : "success"
-                      }>
-                        {item.type}
-                      </Badge>
+                      Rp {new Intl.NumberFormat("id-ID").format(item.price)}
                     </td>
                     <td>
-                      <Badge bg={item.status === "active" ? "success" : "warning"}>
-                        {item.status || "active"}
+                      <Badge
+                        bg={
+                          item.type === "Putra"
+                            ? "primary"
+                            : item.type === "Putri"
+                            ? "danger"
+                            : "success"
+                        }
+                      >
+                        {item.type}
                       </Badge>
                     </td>
                     <td>
                       <div className="d-flex gap-2">
                         <Button
-                          as={Link}
-                          to={`/admin/kos/detail/${item.id}`}
                           variant="outline-info"
                           size="sm"
+                          onClick={() => handleViewDetail(item.id)}
                           title="Detail"
                         >
                           <FaEye />
-                        </Button>
-                        <Button
-                          as={Link}
-                          to={`/admin/kos/edit/${item.id}`}
-                          variant="outline-primary"
-                          size="sm"
-                          title="Edit"
-                        >
-                          <FaEdit />
                         </Button>
                         <Button
                           variant="outline-danger"

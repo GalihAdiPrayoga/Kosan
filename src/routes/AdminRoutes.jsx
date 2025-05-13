@@ -1,12 +1,11 @@
 // src/routes/AdminRoutes.jsx
-import { Route, Navigate, Outlet, useNavigate } from "react-router-dom";
+import { Route, Navigate, Outlet } from "react-router-dom";
 import { useEffect, useState } from "react";
 import DashboardAdmin from "../pages/Admin/DashboardAdmin";
-import ItemListAdmin from "../pages/Admin/ItemListAdmin";
-import AddKosAdmin from "../pages/Admin/AddKosAdmin";
-import EditKosAdmin from "../pages/Admin/EditKosAdmin";
+import ItemListAdmin from "../pages/admin/ItemListAdmin";
+import DetailKosAdmin from "../pages/admin/DetailkosAdmin"; // Fix import name
 import PaymentsAdmin from "../pages/Admin/PaymentsAdmin";
-import ManageUsers from "../pages/Admin/ManageUsers";
+import ManageUsers from "../pages/admin/ManageUsers";
 import AdminNavbar from "../components/AdminNavbar";
 
 // Reusable ProtectedRoute like PemilikRoutes
@@ -23,9 +22,8 @@ const ProtectedRoute = ({ allowedRoles, children }) => {
     if (isLoggedIn && allowedRoles.includes(userType)) {
       setAuthorized(true);
     } else {
-     localStorage.removeItem("token");
-     localStorage.removeItem("isLoggedIn");
-
+      localStorage.removeItem("token");
+      localStorage.removeItem("isLoggedIn");
     }
 
     setChecked(true);
@@ -70,8 +68,8 @@ const AdminRoutes = [
     <Route index element={<Navigate to="dashboard" replace />} />
     <Route path="dashboard" element={<DashboardAdmin />} />
     <Route path="kos" element={<ItemListAdmin />} />
-    <Route path="kos/add" element={<AddKosAdmin />} />
-    <Route path="kos/edit/:id" element={<EditKosAdmin />} />
+    <Route path="kos/detail/:id" element={<DetailKosAdmin />} />{" "}
+    {/* Fix route path and component */}
     <Route path="payments" element={<PaymentsAdmin />} />
     <Route path="users" element={<ManageUsers />} />
   </Route>,

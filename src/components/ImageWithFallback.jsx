@@ -1,15 +1,13 @@
 import React, { useState } from "react";
 
-const ImageWithFallback = ({ src, alt, ...props }) => {
-  const [hasError, setHasError] = useState(false);
+const ImageWithFallback = ({ src, fallbackSrc, alt, ...props }) => {
+  const [imgSrc, setImgSrc] = useState(src);
 
-  if (!src || hasError) {
-    return null;
-  }
+  const onError = () => {
+    setImgSrc(fallbackSrc);
+  };
 
-  return (
-    <img src={src} alt={alt} onError={() => setHasError(true)} {...props} />
-  );
+  return <img src={imgSrc} alt={alt} onError={onError} {...props} />;
 };
 
 export default ImageWithFallback;
