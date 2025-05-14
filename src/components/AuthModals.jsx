@@ -82,14 +82,16 @@ const AuthModals = ({
         navigate("/pemilik/dashboard");
       } else if (user.role === "admin") {
         navigate("/admin/dashboard");
+      } else if (user.role === "user") {
+        navigate("/user/dashboard"); // Add this line
       } else {
-        navigate("/user/dashboard");
+        navigate("/");
       }
     } catch (err) {
       if (err.response?.status === 401) {
-        setError("Invalid credentials, please try again.");
+        setError("Email atau password salah");
       } else {
-        setError(err.response?.data?.message || err.message || "Login failed");
+        setError(err.response?.data?.message || err.message || "Login gagal");
       }
     } finally {
       setLoading(false);
@@ -169,8 +171,12 @@ const AuthModals = ({
       >
         <Modal.Header closeButton className="border-0">
           <Modal.Title className="w-100 text-center">
-            <FaUserCircle className="auth-icon" />
-            <h4>Welcome Back!</h4>
+            <div className="d-flex flex-column align-items-center">
+              <div className="mb-3">
+                <FaUserCircle className="text-primary" size={50} />
+              </div>
+              <h4 className="mb-0">Welcome Back!</h4>
+            </div>
           </Modal.Title>
         </Modal.Header>
         <Modal.Body>
@@ -248,8 +254,12 @@ const AuthModals = ({
       >
         <Modal.Header closeButton className="border-0">
           <Modal.Title className="w-100 text-center">
-            <FaUserPlus className="auth-icon" />
-            <h4>Create an Account</h4>
+            <div className="d-flex flex-column align-items-center">
+              <div className="mb-3">
+                <FaUserPlus className="text-primary" size={50} />
+              </div>
+              <h4 className="mb-0">Create Account</h4>
+            </div>
           </Modal.Title>
         </Modal.Header>
         <Modal.Body>

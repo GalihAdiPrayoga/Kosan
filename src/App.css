@@ -144,6 +144,17 @@ body {
   margin-bottom: 0.5rem;
 }
 
+.auth-icon {
+  color: #0d6efd;
+  opacity: 0.9;
+  transition: all 0.3s ease;
+}
+
+.auth-icon:hover {
+  opacity: 1;
+  transform: scale(1.05);
+}
+
 .auth-input-group {
   position: relative;
   margin-bottom: 1.5rem;
@@ -298,6 +309,7 @@ footer hr {
 .modal-header {
   background: linear-gradient(135deg, #0d6efd 0%, #084298 100%);
   padding: 2rem 1rem;
+  padding-top: 2rem;
 }
 
 .modal-header .modal-title {
@@ -307,6 +319,20 @@ footer hr {
 .modal-header .btn-close {
   color: white;
   opacity: 0.8;
+}
+
+.modal-header .close {
+  position: absolute;
+  right: 1rem;
+  top: 1rem;
+}
+
+.modal-title svg {
+  transition: transform 0.3s ease;
+}
+
+.modal-title svg:hover {
+  transform: scale(1.1);
 }
 
 .modal-body {

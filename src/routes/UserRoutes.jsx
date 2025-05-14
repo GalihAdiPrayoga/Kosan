@@ -9,7 +9,7 @@ import UserGuard from "./UserGuard";
 
 const UserRoutes = [
   {
-    path: "/",
+    path: "/user/dashboard",
     element: (
       <UserGuard>
         <DashboardUser />

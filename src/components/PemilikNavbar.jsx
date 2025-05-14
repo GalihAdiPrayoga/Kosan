@@ -22,7 +22,7 @@ const PemilikNavbar = () => {
     const confirmLogout = window.confirm("Apakah Anda yakin ingin keluar?");
     if (confirmLogout) {
       localStorage.clear();
-      navigate("/");
+      navigate("/user/dashboard", { replace: true }); // Change from "/" to "/user/dashboard"
     }
   };
 

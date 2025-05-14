@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Table,
   Button,
@@ -7,9 +7,13 @@ import {
   Badge,
   Card,
   Container,
+  Form,
+  InputGroup,
+  Row,
+  Col,
 } from "react-bootstrap";
 import { Link, useNavigate } from "react-router-dom";
-import { FaTrash, FaEye } from "react-icons/fa";
+import { FaTrash, FaEye, FaSearch, FaFolder, FaHome } from "react-icons/fa";
 import { API } from "../../api/config";
 
 const ItemListAdmin = () => {
@@ -17,6 +21,19 @@ const ItemListAdmin = () => {
   const [kos, setKos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const filteredKos = useMemo(() => {
+    if (!searchTerm) return kos;
+
+    return kos.filter(
+      (item) =>
+        item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.ownerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.ownerPhone.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [kos, searchTerm]);
 
   useEffect(() => {
     fetchAllKos();
@@ -92,8 +109,49 @@ const ItemListAdmin = () => {
             </Alert>
           )}
 
-          {kos.length === 0 ? (
-            <Alert variant="info">Belum ada data kos yang tersedia.</Alert>
+          <Row className="mb-4">
+            <Col>
+              <InputGroup>
+                <InputGroup.Text className="bg-light border-end-0">
+                  <FaSearch className="text-muted" />
+                </InputGroup.Text>
+                <Form.Control
+                  className="border-start-0 bg-light"
+                  placeholder="Cari berdasarkan nama, lokasi, atau pemilik..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  autoComplete="off"
+                />
+              </InputGroup>
+            </Col>
+          </Row>
+
+          <div className="mb-3">
+            <small className="text-muted">
+              Menampilkan {filteredKos.length} dari {kos.length} kos
+            </small>
+          </div>
+
+          {filteredKos.length === 0 ? (
+            <div className="text-center py-5">
+              <div className="d-flex flex-column align-items-center">
+                <div className="mb-3">
+                  <FaFolder
+                    size={64}
+                    className="text-muted"
+                    style={{ opacity: 0.5 }}
+                  />
+                </div>
+                <div>
+                  <h5 className="text-muted mb-1">Data Tidak Ditemukan</h5>
+                  <p className="text-muted mb-0" style={{ fontSize: "0.9rem" }}>
+                    {searchTerm
+                      ? "Tidak ada kos yang sesuai dengan pencarian"
+                      : "Tidak ada data kos yang tersedia"}
+                  </p>
+                </div>
+              </div>
+            </div>
           ) : (
             <Table responsive hover>
               <thead>
@@ -109,7 +167,7 @@ const ItemListAdmin = () => {
                 </tr>
               </thead>
               <tbody>
-                {kos.map((item, index) => (
+                {filteredKos.map((item, index) => (
                   <tr key={item.id}>
                     <td>{index + 1}</td>
                     <td>{item.name}</td>

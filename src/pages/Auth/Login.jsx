@@ -19,14 +19,17 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    setError("");
-
     try {
-      const res = await axios.post(`${import.meta.env.VITE_API_URL}/login`, formData);
+      setLoading(true);
+      setError(null);
 
-      if (res.data.token && res.data.user) {
-        const { token, user } = res.data;
+      const response = await axios.post(`${import.meta.env.VITE_API_URL}/login`, {
+        email: formData.email,
+        password: formData.password,
+      });
+
+      if (response.data) {
+        const { user, token } = response.data;
 
         localStorage.setItem("token", token);
         localStorage.setItem("isLoggedIn", "true");
@@ -36,11 +39,12 @@ const Login = () => {
         localStorage.setItem("isAdmin", user.role === "admin" ? "true" : "false");
         localStorage.setItem("isPemilik", user.role === "pemilik" ? "true" : "false");
 
-
         if (user.role === "admin") {
           navigate("/admin/dashboard", { replace: true });
         } else if (user.role === "pemilik") {
           navigate("/pemilik/dashboard", { replace: true });
+        } else if (user.role === "user") {
+          navigate("/user/dashboard", { replace: true }); // Add this line
         } else {
           navigate("/");
         }

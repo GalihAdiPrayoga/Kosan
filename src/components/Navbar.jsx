@@ -31,11 +31,8 @@ const UserNavbar = () => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("userType");
-    localStorage.removeItem("isLoggedIn");
-    localStorage.removeItem("userId");
-    localStorage.removeItem("userName");
-    navigate("/");
+    localStorage.clear(); // Clear all localStorage data
+    navigate("/user/dashboard", { replace: true }); // Change from "/" to "/user/dashboard"
   };
 
   // Add this function to handle navigation
@@ -67,7 +64,7 @@ const UserNavbar = () => {
             <Nav className="mx-auto">
               <Nav.Link
                 as={Link}
-                to="/"
+                to="/user/dashboard"
                 onClick={handleNavigation}
                 className="px-3"
               >
