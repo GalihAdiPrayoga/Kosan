@@ -44,18 +44,24 @@ const EditProfileModal = ({ show, handleClose }) => {
     setSuccess("");
 
     try {
-      const userId = localStorage.getItem("userId");
-      await API.put(`/users/${userId}`, formData);
+      // Update profile using the /me endpoint
+      const response = await API.put("/me/update", formData);
 
-      // Update localStorage
-      localStorage.setItem("userName", formData.name);
+      if (response.data.status === "success") {
+        // Update localStorage with new user data
+        localStorage.setItem("userName", formData.name);
 
-      setSuccess("Profil berhasil diperbarui");
-      setTimeout(() => {
-        handleClose();
-        window.location.reload();
-      }, 1500);
+        setSuccess("Profil berhasil diperbarui");
+        setTimeout(() => {
+          handleClose();
+          // Reload component instead of full page
+          window.dispatchEvent(new Event("userUpdated"));
+        }, 1500);
+      } else {
+        setError("Gagal memperbarui profil");
+      }
     } catch (err) {
+      console.error("Update error:", err);
       setError(err.response?.data?.message || "Gagal memperbarui profil");
     } finally {
       setLoading(false);
@@ -130,10 +136,15 @@ const EditProfileModal = ({ show, handleClose }) => {
           </div>
 
           <div className="d-grid">
-            <Button type="submit" disabled={loading}>
+            <Button type="submit" disabled={loading} className="rounded-pill">
               {loading ? (
                 <>
-                  <Spinner size="sm" className="me-2" />
+                  <Spinner
+                    as="span"
+                    animation="border"
+                    size="sm"
+                    className="me-2"
+                  />
                   Menyimpan...
                 </>
               ) : (
