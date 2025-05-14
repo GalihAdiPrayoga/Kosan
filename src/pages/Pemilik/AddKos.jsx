@@ -293,7 +293,7 @@ const AddKos = () => {
 
                 <FloatingLabel
                   controlId="description"
-                  label="Deskripsi Fasilitas"
+                  label="Deskripsi"
                   className="mb-3"
                 >
                   <Form.Control

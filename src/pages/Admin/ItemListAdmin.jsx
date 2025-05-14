@@ -17,7 +17,7 @@ import { FaTrash, FaEye, FaSearch, FaFolder, FaHome } from "react-icons/fa";
 import { API } from "../../api/config";
 import Swal from "sweetalert2";
 import { getImageUrl } from "../../utils/imageUtils";
-
+import notFoundImage from "../../assets/notfound.jpg";  // Replace the existing animation import
 const ItemListAdmin = () => {
   const navigate = useNavigate();
   const [kos, setKos] = useState([]);
@@ -27,7 +27,7 @@ const ItemListAdmin = () => {
 
   // Add these state variables after other useState declarations
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(10);
+  const [itemsPerPage] = useState(5); // Changed from 10 to 5
 
   const filteredKos = useMemo(() => {
     if (!searchTerm) return kos;
@@ -41,7 +41,7 @@ const ItemListAdmin = () => {
     );
   }, [kos, searchTerm]);
 
-  // Add this calculation before the return statement
+  // Update pagination calculations
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = filteredKos.slice(indexOfFirstItem, indexOfLastItem);
@@ -113,6 +113,14 @@ const ItemListAdmin = () => {
     navigate(`/admin/kos/detail/${id}`);
   };
 
+  const handlePreviousPage = () => {
+    setCurrentPage((prev) => Math.max(prev - 1, 1));
+  };
+
+  const handleNextPage = () => {
+    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+  };
+
   if (loading) {
     return (
       <div className="text-center py-5">
@@ -152,26 +160,24 @@ const ItemListAdmin = () => {
             </Col>
           </Row>
 
-          <div className="mb-3">
-            <small className="text-muted">
-              Menampilkan {indexOfFirstItem + 1}-
-              {Math.min(indexOfLastItem, filteredKos.length)} dari{" "}
-              {filteredKos.length} kos
-            </small>
-          </div>
-
           {filteredKos.length === 0 ? (
             <div className="text-center py-5">
               <div className="d-flex flex-column align-items-center">
-                <div className="mb-3">
-                  <FaFolder
-                    size={64}
-                    className="text-muted"
-                    style={{ opacity: 0.5 }}
+                <div className="mb-4">
+                  <img
+                    src={notFoundImage}
+                    alt="No Data Found"
+                    style={{
+                      width: "250px",
+                      height: "auto",
+                      objectFit: "contain",
+                      opacity: 0.9,
+                      borderRadius: "8px",
+                    }}
                   />
                 </div>
                 <div>
-                  <h5 className="text-muted mb-1">Data Tidak Ditemukan</h5>
+                  <h5 className="text-muted mb-2">Data Tidak Ditemukan</h5>
                   <p className="text-muted mb-0" style={{ fontSize: "0.9rem" }}>
                     {searchTerm
                       ? "Tidak ada kos yang sesuai dengan pencarian"
@@ -275,48 +281,56 @@ const ItemListAdmin = () => {
               </Table>
 
               {/* Pagination controls */}
-              {totalPages > 1 && (
-                <div className="d-flex justify-content-center mt-4 gap-2">
-                  <Button
-                    variant="outline-primary"
-                    size="sm"
-                    onClick={() =>
-                      setCurrentPage((prev) => Math.max(prev - 1, 1))
-                    }
-                    disabled={currentPage === 1}
-                    className="rounded-circle d-flex align-items-center justify-content-center"
-                    style={{ width: "35px", height: "35px" }}
-                  >
-                    &lt;
-                  </Button>
-
-                  {[...Array(totalPages)].map((_, idx) => (
+              {filteredKos.length > 0 && totalPages > 1 && (
+                <div className="d-flex justify-content-between align-items-center mt-4">
+                  <div className="text-muted small">
+                    Menampilkan {currentItems.length} dari {filteredKos.length}{" "}
+                    data
+                  </div>
+                  <div className="pagination-container d-flex align-items-center gap-3">
                     <Button
-                      key={idx + 1}
-                      variant={
-                        currentPage === idx + 1 ? "primary" : "outline-primary"
-                      }
+                      variant="light"
                       size="sm"
-                      onClick={() => setCurrentPage(idx + 1)}
-                      className="rounded-circle d-flex align-items-center justify-content-center"
-                      style={{ width: "35px", height: "35px" }}
+                      onClick={handlePreviousPage}
+                      disabled={currentPage === 1}
+                      className="d-flex align-items-center px-3 py-2 rounded-pill shadow-sm border"
                     >
-                      {idx + 1}
+                      <i className="bi bi-chevron-left me-1"></i>
+                      Prev
                     </Button>
-                  ))}
 
-                  <Button
-                    variant="outline-primary"
-                    size="sm"
-                    onClick={() =>
-                      setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-                    }
-                    disabled={currentPage === totalPages}
-                    className="rounded-circle d-flex align-items-center justify-content-center"
-                    style={{ width: "35px", height: "35px" }}
-                  >
-                    &gt;
-                  </Button>
+                    <div className="d-flex align-items-center gap-2">
+                      {Array.from({ length: totalPages }, (_, index) => (
+                        <Button
+                          key={index + 1}
+                          variant={
+                            currentPage === index + 1 ? "primary" : "light"
+                          }
+                          size="sm"
+                          onClick={() => setCurrentPage(index + 1)}
+                          className={`rounded-circle d-flex align-items-center justify-content-center p-0 ${
+                            currentPage === index + 1
+                              ? "shadow"
+                              : "shadow-sm border"
+                          }`}
+                          style={{ width: "35px", height: "35px" }}
+                        >
+                          {index + 1}
+                        </Button>
+                      ))}
+                    </div>
+
+                    <Button
+                      variant="light"
+                      size="sm"
+                      onClick={handleNextPage}
+                      disabled={currentPage === totalPages}
+                      className="d-flex align-items-center px-3 py-2 rounded-pill shadow-sm border"
+                    >
+                      Next
+                      <i className="bi bi-chevron-right ms-1"></i>
+                    </Button>
+                  </div>
                 </div>
               )}
             </>

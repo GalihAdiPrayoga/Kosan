@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import notFoundImage from "../../assets/notfound.jpg";
 import Swal from "sweetalert2";
 import {
   Container,
@@ -12,9 +13,103 @@ import {
   Pagination,
   Row,
   Col,
+  Modal,
 } from "react-bootstrap";
-import { FaTrash, FaSearch, FaFolder, FaEye } from "react-icons/fa";
+import { FaTrash, FaSearch, FaFolder, FaEye, FaEdit } from "react-icons/fa";
 import { API } from "../../api/config";
+
+const EditModal = React.memo(
+  ({ show, onHide, editForm, setEditForm, handleUpdate, loading }) => (
+    <Modal show={show} onHide={onHide}>
+      <Modal.Header closeButton>
+        <Modal.Title>Edit Pengguna</Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        <Form>
+          <Form.Group className="mb-3">
+            <Form.Label>Nama</Form.Label>
+            <Form.Control
+              type="text"
+              value={editForm.name}
+              onChange={(e) => {
+                e.persist();
+                setEditForm((prev) => ({
+                  ...prev,
+                  name: e.target.value,
+                }));
+              }}
+            />
+          </Form.Group>
+          <Form.Group className="mb-3">
+            <Form.Label>Email</Form.Label>
+            <Form.Control
+              type="email"
+              value={editForm.email}
+              onChange={(e) => {
+                e.persist();
+                setEditForm((prev) => ({
+                  ...prev,
+                  email: e.target.value,
+                }));
+              }}
+            />
+          </Form.Group>
+          <Form.Group className="mb-3">
+            <Form.Label>No. Telepon</Form.Label>
+            <Form.Control
+              type="text"
+              value={editForm.nomor}
+              onChange={(e) => {
+                e.persist();
+                setEditForm((prev) => ({
+                  ...prev,
+                  nomor: e.target.value,
+                }));
+              }}
+            />
+          </Form.Group>
+          <Form.Group className="mb-3">
+            <Form.Label>Role</Form.Label>
+            <Form.Select
+              value={editForm.role}
+              onChange={(e) => {
+                e.persist();
+                setEditForm((prev) => ({
+                  ...prev,
+                  role: e.target.value,
+                }));
+              }}
+            >
+              <option value="user">Pencari Kos</option>
+              <option value="pemilik">Pemilik Kos</option>
+            </Form.Select>
+          </Form.Group>
+        </Form>
+      </Modal.Body>
+      <Modal.Footer>
+        <Button variant="secondary" onClick={onHide}>
+          Batal
+        </Button>
+        <Button variant="primary" onClick={handleUpdate} disabled={loading}>
+          {loading ? (
+            <>
+              <Spinner
+                as="span"
+                animation="border"
+                size="sm"
+                role="status"
+                className="me-2"
+              />
+              Menyimpan...
+            </>
+          ) : (
+            "Simpan Perubahan"
+          )}
+        </Button>
+      </Modal.Footer>
+    </Modal>
+  )
+);
 
 const ManageUsers = () => {
   const [users, setUsers] = useState([]);
@@ -24,6 +119,14 @@ const ManageUsers = () => {
   const [selectedRole, setSelectedRole] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredUsers, setFilteredUsers] = useState([]);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingUser, setEditingUser] = useState(null);
+  const [editForm, setEditForm] = useState({
+    name: "",
+    email: "",
+    nomor: "",
+    role: "",
+  });
   const itemsPerPage = 5;
 
   useEffect(() => {
@@ -56,37 +159,41 @@ const ManageUsers = () => {
   const handleDelete = async (id) => {
     const result = await Swal.fire({
       title: "Apakah Anda yakin?",
-      text: "Pengguna yang dihapus tidak dapat dikembalikan!",
+      text: "Data pengguna yang dihapus tidak dapat dikembalikan!",
       icon: "warning",
       showCancelButton: true,
-      confirmButtonColor: "#dc3545",
-      cancelButtonColor: "#6c757d",
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
       confirmButtonText: "Ya, hapus!",
       cancelButtonText: "Batal",
-      reverseButtons: true,
     });
 
     if (result.isConfirmed) {
       try {
         setLoading(true);
-        await API.delete(`/users/${id}`);
-        setUsers(users.filter((user) => user.id !== id));
+        const token = localStorage.getItem("token");
+        if (!token) {
+          throw new Error("Token tidak ditemukan");
+        }
 
-        Swal.fire({
-          title: "Terhapus!",
-          text: "Pengguna berhasil dihapus.",
-          icon: "success",
-          timer: 1500,
-          showConfirmButton: false,
+        await API.delete(`/users/${id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+          },
         });
+
+        // Update the local state after successful deletion
+        setUsers((prevUsers) => prevUsers.filter((user) => user.id !== id));
+        setFilteredUsers((prevFiltered) =>
+          prevFiltered.filter((user) => user.id !== id)
+        );
+
+        // Show success message
+        Swal.fire("Terhapus!", "Data pengguna berhasil dihapus.", "success");
       } catch (err) {
-        Swal.fire({
-          title: "Error!",
-          text: "Gagal menghapus pengguna.",
-          icon: "error",
-          confirmButtonColor: "#dc3545",
-        });
-        setError("Gagal menghapus pengguna");
+        console.error("Error deleting user:", err);
+        Swal.fire("Error!", "Gagal menghapus data pengguna", "error");
       } finally {
         setLoading(false);
       }
@@ -118,6 +225,113 @@ const ManageUsers = () => {
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
+
+  const handlePreviousPage = () => {
+    setCurrentPage((prev) => Math.max(prev - 1, 1));
+  };
+
+  const handleNextPage = () => {
+    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+  };
+
+  const handleEdit = (user) => {
+    setEditingUser(user);
+    setEditForm({
+      name: user.name,
+      email: user.email,
+      nomor: user.phone,
+      role: user.role,
+    });
+    setShowEditModal(true);
+  };
+
+  const handleUpdate = async () => {
+    try {
+      // Basic validation
+      if (
+        !editForm.name ||
+        !editForm.email ||
+        !editForm.nomor ||
+        !editForm.role
+      ) {
+        throw new Error("Semua field harus diisi");
+      }
+
+      // Email validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(editForm.email)) {
+        throw new Error("Format email tidak valid");
+      }
+
+      // Phone number validation
+      if (!editForm.nomor.startsWith("62")) {
+        throw new Error("Nomor telepon harus diawali dengan 62");
+      }
+
+      setLoading(true);
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        throw new Error("Token tidak ditemukan");
+      }
+
+      const response = await API.put(
+        `/users/${editingUser.id}`,
+        {
+          name: editForm.name.trim(),
+          email: editForm.email.toLowerCase().trim(),
+          nomor: editForm.nomor.trim(),
+          role: editForm.role,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+          },
+        }
+      );
+
+      // Update local state without fetching
+      setUsers((prevUsers) =>
+        prevUsers.map((user) =>
+          user.id === editingUser.id
+            ? {
+                ...user,
+                name: editForm.name.trim(),
+                email: editForm.email.toLowerCase().trim(),
+                phone: editForm.nomor.trim(),
+                role: editForm.role,
+              }
+            : user
+        )
+      );
+
+      // Close modal first
+      setShowEditModal(false);
+
+      // Then show success message
+      await Swal.fire({
+        icon: "success",
+        title: "Berhasil!",
+        text: "Data pengguna berhasil diperbarui",
+        timer: 1500,
+        showConfirmButton: false,
+      });
+    } catch (err) {
+      console.error("Error updating user:", err);
+      await Swal.fire({
+        icon: "error",
+        title: "Gagal!",
+        text:
+          err.response?.data?.message ||
+          err.message ||
+          "Gagal memperbarui data pengguna",
+        confirmButtonColor: "#d33",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -173,15 +387,21 @@ const ManageUsers = () => {
           {filteredUsers.length === 0 ? (
             <div className="text-center py-5">
               <div className="d-flex flex-column align-items-center">
-                <div className="mb-3">
-                  <FaFolder
-                    size={64}
-                    className="text-muted"
-                    style={{ opacity: 0.5 }}
+                <div className="mb-4">
+                  <img
+                    src={notFoundImage}
+                    alt="No Data Found"
+                    style={{
+                      width: "250px",
+                      height: "auto",
+                      objectFit: "contain",
+                      opacity: 0.9,
+                      borderRadius: "8px",
+                    }}
                   />
                 </div>
                 <div>
-                  <h5 className="text-muted mb-1">Data Tidak Ditemukan</h5>
+                  <h5 className="text-muted mb-2">Data Tidak Ditemukan</h5>
                   <p className="text-muted mb-0" style={{ fontSize: "0.9rem" }}>
                     {searchTerm
                       ? "Tidak ada pengguna yang sesuai dengan pencarian"
@@ -246,6 +466,17 @@ const ManageUsers = () => {
                       <td className="py-3 px-2">
                         <div className="d-flex gap-2">
                           <Button
+                            variant="outline-primary"
+                            size="sm"
+                            onClick={() => handleEdit(user)}
+                            disabled={loading}
+                            className="rounded-circle d-flex align-items-center justify-content-center"
+                            style={{ width: "35px", height: "35px" }}
+                            title="Edit"
+                          >
+                            <FaEdit size={14} />
+                          </Button>
+                          <Button
                             variant="outline-danger"
                             size="sm"
                             onClick={() => handleDelete(user.id)}
@@ -272,10 +503,72 @@ const ManageUsers = () => {
                   ))}
                 </tbody>
               </Table>
+
+              {filteredUsers.length > 0 && (
+                <div className="d-flex justify-content-between align-items-center mt-4">
+                  <div className="text-muted small">
+                    Menampilkan {currentUsers.length} dari{" "}
+                    {filteredUsers.length} data
+                  </div>
+                  <div className="pagination-container d-flex align-items-center gap-3">
+                    <Button
+                      variant="light"
+                      size="sm"
+                      onClick={handlePreviousPage}
+                      disabled={currentPage === 1}
+                      className="d-flex align-items-center px-3 py-2 rounded-pill shadow-sm border"
+                    >
+                      <i className="bi bi-chevron-left me-1"></i>
+                      Prev
+                    </Button>
+
+                    <div className="d-flex align-items-center gap-2">
+                      {Array.from({ length: totalPages }, (_, index) => (
+                        <Button
+                          key={index + 1}
+                          variant={
+                            currentPage === index + 1 ? "primary" : "light"
+                          }
+                          size="sm"
+                          onClick={() => setCurrentPage(index + 1)}
+                          className={`rounded-circle d-flex align-items-center justify-content-center p-0 ${
+                            currentPage === index + 1
+                              ? "shadow"
+                              : "shadow-sm border"
+                          }`}
+                          style={{ width: "35px", height: "35px" }}
+                        >
+                          {index + 1}
+                        </Button>
+                      ))}
+                    </div>
+
+                    <Button
+                      variant="light"
+                      size="sm"
+                      onClick={handleNextPage}
+                      disabled={currentPage === totalPages}
+                      className="d-flex align-items-center px-3 py-2 rounded-pill shadow-sm border"
+                    >
+                      Next
+                      <i className="bi bi-chevron-right ms-1"></i>
+                    </Button>
+                  </div>
+                </div>
+              )}
             </>
           )}
         </Card.Body>
       </Card>
+
+      <EditModal
+        show={showEditModal}
+        onHide={() => setShowEditModal(false)}
+        editForm={editForm}
+        setEditForm={setEditForm}
+        handleUpdate={handleUpdate}
+        loading={loading}
+      />
     </Container>
   );
 };

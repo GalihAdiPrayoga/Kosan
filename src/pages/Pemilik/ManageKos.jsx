@@ -15,6 +15,7 @@ import { API } from "../../api/config"; // Pastikan API ini dikonfigurasi dengan
 import { getImageUrl } from "../../utils/imageUtils";
 import ImageWithFallback from "../../components/ImageWithFallback";
 import Swal from "sweetalert2";
+import notFoundImage from "../../assets/notfound.jpg"; // Replace the existing animation import
 
 const ManageKos = () => {
   const [kosList, setKosList] = useState([]);
@@ -192,12 +193,31 @@ const ManageKos = () => {
           )}
 
           {kosList.length === 0 ? (
-            <Alert variant="info" className="text-center py-4">
-              <h5 className="mb-2">Belum Ada Kos</h5>
-              <p className="mb-0">
-                Anda belum memiliki kos yang terdaftar. Silakan tambah kos baru.
-              </p>
-            </Alert>
+            <div className="text-center py-5">
+              <div className="d-flex flex-column align-items-center">
+                <div className="mb-4">
+                  <img
+                    src={notFoundImage}
+                    alt="No Data Found"
+                    style={{
+                      width: "250px",
+                      height: "auto",
+                      objectFit: "contain",
+                      opacity: 0.9,
+                      borderRadius: "8px",
+                    }}
+                  />
+                </div>
+                <div>
+                  <h5 className="text-muted mb-2">Belum Ada Kos</h5>
+                  <p className="text-muted mb-0" style={{ fontSize: "0.9rem" }}>
+                    Anda belum memiliki kos yang terdaftar. Silakan tambah kos
+                    baru.
+                  </p>
+                </div>
+              
+              </div>
+            </div>
           ) : (
             <Row className="g-4">
               {currentItems.map((kos, index) => (

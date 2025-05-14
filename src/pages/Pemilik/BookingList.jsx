@@ -9,6 +9,8 @@ import {
   Alert,
 } from "react-bootstrap";
 import { API } from "../../api/config";
+// Update the import statement at the top
+import notFoundImage from "../../assets/notfound.jpg"; // Replace the existing animation import
 
 const BookingList = () => {
   const [bookings, setBookings] = useState([]);
@@ -83,7 +85,29 @@ const BookingList = () => {
           )}
 
           {bookings.length === 0 ? (
-            <Alert variant="info">Belum ada booking</Alert>
+            <div className="text-center py-5">
+              <div className="d-flex flex-column align-items-center">
+                <div className="mb-4">
+                  <img
+                    src={notFoundImage}
+                    alt="No Data Found"
+                    style={{
+                      width: "250px",
+                      height: "auto",
+                      objectFit: "contain",
+                      opacity: 0.9,
+                      borderRadius: "8px",
+                    }}
+                  />
+                </div>
+                <div>
+                  <h5 className="text-muted mb-2">Belum Ada Booking</h5>
+                  <p className="text-muted mb-0" style={{ fontSize: "0.9rem" }}>
+                    Belum ada pemesanan kos yang masuk saat ini
+                  </p>
+                </div>
+              </div>
+            </div>
           ) : (
             <Table responsive hover>
               <thead>

@@ -715,3 +715,27 @@ a.text-primary:hover {
     opacity: 1;
   }
 }
+/* Add to your CSS */
+.pagination-container button {
+  transition: all 0.2s ease-in-out;
+}
+
+.pagination-container button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  background-color: var(--bs-primary);
+  color: white;
+  border-color: var(--bs-primary);
+}
+
+.pagination-container button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pagination-container .rounded-circle.btn-primary {
+  border: none;
+}
+
+.pagination-container .rounded-circle {
+  font-weight: 500;
+}

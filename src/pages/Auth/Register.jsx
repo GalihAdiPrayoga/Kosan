@@ -20,6 +20,7 @@ import {
 import { CSSTransition } from "react-transition-group";
 import { API } from "../../api/config";
 import axios from "axios";
+import Swal from "sweetalert2";
 
 const Register = () => {
   const navigate = useNavigate();
@@ -72,38 +73,47 @@ const Register = () => {
         nomor: formData.nomor.trim(),
       });
 
-      const { user, token, roles } = response.data;
+      const { user, token } = response.data;
 
-      // Simpan data ke localStorage
+      // Save data to localStorage
       localStorage.setItem("token", token);
       localStorage.setItem("userId", user.id);
       localStorage.setItem("userName", user.name);
-      localStorage.setItem("userType", roles[0]);
-      localStorage.setItem(
-        "isAdmin",
-        roles.includes("admin") ? "true" : "false"
-      );
-      localStorage.setItem(
-        "isPemilik",
-        roles.includes("pemilik") ? "true" : "false"
-      );
-      localStorage.setItem("isUser", roles.includes("user") ? "true" : "false");
+      localStorage.setItem("userType", formData.role);
+      localStorage.setItem("isLoggedIn", "true");
 
-      // Set token untuk request selanjutnya
+      // Set token for subsequent requests
       API.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 
-      // Redirect berdasarkan role
-      if (roles.includes("admin")) {
-        navigate("/admin/dashboard");
-      } else if (roles.includes("pemilik")) {
-        navigate("/pemilik/dashboard");
-      } else {
-        navigate("/");
-      }
+      // Show success message and navigate based on role
+      await Swal.fire({
+        icon: "success",
+        title: "Registrasi Berhasil!",
+        text: `Selamat datang, ${user.name}!`,
+        timer: 1500,
+        showConfirmButton: false,
+        willClose: () => {
+          // Navigate after alert closes
+          if (formData.role === "pemilik") {
+            navigate("/pemilik/dashboard");
+          } else {
+            navigate("/user/dashboard");
+          }
+        },
+      });
     } catch (err) {
+      console.error("Registration error:", err);
       setError(
-        err.response?.data?.message || err.message || "Registrasi gagal"
+        err.response?.data?.message ||
+          err.message ||
+          "Registrasi gagal. Silakan coba lagi."
       );
+      await Swal.fire({
+        icon: "error",
+        title: "Registrasi Gagal!",
+        text: err.response?.data?.message || "Terjadi kesalahan saat mendaftar",
+        confirmButtonColor: "#d33",
+      });
     } finally {
       setLoading(false);
     }

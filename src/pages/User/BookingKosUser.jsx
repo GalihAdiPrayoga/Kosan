@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import Swal from 'sweetalert2';
+import Swal from "sweetalert2";
 import {
   Container,
   Row,
@@ -10,6 +10,7 @@ import {
   Alert,
   Toast,
   ToastContainer,
+  Spinner,
 } from "react-bootstrap";
 import { useParams, useNavigate } from "react-router-dom";
 import { API } from "../../api/config";
@@ -101,13 +102,20 @@ const BookingKosUser = () => {
 
       const totalHarga = calculateTotal();
 
-      // Show loading
+      // Show loading with new style
       Swal.fire({
-        title: 'Memproses Pemesanan',
-        html: 'Mohon tunggu sebentar...',
-        allowOutsideClick: false,
+        title: "Memproses Pemesanan",
+        html: `
+          <div class="d-flex flex-column align-items-center">
+            <div class="spinner-border text-primary mb-3" role="status" style="width: 3rem; height: 3rem;">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="text-muted mb-0">Mohon tunggu sebentar...</p>
+          </div>
+        `,
         showConfirmButton: false,
-        willOpen: () => {
+        allowOutsideClick: false,
+        didOpen: () => {
           Swal.showLoading();
         },
       });
@@ -131,9 +139,9 @@ const BookingKosUser = () => {
 
       // Close loading and show success
       await Swal.fire({
-        icon: 'success',
-        title: 'Pemesanan Berhasil!',
-        text: 'Pesanan Anda sedang diproses. Anda akan dialihkan ke halaman dashboard.',
+        icon: "success",
+        title: "Pemesanan Berhasil!",
+        text: "Pesanan Anda sedang diproses. Anda akan dialihkan ke halaman dashboard.",
         timer: 2000,
         showConfirmButton: false,
         backdrop: `
@@ -142,23 +150,46 @@ const BookingKosUser = () => {
           no-repeat
         `,
         customClass: {
-          popup: 'animated fadeInDown'
-        }
+          popup: "animated fadeInDown",
+        },
       });
 
       navigate("/user/dashboard", { replace: true });
     } catch (err) {
       // Show error alert
       Swal.fire({
-        icon: 'error',
-        title: 'Pemesanan Gagal',
-        text: err.response?.data?.message || err.message || 'Terjadi kesalahan saat memproses pemesanan',
-        confirmButtonColor: '#dc3545'
+        icon: "error",
+        title: "Pemesanan Gagal",
+        text:
+          err.response?.data?.message ||
+          err.message ||
+          "Terjadi kesalahan saat memproses pemesanan",
+        confirmButtonColor: "#dc3545",
       });
     }
   };
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) {
+    return (
+      <Container className="py-5 text-center">
+        <div
+          className="d-flex flex-column align-items-center justify-content-center"
+          style={{ minHeight: "60vh" }}
+        >
+          <Spinner
+            animation="border"
+            variant="primary"
+            style={{ width: "3rem", height: "3rem" }}
+            className="mb-3"
+          />
+          <h5 className="text-muted mb-2">Memuat Data</h5>
+          <p className="text-muted" style={{ fontSize: "0.9rem" }}>
+            Mohon tunggu sebentar...
+          </p>
+        </div>
+      </Container>
+    );
+  }
   if (error) return <Alert variant="danger">{error}</Alert>;
   if (!kosDetail) return <Alert variant="warning">Kos tidak ditemukan</Alert>;
 
@@ -173,7 +204,7 @@ const BookingKosUser = () => {
                 <Row>
                   <Col md={6}>
                     <Form.Group className="mb-3">
-                      <Form.Label>Tanggal Bayar</Form.Label>
+                      <Form.Label>Tanggal Booking</Form.Label>
                       <Form.Control
                         type="date"
                         name="startDate"

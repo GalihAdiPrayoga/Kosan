@@ -17,8 +17,8 @@ import {
 import { FaCheck, FaTimes, FaSearch, FaFolder } from "react-icons/fa";
 import { API } from "../../api/config";
 import { getImageUrl } from "../../utils/imageUtils";
-
-const ITEMS_PER_PAGE = 10;
+import notFoundImage from "../../assets/notfound.jpg"; // Replace the existing animation import
+const ITEMS_PER_PAGE = 5; // Change from 10 to 5
 
 const PaymentsAdmin = () => {
   // Update state
@@ -67,9 +67,9 @@ const PaymentsAdmin = () => {
     }
   };
 
-  // Add filtered and paginated data with useMemo
+  // Update the filteredPayments useMemo to sort pending payments first
   const filteredPayments = useMemo(() => {
-    return payments.filter((payment) => {
+    const filtered = payments.filter((payment) => {
       const searchMatch = filters.search.toLowerCase();
       const statusMatch =
         filters.status === "all" || payment.status === filters.status;
@@ -90,12 +90,34 @@ const PaymentsAdmin = () => {
           searchableFields.some((field) => field?.includes(searchMatch)))
       );
     });
+
+    // Sort payments to prioritize pending status
+    return filtered.sort((a, b) => {
+      if (a.status === "pending" && b.status !== "pending") return -1;
+      if (a.status !== "pending" && b.status === "pending") return 1;
+
+      // For non-pending payments, sort by date (newest first)
+      return new Date(b.tanggal_bayar) - new Date(a.tanggal_bayar);
+    });
   }, [payments, filters]);
 
-  const paginatedPayments = useMemo(() => {
-    const start = (currentPage - 1) * ITEMS_PER_PAGE;
-    return [...filteredPayments].slice(start, start + ITEMS_PER_PAGE);
-  }, [filteredPayments, currentPage]);
+  // Update pagination calculations
+  const indexOfLastItem = currentPage * ITEMS_PER_PAGE;
+  const indexOfFirstItem = indexOfLastItem - ITEMS_PER_PAGE;
+  const paginatedPayments = filteredPayments.slice(
+    indexOfFirstItem,
+    indexOfLastItem
+  );
+  const totalPages = Math.ceil(filteredPayments.length / ITEMS_PER_PAGE);
+
+  // Add pagination handlers
+  const handlePreviousPage = () => {
+    setCurrentPage((prev) => Math.max(prev - 1, 1));
+  };
+
+  const handleNextPage = () => {
+    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+  };
 
   // Add handler for filter changes
   const handleFilterChange = (e) => {
@@ -104,8 +126,13 @@ const PaymentsAdmin = () => {
       ...prev,
       [name]: value,
     }));
-    setCurrentPage(1);
+    setCurrentPage(1); // Reset to first page when filtering
   };
+
+  // Add useEffect to reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filters]);
 
   // Add reset filters function
   const handleReset = () => {
@@ -237,19 +264,27 @@ const PaymentsAdmin = () => {
           {paginatedPayments.length === 0 ? (
             <div className="text-center py-5">
               <div className="d-flex flex-column align-items-center">
-                <div className="mb-3">
-                  <FaFolder
-                    size={64}
-                    className="text-muted"
-                    style={{ opacity: 0.5 }}
+                <div className="mb-4">
+                  <img
+                    src={notFoundImage}
+                    alt="No Data Found"
+                    style={{
+                      width: "250px",
+                      height: "auto",
+                      objectFit: "contain",
+                      opacity: 0.9,
+                      borderRadius: "8px",
+                    }}
                   />
                 </div>
                 <div>
-                  <h5 className="text-muted mb-1">Data Tidak Ditemukan</h5>
+                  <h5 className="text-muted mb-2">Data Tidak Ditemukan</h5>
                   <p className="text-muted mb-0" style={{ fontSize: "0.9rem" }}>
                     {payments.length === 0
                       ? "Belum ada data pembayaran yang tersedia"
-                      : "Tidak ada data pembayaran yang sesuai dengan pencarian"}
+                      : filters.search
+                      ? "Tidak ada pembayaran yang sesuai dengan pencarian"
+                      : "Tidak ada data pembayaran yang tersedia"}
                   </p>
                 </div>
               </div>
@@ -264,7 +299,7 @@ const PaymentsAdmin = () => {
                     <th>Nama Penyewa</th>
                     <th>Nama Kos</th>
                     <th>Total Harga</th>
-                    <th>Tanggal Bayar</th>
+                    <th>Tanggal Booking</th>
                     <th>Bukti Pembayaran</th>
                     <th>Status</th>
                     {/* Only show action column header if there are pending payments */}
@@ -384,76 +419,56 @@ const PaymentsAdmin = () => {
                 </tbody>
               </Table>
 
-              {filteredPayments.length > ITEMS_PER_PAGE && (
-                <div className="d-flex justify-content-center mt-4 gap-2">
-                  <Button
-                    variant="outline-primary"
-                    size="sm"
-                    onClick={() =>
-                      setCurrentPage((prev) => Math.max(prev - 1, 1))
-                    }
-                    disabled={currentPage === 1}
-                    className="rounded-circle d-flex align-items-center justify-content-center"
-                    style={{ width: "35px", height: "35px" }}
-                  >
-                    &lt;
-                  </Button>
+              {filteredPayments.length > 0 && (
+                <div className="d-flex justify-content-between align-items-center mt-4">
+                  <div className="text-muted small">
+                    Menampilkan {paginatedPayments.length} dari{" "}
+                    {filteredPayments.length} data
+                  </div>
+                  <div className="pagination-container d-flex align-items-center gap-3">
+                    <Button
+                      variant="light"
+                      size="sm"
+                      onClick={handlePreviousPage}
+                      disabled={currentPage === 1}
+                      className="d-flex align-items-center px-3 py-2 rounded-pill shadow-sm border"
+                    >
+                      <i className="bi bi-chevron-left me-1"></i>
+                      Prev
+                    </Button>
 
-                  {(() => {
-                    const totalPages = Math.ceil(
-                      filteredPayments.length / ITEMS_PER_PAGE
-                    );
-                    let startPage = Math.max(1, currentPage - 2);
-                    let endPage = Math.min(totalPages, startPage + 4);
+                    <div className="d-flex align-items-center gap-2">
+                      {Array.from({ length: totalPages }, (_, index) => (
+                        <Button
+                          key={index + 1}
+                          variant={
+                            currentPage === index + 1 ? "primary" : "light"
+                          }
+                          size="sm"
+                          onClick={() => setCurrentPage(index + 1)}
+                          className={`rounded-circle d-flex align-items-center justify-content-center p-0 ${
+                            currentPage === index + 1
+                              ? "shadow"
+                              : "shadow-sm border"
+                          }`}
+                          style={{ width: "35px", height: "35px" }}
+                        >
+                          {index + 1}
+                        </Button>
+                      ))}
+                    </div>
 
-                    if (endPage - startPage < 4) {
-                      startPage = Math.max(1, endPage - 4);
-                    }
-
-                    return Array.from(
-                      { length: endPage - startPage + 1 },
-                      (_, idx) => {
-                        const pageNumber = startPage + idx;
-                        return (
-                          <Button
-                            key={pageNumber}
-                            variant={
-                              currentPage === pageNumber
-                                ? "primary"
-                                : "outline-primary"
-                            }
-                            size="sm"
-                            onClick={() => setCurrentPage(pageNumber)}
-                            className="rounded-circle d-flex align-items-center justify-content-center"
-                            style={{ width: "35px", height: "35px" }}
-                          >
-                            {pageNumber}
-                          </Button>
-                        );
-                      }
-                    );
-                  })()}
-
-                  <Button
-                    variant="outline-primary"
-                    size="sm"
-                    onClick={() =>
-                      setCurrentPage((prev) =>
-                        Math.min(
-                          prev + 1,
-                          Math.ceil(filteredPayments.length / ITEMS_PER_PAGE)
-                        )
-                      )
-                    }
-                    disabled={
-                      currentPage ===
-                      Math.ceil(filteredPayments.length / ITEMS_PER_PAGE)
-                    }
-                    className="rounded-circle d-flex align-items-center justify-content-center"
-                    style={{ width: "35px", height: "35px" }}
-                  >
-                    &gt;
-                  </Button>
+                    <Button
+                      variant="light"
+                      size="sm"
+                      onClick={handleNextPage}
+                      disabled={currentPage === totalPages}
+                      className="d-flex align-items-center px-3 py-2 rounded-pill shadow-sm border"
+                    >
+                      Next
+                      <i className="bi bi-chevron-right ms-1"></i>
+                    </Button>
+                  </div>
                 </div>
               )}
             </>
