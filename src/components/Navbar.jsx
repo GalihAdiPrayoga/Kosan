@@ -3,6 +3,7 @@ import { Navbar, Container, Nav, NavDropdown } from "react-bootstrap";
 import { Link, useNavigate } from "react-router-dom";
 import AuthModals from "./AuthModals";
 import { FaUserCircle } from "react-icons/fa";
+import EditProfileModal from "./EditProfileModal";
 
 const UserNavbar = () => {
   const navigate = useNavigate();
@@ -11,6 +12,7 @@ const UserNavbar = () => {
 
   const [showLogin, setShowLogin] = useState(false);
   const [showRegister, setShowRegister] = useState(false);
+  const [showEditProfile, setShowEditProfile] = useState(false);
   const [expanded, setExpanded] = useState(false);
 
   const handleClose = () => {
@@ -102,6 +104,10 @@ const UserNavbar = () => {
                   align="end"
                   className="px-2"
                 >
+                  <NavDropdown.Item onClick={() => setShowEditProfile(true)}>
+                    <i className="bi bi-person me-2"></i>
+                    Edit Profil
+                  </NavDropdown.Item>
                   <NavDropdown.Item as={Link} to="/payment-history">
                     <i className="bi bi-receipt me-2"></i>
                     Riwayat Pembayaran
@@ -150,6 +156,10 @@ const UserNavbar = () => {
         showRegister={showRegister}
         handleClose={handleClose}
         handleSwitch={handleSwitch}
+      />
+      <EditProfileModal
+        show={showEditProfile}
+        handleClose={() => setShowEditProfile(false)}
       />
     </>
   );

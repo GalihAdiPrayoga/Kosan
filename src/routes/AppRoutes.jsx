@@ -38,15 +38,6 @@ const AppRoutes = () => {
             </ProtectedRoute>
           }
         />
-
-        <Route
-          path="/payment-history"
-          element={
-            <ProtectedRoute allowedRoles={["user"]}>
-              <PaymentHistory />
-            </ProtectedRoute>
-          }
-        />
       </Routes>
     </>
   );

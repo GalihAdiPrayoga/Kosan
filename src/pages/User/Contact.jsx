@@ -1,191 +1,194 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Container,
   Row,
   Col,
+  Card,
   Form,
   Button,
-  Card,
   Alert,
+  Spinner,
 } from "react-bootstrap";
-import {
-  FaPhone,
-  FaEnvelope,
-  FaMapMarkerAlt,
-  FaWhatsapp,
-} from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
+import { API } from "../../api/config";
+import AuthModals from "../../components/AuthModals";
 
 const Contact = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    subject: "",
-    message: "",
+    kosan_id: "",
+    isi_pengaduan: "",
   });
-  const [status, setStatus] = useState({ type: "", message: "" });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [kosanList, setKosanList] = useState([]);
+  const [showLogin, setShowLogin] = useState(false);
+  const [showRegister, setShowRegister] = useState(false);
 
-  const handleSubmit = (e) => {
+  useEffect(() => {
+    checkAuth();
+  }, []);
+
+  const checkAuth = () => {
+    const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
+    if (!isLoggedIn) {
+      setShowLogin(true);
+    } else {
+      fetchKosanList();
+    }
+  };
+
+  const handleClose = () => {
+    setShowLogin(false);
+    setShowRegister(false);
+  };
+
+  const handleSwitch = (type) => {
+    if (type === "login") {
+      setShowRegister(false);
+      setShowLogin(true);
+    } else {
+      setShowLogin(false);
+      setShowRegister(true);
+    }
+  };
+
+  const fetchKosanList = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem("token");
+      const userId = localStorage.getItem("userId");
+
+      if (!token || !userId) {
+        throw new Error("Silakan login terlebih dahulu");
+      }
+
+      // Add timeout for better error handling
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+      const response = await API.get("/kosans", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (response.data?.data) {
+        setKosanList(response.data.data);
+        setError("");
+      } else {
+        throw new Error("Data kos tidak ditemukan");
+      }
+    } catch (err) {
+      console.error("Error fetching kos list:", err);
+
+      if (err.name === "AbortError") {
+        setError("Koneksi timeout. Silakan coba lagi.");
+      } else if (err.response?.status === 401) {
+        setError("Sesi anda telah berakhir. Silakan login kembali.");
+      } else if (err.response?.status === 404) {
+        setError("Data kos tidak ditemukan.");
+      } else if (err.response?.data?.message) {
+        setError(`Gagal memuat daftar kos: ${err.response.data.message}`);
+      } else {
+        setError("Gagal memuat daftar kos. Silakan coba lagi nanti.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Here you would typically send the form data to your backend
-    setStatus({
-      type: "success",
-      message: "Pesan Anda telah terkirim. Kami akan segera menghubungi Anda.",
-    });
-    setFormData({ name: "", email: "", subject: "", message: "" });
-  };
+    setLoading(true);
+    setError("");
+    setSuccess("");
 
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
-  };
+    try {
+      const userId = localStorage.getItem("userId");
+      if (!userId) {
+        throw new Error("User ID not found");
+      }
 
-  const contactInfo = [
-    {
-      icon: <FaPhone className="text-primary" size={24} />,
-      title: "Telepon",
-      content: "(021) 1234-5678",
-      link: "tel:+622112345678",
-    },
-    {
-      icon: <FaWhatsapp className="text-primary" size={24} />,
-      title: "WhatsApp",
-      content: "+62 812-3456-7890",
-      link: "https://wa.me/6281234567890",
-    },
-    {
-      icon: <FaEnvelope className="text-primary" size={24} />,
-      title: "Email",
-      content: "info@kosapp.com",
-      link: "mailto:info@kosapp.com",
-    },
-    {
-      icon: <FaMapMarkerAlt className="text-primary" size={24} />,
-      title: "Alamat",
-      content: "Jl. Example No. 123, Jakarta",
-      link: "https://maps.google.com",
-    },
-  ];
+      const response = await API.post("/pengaduans", {
+        ...formData,
+        user_id: userId,
+        status: "menunggu",
+      });
+
+      setSuccess("Feedback berhasil dikirim!");
+      setFormData({ kosan_id: "", isi_pengaduan: "" });
+    } catch (err) {
+      setError(err.response?.data?.message || "Gagal mengirim pengaduan");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <div className="bg-light min-vh-100">
+    <>
       <Container className="py-5">
-        {/* Hero Section */}
-        <Row className="justify-content-center mb-5">
-          <Col md={8} className="text-center">
-            <h1 className="display-4 fw-bold mb-4">Hubungi Kami</h1>
-            <p className="lead text-muted">
-              Kami siap membantu Anda 24/7. Silakan hubungi kami melalui form di
-              bawah ini atau melalui kontak yang tersedia.
-            </p>
-          </Col>
-        </Row>
-
-        {/* Contact Info Cards */}
-        <Row className="justify-content-center mb-5">
-          {contactInfo.map((info, index) => (
-            <Col key={index} md={3} sm={6} className="mb-4">
-              <Card className="h-100 border-0 shadow-sm hover-shadow transition-all">
-                <Card.Body className="text-center p-4">
-                  <div className="mb-3">{info.icon}</div>
-                  <h5 className="fw-bold mb-2">{info.title}</h5>
-                  <a
-                    href={info.link}
-                    className="text-decoration-none text-muted"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    {info.content}
-                  </a>
-                </Card.Body>
-              </Card>
-            </Col>
-          ))}
-        </Row>
-
-        {/* Contact Form */}
         <Row className="justify-content-center">
           <Col md={8}>
-            <Card className="border-0 shadow">
-              <Card.Body className="p-5">
-                <h3 className="text-center mb-4">Kirim Pesan</h3>
+            <Card className="shadow-sm">
+              <Card.Body>
+                <h2 className="mb-4">Formulir Feedback</h2>
 
-                {status.message && (
-                  <Alert
-                    variant={status.type === "success" ? "success" : "danger"}
-                    className="mb-4"
-                  >
-                    {status.message}
-                  </Alert>
-                )}
+                {error && <Alert variant="danger">{error}</Alert>}
+                {success && <Alert variant="success">{success}</Alert>}
 
                 <Form onSubmit={handleSubmit}>
-                  <Row>
-                    <Col md={6}>
-                      <Form.Group className="mb-4">
-                        <Form.Label className="fw-semibold">Nama</Form.Label>
-                        <Form.Control
-                          type="text"
-                          name="name"
-                          value={formData.name}
-                          onChange={handleChange}
-                          required
-                          className="py-2"
-                          placeholder="Masukkan nama lengkap"
-                        />
-                      </Form.Group>
-                    </Col>
-                    <Col md={6}>
-                      <Form.Group className="mb-4">
-                        <Form.Label className="fw-semibold">Email</Form.Label>
-                        <Form.Control
-                          type="email"
-                          name="email"
-                          value={formData.email}
-                          onChange={handleChange}
-                          required
-                          className="py-2"
-                          placeholder="Masukkan alamat email"
-                        />
-                      </Form.Group>
-                    </Col>
-                  </Row>
-
-                  <Form.Group className="mb-4">
-                    <Form.Label className="fw-semibold">Subjek</Form.Label>
-                    <Form.Control
-                      type="text"
-                      name="subject"
-                      value={formData.subject}
-                      onChange={handleChange}
+                  <Form.Group className="mb-3">
+                    <Form.Label>Pilih Kos</Form.Label>
+                    <Form.Select
+                      value={formData.kosan_id}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          kosan_id: e.target.value,
+                        }))
+                      }
                       required
-                      className="py-2"
-                      placeholder="Masukkan subjek pesan"
-                    />
+                    >
+                      <option value="">Pilih Kos</option>
+                      {kosanList.map((kos) => (
+                        <option key={kos.id} value={kos.id}>
+                          {kos.nama_kosan}
+                        </option>
+                      ))}
+                    </Form.Select>
                   </Form.Group>
 
-                  <Form.Group className="mb-4">
-                    <Form.Label className="fw-semibold">Pesan</Form.Label>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Isi Feedback</Form.Label>
                     <Form.Control
                       as="textarea"
-                      rows={5}
-                      name="message"
-                      value={formData.message}
-                      onChange={handleChange}
+                      rows={4}
+                      value={formData.isi_pengaduan}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          isi_pengaduan: e.target.value,
+                        }))
+                      }
+                      placeholder="Tulis pengaduan Anda di sini..."
                       required
-                      className="py-2"
-                      placeholder="Tulis pesan Anda di sini..."
                     />
                   </Form.Group>
 
-                  <Button
-                    type="submit"
-                    variant="primary"
-                    size="lg"
-                    className="w-100 py-3"
-                  >
-                    Kirim Pesan
+                  <Button type="submit" disabled={loading} className="w-100">
+                    {loading ? (
+                      <>
+                        <Spinner size="sm" className="me-2" />
+                        Mengirim...
+                      </>
+                    ) : (
+                      "Kirim Pengaduan"
+                    )}
                   </Button>
                 </Form>
               </Card.Body>
@@ -193,7 +196,18 @@ const Contact = () => {
           </Col>
         </Row>
       </Container>
-    </div>
+
+      <AuthModals
+        showLogin={showLogin}
+        showRegister={showRegister}
+        handleClose={handleClose}
+        handleSwitch={handleSwitch}
+        onLoginSuccess={() => {
+          handleClose();
+          fetchKosanList();
+        }}
+      />
+    </>
   );
 };
 

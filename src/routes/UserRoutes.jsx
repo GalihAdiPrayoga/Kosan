@@ -4,8 +4,8 @@ import SearchUser from "../pages/User/SearchUser";
 import DetailKosUser from "../pages/User/DetailKosUser";
 import BookingKosUser from "../pages/User/BookingKosUser";
 import Contact from "../pages/User/Contact";
-import UserGuard from "./UserGuard";
 import PaymentHistory from "../pages/User/PesananHistory";
+import UserGuard from "./UserGuard";
 
 const UserRoutes = [
   {
@@ -49,7 +49,7 @@ const UserRoutes = [
     ),
   },
   {
-    path: "/payments/history",
+    path: "/payment-history",
     element: (
       <UserGuard>
         <PaymentHistory />

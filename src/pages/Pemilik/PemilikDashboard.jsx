@@ -1,5 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { Container, Row, Col, Card, Button } from "react-bootstrap";
+import {
+  Container,
+  Row,
+  Col,
+  Card,
+  Button,
+  Spinner,
+  Alert,
+} from "react-bootstrap";
 import { Link } from "react-router-dom";
 import { FaHome, FaUsers, FaMoneyBillWave, FaClock } from "react-icons/fa";
 import { API } from "../../api/config";
@@ -11,7 +19,6 @@ const PemilikDashboard = () => {
     totalPendapatan: 0,
     bookingPending: 0,
   });
-
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -21,56 +28,69 @@ const PemilikDashboard = () => {
 
   const fetchDashboardData = async () => {
     try {
-      const response = await API.get("/db.json");
       const userId = localStorage.getItem("userId");
-      const data = response.data;
+      if (!userId) {
+        throw new Error("User ID not found");
+      }
 
-      // Filter kos by owner ID
-      const ownerKos = data.kos.filter(
-        (kos) => kos.adminId.toString() === userId
-      );
+      // Fetch kos data owned by the user
+      const kosResponse = await API.get(`/kosans/owner/${userId}`);
+      const kosData = kosResponse.data.data || [];
+
+      // Fetch payments data
+      const paymentsResponse = await API.get(`/pembayarans/accepted/${userId}`);
+      const paymentsData = paymentsResponse.data.data || [];
 
       // Calculate statistics
-      const stats = {
-        totalKos: ownerKos.length,
-        totalPenghuni: calculateTotalPenghuni(data.bookings, ownerKos),
-        totalPendapatan: calculateTotalPendapatan(data.payments, ownerKos),
-        bookingPending: calculatePendingBookings(data.bookings, ownerKos),
-      };
+      const totalKos = kosData.length;
+      const totalPendapatan = paymentsData.reduce(
+        (sum, payment) => sum + payment.total_harga,
+        0
+      );
+      const totalPenghuni = paymentsData.filter(
+        (payment) => payment.status === "diterima"
+      ).length;
+      const bookingPending = paymentsData.filter(
+        (payment) => payment.status === "pending"
+      ).length;
 
-      setStats(stats);
-      setLoading(false);
-    } catch (error) {
-      setError("Failed to load dashboard data");
+      setStats({
+        totalKos,
+        totalPenghuni,
+        totalPendapatan,
+        bookingPending,
+      });
+
+      setError(null);
+    } catch (err) {
+      console.error("Error fetching dashboard data:", err);
+      setError(
+        "Gagal memuat data dashboard: " +
+          (err.response?.data?.message || err.message)
+      );
+    } finally {
       setLoading(false);
     }
   };
 
-  const calculateTotalPenghuni = (bookings, ownerKos) => {
-    const kosIds = ownerKos.map((kos) => kos.id);
-    return bookings.filter(
-      (booking) =>
-        kosIds.includes(booking.kosId) && booking.status === "confirmed"
-    ).length;
-  };
+  if (loading) {
+    return (
+      <Container
+        className="d-flex justify-content-center align-items-center"
+        style={{ minHeight: "80vh" }}
+      >
+        <Spinner animation="border" variant="primary" />
+      </Container>
+    );
+  }
 
-  const calculateTotalPendapatan = (payments, ownerKos) => {
-    const kosIds = ownerKos.map((kos) => kos.id);
-    return payments
-      .filter(
-        (payment) =>
-          kosIds.includes(payment.kosId) && payment.status === "completed"
-      )
-      .reduce((sum, payment) => sum + payment.amount, 0);
-  };
-
-  const calculatePendingBookings = (bookings, ownerKos) => {
-    const kosIds = ownerKos.map((kos) => kos.id);
-    return bookings.filter(
-      (booking) =>
-        kosIds.includes(booking.kosId) && booking.status === "pending"
-    ).length;
-  };
+  if (error) {
+    return (
+      <Container className="py-4">
+        <Alert variant="danger">{error}</Alert>
+      </Container>
+    );
+  }
 
   return (
     <Container fluid className="py-4">

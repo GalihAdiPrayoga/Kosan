@@ -3,9 +3,10 @@ import { Route, Navigate, Outlet } from "react-router-dom";
 import { useEffect, useState } from "react";
 import DashboardAdmin from "../pages/Admin/DashboardAdmin";
 import ItemListAdmin from "../pages/admin/ItemListAdmin";
-import DetailKosAdmin from "../pages/admin/DetailkosAdmin"; // Fix import name
-import PaymentsAdmin from "../pages/Admin/PaymentsAdmin";
+import DetailKosAdmin from "../pages/admin/DetailkosAdmin";
+import PaymentsAdmin from "../pages/admin/PaymentsAdmin";
 import ManageUsers from "../pages/admin/ManageUsers";
+import FeedbackAdmin from "../pages/Admin/FeedbackAdmin";
 import AdminNavbar from "../components/AdminNavbar";
 
 // Reusable ProtectedRoute like PemilikRoutes
@@ -68,10 +69,10 @@ const AdminRoutes = [
     <Route index element={<Navigate to="dashboard" replace />} />
     <Route path="dashboard" element={<DashboardAdmin />} />
     <Route path="kos" element={<ItemListAdmin />} />
-    <Route path="kos/detail/:id" element={<DetailKosAdmin />} />{" "}
-    {/* Fix route path and component */}
+    <Route path="kos/detail/:id" element={<DetailKosAdmin />} />
     <Route path="payments" element={<PaymentsAdmin />} />
     <Route path="users" element={<ManageUsers />} />
+    <Route path="feedback" element={<FeedbackAdmin />} />
   </Route>,
 ];
 

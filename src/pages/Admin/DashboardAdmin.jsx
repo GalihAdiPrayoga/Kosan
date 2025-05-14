@@ -1,17 +1,81 @@
 import React, { useState, useEffect } from "react";
-import { Spinner } from "react-bootstrap";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { Container, Row, Col, Card, Spinner, Alert } from "react-bootstrap";
 import {
-  faHome,
-  faUsers,
-  faMoneyBillWave,
-  faClock,
-  faExclamationCircle,
-  faChartLine,
-  faBell,
-  faCalendarCheck,
-} from "@fortawesome/free-solid-svg-icons";
+  FaHome,
+  FaUsers,
+  FaMoneyBillWave,
+  FaClock,
+  FaChartLine,
+} from "react-icons/fa";
 import { API } from "../../api/config";
+
+const StatCard = ({ title, value, icon, color }) => (
+  <Col xs={12} sm={6} md={3}>
+    <Card className="h-100 shadow-sm">
+      <Card.Body>
+        <div className="d-flex align-items-center">
+          <div className={`rounded-circle p-3 bg-${color} bg-opacity-10 me-3`}>
+            <div className={`text-${color}`}>{icon}</div>
+          </div>
+          <div>
+            <h6 className="mb-1 text-muted">{title}</h6>
+            <h4 className="mb-0 fw-bold">{value}</h4>
+          </div>
+        </div>
+      </Card.Body>
+    </Card>
+  </Col>
+);
+
+const SummaryCard = ({ stats }) => (
+  <Card className="shadow-sm">
+    <Card.Body>
+      <h5 className="mb-4">Ringkasan</h5>
+      <div className="d-flex justify-content-between mb-3">
+        <span>Total Kos Aktif</span>
+        <span className="fw-bold">{stats.totalKos}</span>
+      </div>
+      <div className="d-flex justify-content-between mb-3">
+        <span>Total Pengguna</span>
+        <span className="fw-bold">{stats.totalUsers}</span>
+      </div>
+      <div className="d-flex justify-content-between mb-3">
+        <span>Pemilik Kos</span>
+        <span className="fw-bold text-danger">{stats.totalPemilik}</span>
+      </div>
+      <div className="d-flex justify-content-between mb-3">
+        <span>Pencari Kos</span>
+        <span className="fw-bold text-info">{stats.totalPencari}</span>
+      </div>
+      <div className="d-flex justify-content-between mb-3">
+        <span>Pembayaran Pending</span>
+        <span className="fw-bold">{stats.pendingPayments}</span>
+      </div>
+      <div className="d-flex justify-content-between">
+        <span>Total Pendapatan</span>
+        <span className="fw-bold text-success">
+          Rp {new Intl.NumberFormat("id-ID").format(stats.totalIncome)}
+        </span>
+      </div>
+    </Card.Body>
+  </Card>
+);
+
+const StatisticsCard = () => (
+  <Card className="shadow-sm">
+    <Card.Body>
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <h5 className="mb-0">
+          <FaChartLine className="me-2" />
+          Statistik Pendapatan
+        </h5>
+      </div>
+      <div className="text-center text-muted py-5">
+        Grafik statistik akan ditampilkan di sini
+      </div>
+    </Card.Body>
+  </Card>
+);
 
 const DashboardAdmin = () => {
   const [stats, setStats] = useState({
@@ -23,33 +87,32 @@ const DashboardAdmin = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Tambahkan state baru
-  const [recentActivities] = useState([
-    { id: 1, text: "Pembayaran baru dari John Doe", time: "5 menit yang lalu" },
-    { id: 2, text: "Pemesanan kamar baru", time: "10 menit yang lalu" },
-    { id: 3, text: "Update status pembayaran", time: "1 jam yang lalu" },
-  ]);
-
-  const [upcomingEvents] = useState([
+  const statCards = [
     {
-      id: 1,
-      title: "Pembayaran Jatuh Tempo",
-      date: "25 Mei 2025",
-      room: "Kamar A1",
+      title: "Total Kos",
+      value: stats.totalKos,
+      icon: <FaHome size={24} />,
+      color: "primary",
     },
     {
-      id: 2,
-      title: "Check-out Penghuni",
-      date: "27 Mei 2025",
-      room: "Kamar B2",
+      title: "Total Pengguna",
+      value: stats.totalUsers,
+      icon: <FaUsers size={24} />,
+      color: "success",
     },
     {
-      id: 3,
-      title: "Maintenance Rutin",
-      date: "30 Mei 2025",
-      room: "Semua Kamar",
+      title: "Total Pendapatan",
+      value: `Rp ${new Intl.NumberFormat("id-ID").format(stats.totalIncome)}`,
+      icon: <FaMoneyBillWave size={24} />,
+      color: "info",
     },
-  ]);
+    {
+      title: "Pembayaran Pending",
+      value: stats.pendingPayments,
+      icon: <FaClock size={24} />,
+      color: "warning",
+    },
+  ];
 
   useEffect(() => {
     fetchDashboardStats();
@@ -58,166 +121,87 @@ const DashboardAdmin = () => {
   const fetchDashboardStats = async () => {
     try {
       setLoading(true);
-      const response = await API.get("/db.json");
-      const data = response.data;
+      const [kosResponse, usersResponse, paymentsResponse] = await Promise.all([
+        API.get("/kosans"),
+        API.get("/users"),
+        API.get("/pembayarans"),
+      ]);
 
-      // Calculate statistics from API data
-      const stats = {
-        totalKos: data.kos.length,
-        totalUsers: data.users.filter((user) => user.role === "user").length,
-        totalIncome: data.payments
-          .filter((payment) => payment.status === "completed")
-          .reduce((sum, payment) => sum + payment.amount, 0),
-        pendingPayments: data.payments.filter(
+      const totalKos = kosResponse.data.data.length;
+
+      // Count users by role
+      const users = usersResponse.data;
+      const totalPemilik = users.filter(
+        (user) => user.role === "pemilik"
+      ).length;
+      const totalPencari = users.filter((user) => user.role === "user").length;
+      const totalUsers = totalPemilik + totalPencari;
+
+      const payments = paymentsResponse.data;
+
+      setStats({
+        totalKos,
+        totalUsers,
+        totalPemilik,
+        totalPencari,
+        totalIncome: payments
+          .filter((payment) => payment.status === "diterima")
+          .reduce((sum, payment) => sum + Number(payment.total_harga), 0),
+        pendingPayments: payments.filter(
           (payment) => payment.status === "pending"
         ).length,
-      };
-
-      setStats(stats);
-    } catch (error) {
-      console.error("Error fetching dashboard stats:", error);
-      setError("Failed to load dashboard statistics");
+      });
+      setError(null);
+    } catch (err) {
+      console.error("Error fetching dashboard stats:", err);
+      setError("Gagal memuat statistik dashboard");
     } finally {
       setLoading(false);
     }
   };
 
-  const cards = [
-    {
-      title: "Total Kos",
-      value: stats.totalKos,
-      icon: faHome,
-      bgColor: "bg-gradient-to-r from-blue-500 to-blue-700",
-    },
-    {
-      title: "Total Pengguna",
-      value: stats.totalUsers,
-      icon: faUsers,
-      bgColor: "bg-gradient-to-r from-green-500 to-green-700",
-    },
-    {
-      title: "Total Pendapatan",
-      value: `Rp ${stats.totalIncome.toLocaleString("id-ID")}`,
-      icon: faMoneyBillWave,
-      bgColor: "bg-gradient-to-r from-cyan-500 to-cyan-700",
-    },
-    {
-      title: "Transaksi Pending",
-      value: stats.pendingPayments,
-      icon: faClock,
-      bgColor: "bg-gradient-to-r from-yellow-500 to-yellow-700",
-    },
-  ];
-
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[300px]">
+      <div className="d-flex justify-content-center align-items-center min-vh-100">
         <Spinner animation="border" variant="primary" />
-        <p className="mt-2">Loading dashboard...</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="my-3 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
-        <FontAwesomeIcon icon={faExclamationCircle} className="mr-2" />
-        {error}
-      </div>
+      <Container fluid className="py-4">
+        <Alert variant="danger">{error}</Alert>
+      </Container>
     );
   }
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
-      {/* Header Section */}
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold text-gray-800">Dashboard Admin</h2>
-        <p className="text-gray-600">Selamat datang di panel kontrol admin</p>
+    <Container fluid className="py-4">
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h2 className="mb-1">Dashboard Admin</h2>
+          <p className="text-muted mb-0">
+            Selamat datang di panel kontrol admin
+          </p>
+        </div>
       </div>
 
-      {/* Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {cards.map((card, index) => (
-          <div
-            key={index}
-            className="transform transition-all duration-200 hover:-translate-y-1"
-          >
-            <div className={`rounded-lg shadow-lg ${card.bgColor}`}>
-              <div className="p-5">
-                <div className="flex justify-between items-center">
-                  <div className="text-white">
-                    <div className="text-xs font-semibold uppercase tracking-wide mb-1">
-                      {card.title}
-                    </div>
-                    <div className="text-2xl font-bold">{card.value}</div>
-                  </div>
-                  <div className="text-white opacity-80 hover:opacity-100 transition-opacity">
-                    <FontAwesomeIcon icon={card.icon} size="2x" />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+      <Row className="g-4 mb-4">
+        {statCards.map((card, index) => (
+          <StatCard key={index} {...card} />
         ))}
-      </div>
+      </Row>
 
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Chart Section */}
-        <div className="lg:col-span-2 bg-white rounded-lg shadow-lg p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-800">
-              <FontAwesomeIcon icon={faChartLine} className="mr-2" />
-              Grafik Pendapatan
-            </h3>
-            <select className="border rounded-md px-3 py-1 text-sm">
-              <option>7 Hari Terakhir</option>
-              <option>30 Hari Terakhir</option>
-              <option>1 Tahun</option>
-            </select>
-          </div>
-          <div className="h-64 bg-gray-50 rounded flex items-center justify-center">
-            <p className="text-gray-500">Area Grafik</p>
-          </div>
-        </div>
-
-        {/* Recent Activities Section */}
-        <div className="bg-white rounded-lg shadow-lg p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">
-            <FontAwesomeIcon icon={faBell} className="mr-2" />
-            Aktivitas Terbaru
-          </h3>
-          <div className="space-y-4">
-            {recentActivities.map((activity) => (
-              <div key={activity.id} className="border-b pb-3 last:border-0">
-                <p className="text-gray-700">{activity.text}</p>
-                <span className="text-sm text-gray-500">{activity.time}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Upcoming Events Section */}
-        <div className="lg:col-span-3 bg-white rounded-lg shadow-lg p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">
-            <FontAwesomeIcon icon={faCalendarCheck} className="mr-2" />
-            Agenda Mendatang
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {upcomingEvents.map((event) => (
-              <div
-                key={event.id}
-                className="border rounded-lg p-4 hover:shadow-md transition-shadow"
-              >
-                <h4 className="font-semibold text-gray-700">{event.title}</h4>
-                <p className="text-sm text-gray-500">{event.date}</p>
-                <p className="text-sm text-gray-600 mt-1">{event.room}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
+      <Row className="g-4">
+        <Col lg={8}>
+          <StatisticsCard />
+        </Col>
+        <Col lg={4}>
+          <SummaryCard stats={stats} />
+        </Col>
+      </Row>
+    </Container>
   );
 };
 

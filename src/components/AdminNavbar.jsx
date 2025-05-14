@@ -8,6 +8,7 @@ import {
   FaUsers,
   FaSignOutAlt,
   FaUserCircle,
+  FaComments, // Add this import
 } from "react-icons/fa";
 
 const AdminNavbar = () => {
@@ -90,6 +91,15 @@ const AdminNavbar = () => {
             >
               <FaUsers className="me-2" />
               Pengguna
+            </Nav.Link>
+            <Nav.Link
+              as={Link}
+              to="/admin/feedback"
+              onClick={handleNavigation}
+              className={`nav-link px-3 ${isActive("feedback")}`}
+            >
+              <FaComments className="me-2" />
+              Feedback
             </Nav.Link>
           </Nav>
 

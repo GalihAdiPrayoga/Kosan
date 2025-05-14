@@ -309,7 +309,11 @@ const DetailKosUser = () => {
                           <small>Pemilik Kos</small>
                         </p>
                         <div className="d-flex gap-2">
-                          <Badge bg="light" text="dark">
+                          <Badge
+                            bg="light"
+                            text="dark"
+                            style={{ cursor: "default" }}
+                          >
                             <FaWhatsapp className="me-1" />
                             {pemilik.phone}
                           </Badge>
@@ -340,7 +344,7 @@ const DetailKosUser = () => {
                 <Button
                   variant="primary"
                   size="lg"
-                  className="w-100 mb-3"
+                  className="w-100 mb-3 rounded-pill"
                   onClick={handleBookingClick}
                 >
                   {isLoggedIn ? "Booking Sekarang" : "Login untuk Booking"}
@@ -350,10 +354,10 @@ const DetailKosUser = () => {
                   <Button
                     variant="success"
                     size="lg"
-                    className="w-100 d-flex align-items-center justify-content-center gap-2"
+                    className="w-100 d-flex align-items-center justify-content-center gap-2 rounded-pill"
                     onClick={handleWhatsAppClick}
                   >
-                    <FaWhatsapp size={24} />
+                    <FaWhatsapp size={20} />
                     <span>Chat via WhatsApp</span>
                   </Button>
                 )}
@@ -363,6 +367,7 @@ const DetailKosUser = () => {
                     <p className="text-muted mb-2">Belum punya akun?</p>
                     <Button
                       variant="outline-primary"
+                      className="rounded-pill px-4 py-2"
                       onClick={() => setShowRegister(true)}
                     >
                       Daftar Sekarang
