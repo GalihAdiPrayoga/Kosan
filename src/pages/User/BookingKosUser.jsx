@@ -7,6 +7,8 @@ import {
   Card,
   Button,
   Alert,
+  Toast,
+  ToastContainer,
 } from "react-bootstrap";
 import { useParams, useNavigate } from "react-router-dom";
 import { API } from "../../api/config";
@@ -25,6 +27,9 @@ const BookingKosUser = () => {
     duration: 1, // Changed from "1" to 1
     paymentProof: null,
   });
+
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
 
   // Fetch kos detail and user data
   useEffect(() => {
@@ -112,7 +117,20 @@ const BookingKosUser = () => {
         },
       });
 
-      navigate("/payments/history");
+      // Show success toast
+      setToastMessage("Berhasil membuat pesanan!");
+      setShowToast(true);
+
+      // Reset form
+      setBookingData({
+        startDate: new Date().toISOString().split("T")[0],
+        duration: 1,
+        paymentProof: null,
+      });
+
+      // Reset file input
+      const fileInput = document.querySelector('input[type="file"]');
+      if (fileInput) fileInput.value = "";
     } catch (err) {
       setError(
         "Gagal melakukan pemesanan: " +
@@ -225,6 +243,21 @@ const BookingKosUser = () => {
           </Card>
         </Col>
       </Row>
+
+      <ToastContainer position="top-end" className="p-3">
+        <Toast
+          show={showToast}
+          onClose={() => setShowToast(false)}
+          delay={3000}
+          autohide
+          bg="success"
+        >
+          <Toast.Header closeButton={false}>
+            <strong className="me-auto">Notifikasi</strong>
+          </Toast.Header>
+          <Toast.Body className="text-white">{toastMessage}</Toast.Body>
+        </Toast>
+      </ToastContainer>
     </Container>
   );
 };

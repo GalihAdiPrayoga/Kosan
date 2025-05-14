@@ -102,13 +102,9 @@ const UserNavbar = () => {
                   align="end"
                   className="px-2"
                 >
-                  <NavDropdown.Item as={Link} to="/profile">
-                    <i className="bi bi-person me-2"></i>
-                    Profil Saya
-                  </NavDropdown.Item>
-                  <NavDropdown.Item as={Link} to="/bookings">
-                    <i className="bi bi-calendar-check me-2"></i>
-                    Pesanan Saya
+                  <NavDropdown.Item as={Link} to="/payment-history">
+                    <i className="bi bi-receipt me-2"></i>
+                    Riwayat Pembayaran
                   </NavDropdown.Item>
                   <NavDropdown.Divider />
                   <NavDropdown.Item onClick={handleLogout}>

@@ -1,10 +1,11 @@
+import React from "react";
 import { Routes, Route } from "react-router-dom";
 import UserRoutes from "./UserRoutes";
 import AdminRoutes from "./AdminRoutes";
 import PemilikRoutes from "./PemilikRoutes";
 import NavbarManager from "../components/NavbarManager";
-import PaymentsAdmin from "../pages/Admin/PaymentsAdmin";
-import PaymentHistory from "../pages/Pemilik/PaymentHistory";
+import PaymentsAdmin from "../pages/admin/PaymentsAdmin";
+import PaymentHistory from "../pages/User/PesananHistory";
 import ProtectedRoute from "../components/ProtectedRoute";
 
 const AppRoutes = () => {
@@ -33,6 +34,15 @@ const AppRoutes = () => {
           path="/pemilik/payments"
           element={
             <ProtectedRoute allowedRoles={["pemilik"]}>
+              <PaymentHistory />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/payment-history"
+          element={
+            <ProtectedRoute allowedRoles={["user"]}>
               <PaymentHistory />
             </ProtectedRoute>
           }
