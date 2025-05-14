@@ -9,6 +9,7 @@ import {
   Alert,
 } from "react-bootstrap";
 import { API } from "../../api/config";
+import { FaCheck, FaTimes, FaSpinner } from "react-icons/fa";
 
 const BookingList = () => {
   const [bookings, setBookings] = useState([]);
@@ -71,83 +72,144 @@ const BookingList = () => {
   }
 
   return (
-    <Container fluid className="py-4">
-      <Card className="shadow-sm">
-        <Card.Body>
-          <h2 className="mb-4">Daftar Booking</h2>
+    <Container fluid className="py-4 px-4">
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <h2 className="mb-0 fw-bold">Kelola Booking</h2>
+      </div>
 
-          {error && (
-            <Alert variant="danger" className="mb-4">
-              {error}
-            </Alert>
-          )}
+      {error && (
+        <Alert variant="danger" className="mb-4">
+          {error}
+        </Alert>
+      )}
 
+      <Card className="shadow-sm border-0">
+        <Card.Body className="p-4">
           {bookings.length === 0 ? (
-            <Alert variant="info">Belum ada booking</Alert>
+            <div className="text-center py-5">
+              <div className="d-flex flex-column align-items-center">
+                <div className="mb-3">
+                  <FaSpinner
+                    size={64}
+                    className="text-muted"
+                    style={{ opacity: 0.5 }}
+                  />
+                </div>
+                <div>
+                  <h5 className="text-muted mb-1">Belum Ada Booking</h5>
+                  <p
+                    className="text-muted mb-0"
+                    style={{ fontSize: "0.9rem" }}
+                  >
+                    Tidak ada data booking yang tersedia saat ini
+                  </p>
+                </div>
+              </div>
+            </div>
           ) : (
-            <Table responsive hover>
+            <Table hover className="mb-0">
               <thead>
-                <tr>
-                  <th>Kos</th>
-                  <th>Pemesan</th>
-                  <th>No. Telepon</th>
-                  <th>Tanggal Mulai</th>
-                  <th>Durasi</th>
-                  <th>Total Harga</th>
-                  <th>Status</th>
-                  <th>Actions</th>
+                <tr className="bg-light">
+                  <th className="py-3 px-2" style={{ width: "5%" }}>
+                    No
+                  </th>
+                  <th className="py-3 px-2" style={{ width: "20%" }}>
+                    Kos
+                  </th>
+                  <th className="py-3 px-2" style={{ width: "15%" }}>
+                    Pemesan
+                  </th>
+                  <th className="py-3 px-2" style={{ width: "15%" }}>
+                    No. Telepon
+                  </th>
+                  <th className="py-3 px-2" style={{ width: "12%" }}>
+                    Tanggal Mulai
+                  </th>
+                  <th className="py-3 px-2" style={{ width: "10%" }}>
+                    Durasi
+                  </th>
+                  <th className="py-3 px-2" style={{ width: "13%" }}>
+                    Total Harga
+                  </th>
+                  <th className="py-3 px-2" style={{ width: "10%" }}>
+                    Status
+                  </th>
+                  <th className="py-3 px-2" style={{ width: "15%" }}>
+                    Aksi
+                  </th>
                 </tr>
               </thead>
               <tbody>
-                {bookings.map((booking) => (
-                  <tr key={booking.id}>
-                    <td>{booking.kosName}</td>
-                    <td>{booking.userName}</td>
-                    <td>{booking.userPhone}</td>
-                    <td>
+                {bookings.map((booking, index) => (
+                  <tr key={booking.id} className="align-middle">
+                    <td className="py-3 px-2">{index + 1}</td>
+                    <td className="py-3 px-2">
+                      <div className="text-truncate fw-medium">
+                        {booking.kosName}
+                      </div>
+                    </td>
+                    <td className="py-3 px-2">
+                      <div className="text-truncate">{booking.userName}</div>
+                    </td>
+                    <td className="py-3 px-2">
+                      <div className="text-truncate">
+                        {booking.userPhone || "-"}
+                      </div>
+                    </td>
+                    <td className="py-3 px-2">
                       {new Date(booking.startDate).toLocaleDateString("id-ID")}
                     </td>
-                    <td>{booking.durasi_sewa} bulan</td>
-                    <td>
-                      Rp{" "}
-                      {new Intl.NumberFormat("id-ID").format(
-                        booking.total_harga
-                      )}
+                    <td className="py-3 px-2">
+                      <span className="fw-medium">
+                        {booking.durasi_sewa} bulan
+                      </span>
                     </td>
-                    <td>
-                      <Badge
-                        bg={
+                    <td className="py-3 px-2">
+                      <span className="fw-medium">
+                        Rp{" "}
+                        {new Intl.NumberFormat("id-ID").format(booking.total_harga)}
+                      </span>
+                    </td>
+                    <td className="py-3 px-2">
+                      <span
+                        className={`badge bg-${
                           booking.status === "confirmed"
                             ? "success"
                             : booking.status === "pending"
                             ? "warning"
                             : "danger"
-                        }
+                        }`}
                       >
-                        {booking.status}
-                      </Badge>
+                        {booking.status === "confirmed"
+                          ? "Dikonfirmasi"
+                          : booking.status === "pending"
+                          ? "Menunggu"
+                          : "Ditolak"}
+                      </span>
                     </td>
-                    <td>
+                    <td className="py-3 px-2">
                       {booking.status === "pending" && (
                         <div className="d-flex gap-2">
                           <Button
-                            variant="success"
+                            variant="outline-success"
                             size="sm"
                             onClick={() =>
                               handleStatusUpdate(booking.id, "confirmed")
                             }
                             disabled={booking.paymentStatus !== "completed"}
+                            title="Terima"
                           >
-                            Accept
+                            <FaCheck />
                           </Button>
                           <Button
-                            variant="danger"
+                            variant="outline-danger"
                             size="sm"
                             onClick={() =>
                               handleStatusUpdate(booking.id, "rejected")
                             }
+                            title="Tolak"
                           >
-                            Reject
+                            <FaTimes />
                           </Button>
                         </div>
                       )}

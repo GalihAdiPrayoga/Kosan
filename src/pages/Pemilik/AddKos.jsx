@@ -368,7 +368,7 @@ const AddKos = () => {
                 </Row>
 
                 <Form.Group controlId="galeri" className="mb-4">
-                  <Form.Label>Upload Foto Kos (Maksimal 5 foto)</Form.Label>
+                  <Form.Label>Upload Foto Kos</Form.Label>
                   <div className="mb-2">
                     <small className="text-muted">
                       Format yang didukung: JPG, JPEG, PNG (Maks. 2MB per foto)
