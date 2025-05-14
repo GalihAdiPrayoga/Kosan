@@ -49,6 +49,7 @@ const EditKos = () => {
 
         const kosData = kosResponse.data;
 
+        // Set form data
         setFormData({
           nama_kosan: kosData.nama_kosan || "",
           alamat: kosData.alamat || "",
@@ -56,6 +57,7 @@ const EditKos = () => {
           harga_per_bulan: kosData.harga_per_bulan?.toString() || "",
           jumlah_kamar: kosData.jumlah_kamar?.toString() || "",
           kategori_id: kosData.kategori_id?.toString() || "",
+          galeri: [],
         });
 
         // Handle existing images
@@ -68,9 +70,13 @@ const EditKos = () => {
           setExistingImages(images);
         }
 
-        // Set selected facilities
-        if (kosData.fasilitas) {
-          setSelectedFacilities(kosData.fasilitas.map((f) => f.id));
+        // Set selected facilities - Make sure this properly handles the facility IDs
+        if (kosData.fasilitas && Array.isArray(kosData.fasilitas)) {
+          // Extract facility IDs and ensure they are numbers
+          const facilityIds = kosData.fasilitas.map((f) =>
+            typeof f === "object" ? Number(f.id) : Number(f)
+          );
+          setSelectedFacilities(facilityIds);
         }
 
         setCategories(categoriesResponse.data);
@@ -96,23 +102,43 @@ const EditKos = () => {
 
   const handleFacilityChange = (facilityId) => {
     setSelectedFacilities((prev) => {
-      if (prev.includes(facilityId)) {
-        return prev.filter((id) => id !== facilityId);
+      // Ensure we're working with numbers
+      const id = Number(facilityId);
+      if (prev.includes(id)) {
+        return prev.filter((prevId) => prevId !== id);
       }
-      return [...prev, facilityId];
+      return [...prev, id];
     });
   };
 
   // Perbaikan handleImageChange
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
+
+    // Validasi ukuran dan tipe file
+    const validFiles = files.filter((file) => {
+      const isValidType = ["image/jpeg", "image/png", "image/jpg"].includes(
+        file.type
+      );
+      const isValidSize = file.size <= 2 * 1024 * 1024; // 2MB
+      return isValidType && isValidSize;
+    });
+
+    if (validFiles.length !== files.length) {
+      setError(
+        "Beberapa file tidak valid. Pastikan format JPG/PNG dan ukuran max 2MB"
+      );
+      return;
+    }
+
+    // Update formData dengan file baru
     setFormData((prev) => ({
       ...prev,
-      galeri: prev.galeri ? [...prev.galeri, ...files] : [...files], // Tambahkan pengecekan
+      galeri: prev.galeri ? [...prev.galeri, ...validFiles] : validFiles,
     }));
 
-    // Create preview URLs
-    files.forEach((file) => {
+    // Generate preview untuk setiap file
+    validFiles.forEach((file) => {
       const reader = new FileReader();
       reader.onloadend = () => {
         setPreviewImages((prev) => [...prev, reader.result]);
@@ -151,24 +177,31 @@ const EditKos = () => {
         }
       });
 
-      // Append new images
+      // Append new images dengan nama yang benar
       if (formData.galeri && formData.galeri.length > 0) {
-        formData.galeri.forEach((file) => {
-          formDataToSend.append("galeri[]", file);
+        formData.galeri.forEach((file, index) => {
+          formDataToSend.append(`galeri[${index}]`, file);
         });
       }
 
-      // Append existing images
-      existingImages.forEach((image) => {
-        formDataToSend.append("existing_images[]", image);
-      });
+      // Append existing images yang tidak dihapus
+      if (existingImages.length > 0) {
+        existingImages.forEach((image, index) => {
+          formDataToSend.append(`existing_images[${index}]`, image);
+        });
+      }
 
       // Append facilities
       if (selectedFacilities.length > 0) {
-        selectedFacilities.forEach((facilityId) => {
-          formDataToSend.append("fasilitas[]", facilityId);
+        selectedFacilities.forEach((facilityId, index) => {
+          formDataToSend.append(`fasilitas[${index}]`, facilityId);
         });
       }
+
+      // Debug untuk melihat isi FormData
+      // for (let pair of formDataToSend.entries()) {
+      //   console.log(pair[0] + ': ' + pair[1]);
+      // }
 
       const response = await API.post(
         `/kosans/${id}?_method=PUT`,
@@ -180,7 +213,9 @@ const EditKos = () => {
         }
       );
 
-      navigate("/pemilik/kos");
+      if (response.data) {
+        navigate("/pemilik/kos");
+      }
     } catch (err) {
       console.error("Error updating kos:", err);
       setError(err.response?.data?.message || "Gagal mengupdate data kos");
@@ -300,27 +335,20 @@ const EditKos = () => {
 
             <Form.Group className="mb-3">
               <Form.Label>Fasilitas</Form.Label>
-              <div className="d-flex flex-wrap gap-2">
+              <Row className="g-3">
                 {facilities.map((facility) => (
-                  <Badge
-                    key={facility.id}
-                    bg={
-                      selectedFacilities.includes(facility.id)
-                        ? "primary"
-                        : "light"
-                    }
-                    text={
-                      selectedFacilities.includes(facility.id)
-                        ? "white"
-                        : "dark"
-                    }
-                    style={{ cursor: "pointer" }}
-                    onClick={() => handleFacilityChange(facility.id)}
-                  >
-                    {facility.nama_fasilitas}
-                  </Badge>
+                  <Col key={facility.id} xs={12} sm={6} md={4} lg={3}>
+                    <Form.Check
+                      type="checkbox"
+                      id={`facility-${facility.id}`}
+                      label={facility.nama_fasilitas}
+                      checked={selectedFacilities.includes(Number(facility.id))}
+                      onChange={() => handleFacilityChange(Number(facility.id))}
+                      className="user-select-none"
+                    />
+                  </Col>
                 ))}
-              </div>
+              </Row>
             </Form.Group>
 
             <Form.Group className="mb-4">
