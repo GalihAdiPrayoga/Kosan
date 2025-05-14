@@ -82,15 +82,7 @@ const PemilikNavbar = () => {
               <FaClipboardList className="me-2" />
               Pemesanan
             </Nav.Link>
-            <Nav.Link
-              as={Link}
-              to="/pemilik/payments"
-              onClick={handleNavigation}
-              className={`nav-link px-3 ${isActive("payments")}`}
-            >
-              <FaMoneyBillWave className="me-2" />
-              Pembayaran
-            </Nav.Link>
+          
           </Nav>
 
           <Nav>

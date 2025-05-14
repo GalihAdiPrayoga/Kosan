@@ -16,49 +16,36 @@ const BookingList = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetchBookings();
+    fetchAcceptedPayments();
   }, []);
 
-  const fetchBookings = async () => {
+  const fetchAcceptedPayments = async () => {
     try {
       const userId = localStorage.getItem("userId");
-      const response = await API.get("/db.json");
-      
-      // Filter kos owned by the current pemilik
-      const ownerKos = response.data.kos.filter(
-        (kos) => kos.pemilikId.toString() === userId
-      );
-      const kosIds = ownerKos.map((kos) => kos.id);
+      const response = await API.get(`/pembayarans/accepted/${userId}`);
 
-      // Get bookings for owner's kos
-      const ownerBookings = response.data.bookings.filter((booking) =>
-        kosIds.includes(booking.kosId)
-      );
+      if (response.data.status === "success") {
+        const payments = response.data.data.map((payment) => ({
+          id: payment.id,
+          kosName: payment.kosan?.nama_kosan || "Unknown Kos",
+          userName: payment.user?.name || "Unknown User",
+          userPhone: payment.user?.nomor || "",
+          startDate: payment.tanggal_bayar,
+          durasi_sewa: payment.durasi_sewa,
+          total_harga: payment.total_harga,
+          status: payment.status,
+          bukti_pembayaran: payment.bukti_pembayaran,
+        }));
 
-      // Enrich booking data with kos and user details
-      const enrichedBookings = await Promise.all(
-        ownerBookings.map(async (booking) => {
-          const kos = ownerKos.find((k) => k.id === booking.kosId);
-          const user = response.data.users.find((u) => u.id === booking.userId);
-          const payment = response.data.payments.find(
-            (p) => p.bookingId === parseInt(booking.id)
-          );
+        setBookings(payments);
+      } else {
+        throw new Error(response.data.message);
+      }
 
-          return {
-            ...booking,
-            kosName: kos?.name || "Unknown Kos",
-            userName: user?.name || "Unknown User",
-            userPhone: user?.phone || "-",
-            paymentStatus: payment?.status || "pending",
-          };
-        })
-      );
-
-      setBookings(enrichedBookings);
       setLoading(false);
     } catch (err) {
-      setError("Failed to fetch bookings");
-      console.error("Failed to fetch bookings:", err);
+      setError("Failed to fetch payments");
+      console.error("Error:", err);
       setLoading(false);
     }
   };
@@ -66,7 +53,7 @@ const BookingList = () => {
   const handleStatusUpdate = async (bookingId, newStatus) => {
     try {
       await API.patch(`/bookings/${bookingId}`, { status: newStatus });
-      fetchBookings(); // Refresh the list
+      fetchAcceptedPayments(); // Refresh the list
     } catch (err) {
       setError("Failed to update booking status");
       console.error("Failed to update booking status:", err);
@@ -88,8 +75,12 @@ const BookingList = () => {
       <Card className="shadow-sm">
         <Card.Body>
           <h2 className="mb-4">Daftar Booking</h2>
-          
-          {error && <Alert variant="danger" className="mb-4">{error}</Alert>}
+
+          {error && (
+            <Alert variant="danger" className="mb-4">
+              {error}
+            </Alert>
+          )}
 
           {bookings.length === 0 ? (
             <Alert variant="info">Belum ada booking</Alert>
@@ -103,8 +94,7 @@ const BookingList = () => {
                   <th>Tanggal Mulai</th>
                   <th>Durasi</th>
                   <th>Total Harga</th>
-                  <th>Status Booking</th>
-                  <th>Status Pembayaran</th>
+                  <th>Status</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -114,10 +104,15 @@ const BookingList = () => {
                     <td>{booking.kosName}</td>
                     <td>{booking.userName}</td>
                     <td>{booking.userPhone}</td>
-                    <td>{new Date(booking.startDate).toLocaleDateString("id-ID")}</td>
-                    <td>{booking.duration} bulan</td>
                     <td>
-                      Rp {new Intl.NumberFormat("id-ID").format(booking.totalPrice)}
+                      {new Date(booking.startDate).toLocaleDateString("id-ID")}
+                    </td>
+                    <td>{booking.durasi_sewa} bulan</td>
+                    <td>
+                      Rp{" "}
+                      {new Intl.NumberFormat("id-ID").format(
+                        booking.total_harga
+                      )}
                     </td>
                     <td>
                       <Badge
@@ -130,17 +125,6 @@ const BookingList = () => {
                         }
                       >
                         {booking.status}
-                      </Badge>
-                    </td>
-                    <td>
-                      <Badge
-                        bg={
-                          booking.paymentStatus === "completed"
-                            ? "success"
-                            : "warning"
-                        }
-                      >
-                        {booking.paymentStatus}
                       </Badge>
                     </td>
                     <td>

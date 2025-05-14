@@ -6,7 +6,7 @@ import ManageKos from "../pages/Pemilik/ManageKos";
 import AddKos from "../pages/Pemilik/AddKos";
 import EditKos from "../pages/Pemilik/EditKos";
 import BookingList from "../pages/Pemilik/BookingList";
-import PaymentHistory from "../pages/Pemilik/PaymentHistory";
+
 
 const PemilikRoutes = [
   <Route
@@ -54,15 +54,7 @@ const PemilikRoutes = [
       </ProtectedRoute>
     }
   />,
-  <Route
-    key="payments"
-    path="/pemilik/payments"
-    element={
-      <ProtectedRoute allowedRoles={["pemilik"]}>
-        <PaymentHistory />
-      </ProtectedRoute>
-    }
-  />,
+
 ];
 
 export default PemilikRoutes;
