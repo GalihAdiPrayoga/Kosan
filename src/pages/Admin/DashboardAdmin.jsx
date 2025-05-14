@@ -8,6 +8,28 @@ import {
   FaChartLine,
 } from "react-icons/fa";
 import { API } from "../../api/config";
+import { Line } from "react-chartjs-2";
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+} from "chart.js";
+
+// Register ChartJS components
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
 const StatCard = ({ title, value, icon, color }) => (
   <Col xs={12} sm={6} md={3}>
@@ -61,21 +83,119 @@ const SummaryCard = ({ stats }) => (
   </Card>
 );
 
-const StatisticsCard = () => (
-  <Card className="shadow-sm">
-    <Card.Body>
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h5 className="mb-0">
-          <FaChartLine className="me-2" />
-          Statistik Pendapatan
-        </h5>
-      </div>
-      <div className="text-center text-muted py-5">
-        Grafik statistik akan ditampilkan di sini
-      </div>
-    </Card.Body>
-  </Card>
-);
+const StatisticsCard = ({ payments }) => {
+  // Process payment data for monthly income
+  const getMonthlyData = () => {
+    const months = [];
+    const values = [];
+    const today = new Date();
+
+    // Create array of last 6 months
+    for (let i = 5; i >= 0; i--) {
+      const month = new Date(today.getFullYear(), today.getMonth() - i, 1);
+      const monthName = month.toLocaleString("id-ID", { month: "short" });
+      months.push(monthName);
+
+      // Calculate total income for each month
+      const monthPayments = payments
+        .filter((payment) => {
+          const paymentDate = new Date(payment.createdAt);
+          return (
+            paymentDate.getMonth() === month.getMonth() &&
+            paymentDate.getFullYear() === month.getFullYear() &&
+            payment.status === "diterima" // Only count accepted payments
+          );
+        })
+        .reduce((sum, payment) => sum + Number(payment.total_harga), 0);
+
+      values.push(monthPayments);
+    }
+    return { months, values };
+  };
+
+  const { months, values } = getMonthlyData();
+
+  const chartData = {
+    labels: months,
+    datasets: [
+      {
+        label: "Pendapatan Bulanan",
+        data: values,
+        fill: true,
+        backgroundColor: "rgba(75, 192, 192, 0.2)",
+        borderColor: "rgb(75, 192, 192)",
+        tension: 0.3,
+        pointRadius: 4,
+        pointBackgroundColor: "rgb(75, 192, 192)",
+      },
+    ],
+  };
+
+  const options = {
+    responsive: true,
+    plugins: {
+      legend: {
+        position: "top",
+      },
+      tooltip: {
+        callbacks: {
+          label: (context) => {
+            const value = context.raw;
+            return `Pendapatan: Rp ${new Intl.NumberFormat("id-ID").format(value)}`;
+          },
+        },
+      },
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        ticks: {
+          callback: (value) => `Rp ${new Intl.NumberFormat("id-ID").format(value)}`,
+        },
+        title: {
+          display: true,
+          text: "Pendapatan (Rp)",
+        },
+      },
+      x: {
+        title: {
+          display: true,
+          text: "Bulan",
+        },
+      },
+    },
+  };
+
+  // Calculate total and average income
+  const totalIncome = values.reduce((sum, value) => sum + value, 0);
+  const averageIncome = totalIncome / values.length;
+
+  return (
+    <Card className="shadow-sm">
+      <Card.Body>
+        <div className="d-flex justify-content-between align-items-center mb-4">
+          <h5 className="mb-0">
+            <FaChartLine className="me-2" />
+            Statistik Pendapatan
+          </h5>
+          <div className="text-end">
+            <div className="small text-muted">Total Pendapatan</div>
+            <div className="fw-bold">
+              Rp {new Intl.NumberFormat("id-ID").format(totalIncome)}
+            </div>
+          </div>
+        </div>
+        <Line data={chartData} options={options} />
+        <div className="mt-3 text-center text-muted">
+          <small>
+            Rata-rata pendapatan bulanan: Rp{" "}
+            {new Intl.NumberFormat("id-ID").format(Math.round(averageIncome))}
+          </small>
+        </div>
+      </Card.Body>
+    </Card>
+  );
+};
 
 const DashboardAdmin = () => {
   const [stats, setStats] = useState({
@@ -86,6 +206,7 @@ const DashboardAdmin = () => {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [payments, setPayments] = useState([]);
 
   const statCards = [
     {
@@ -151,6 +272,7 @@ const DashboardAdmin = () => {
           (payment) => payment.status === "pending"
         ).length,
       });
+      setPayments(payments);
       setError(null);
     } catch (err) {
       console.error("Error fetching dashboard stats:", err);
@@ -195,7 +317,7 @@ const DashboardAdmin = () => {
 
       <Row className="g-4">
         <Col lg={8}>
-          <StatisticsCard />
+          <StatisticsCard payments={payments} />
         </Col>
         <Col lg={4}>
           <SummaryCard stats={stats} />

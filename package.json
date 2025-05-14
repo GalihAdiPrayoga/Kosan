@@ -11,15 +11,21 @@
   "dependencies": {
     "@fortawesome/free-solid-svg-icons": "^6.7.2",
     "@fortawesome/react-fontawesome": "^0.2.2",
+    "@headlessui/react": "^2.2.3",
     "@tailwindcss/aspect-ratio": "^0.4.2",
+    "@tailwindcss/typography": "^0.5.16",
     "@tailwindcss/vite": "^4.1.4",
     "axios": "^1.9.0",
     "bootstrap": "^5.3.2",
+    "chart.js": "^4.4.9",
     "classnames": "^2.5.1",
     "concurrently": "^9.1.2",
+    "daisyui": "^5.0.35",
+    "framer-motion": "^12.11.0",
     "json-server": "^1.0.0-beta.3",
     "react": "^18.2.0",
     "react-bootstrap": "^2.10.0",
+    "react-chartjs-2": "^5.3.0",
     "react-dom": "^18.2.0",
     "react-icons": "^5.5.0",
     "react-router-dom": "^7.6.0",
@@ -37,7 +43,7 @@
     "eslint-plugin-react-refresh": "^0.4.19",
     "globals": "^16.0.0",
     "postcss": "^8.5.3",
-    "tailwindcss": "^4.1.5",
+    "tailwindcss": "^4.1.6",
     "vite": "^6.3.1"
   }
 }

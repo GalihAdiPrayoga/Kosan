@@ -7,10 +7,133 @@ import {
   Button,
   Spinner,
   Alert,
+  ProgressBar,
 } from "react-bootstrap";
 import { Link } from "react-router-dom";
-import { FaHome, FaUsers, FaMoneyBillWave, FaClock } from "react-icons/fa";
+import {
+  FaHome,
+  FaUsers,
+  FaMoneyBillWave,
+  FaClock,
+  FaChartLine,
+  FaPlus,
+  FaBookmark,
+} from "react-icons/fa";
 import { API } from "../../api/config";
+import { Line } from "react-chartjs-2";
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+} from "chart.js";
+
+// Register ChartJS components
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend
+);
+
+const StatsCard = ({ icon: Icon, title, value, color, percentage }) => (
+  <Col md={3} className="mb-4">
+    <Card className="h-100 stats-card border-0 shadow-sm">
+      <Card.Body>
+        <div className="d-flex justify-content-between align-items-center mb-3">
+          <div className={`rounded-circle p-3 bg-${color} bg-opacity-10`}>
+            <Icon className={`text-${color}`} size={24} />
+          </div>
+          {percentage !== undefined && (
+            <span className={`badge bg-${color} bg-opacity-10 text-${color}`}>
+              {percentage > 0 ? "+" : ""}
+              {percentage}%
+            </span>
+          )}
+        </div>
+        <h6 className="text-muted mb-2">{title}</h6>
+        <h4 className="mb-0 fw-bold">{value}</h4>
+        {percentage !== undefined && (
+          <ProgressBar
+            variant={color}
+            now={Math.abs(percentage)}
+            className="mt-3"
+            style={{ height: "4px" }}
+          />
+        )}
+      </Card.Body>
+    </Card>
+  </Col>
+);
+
+const RevenueChart = ({ data }) => {
+  const chartData = {
+    labels: data.labels,
+    datasets: [
+      {
+        label: "Pendapatan Bulanan",
+        data: data.values,
+        fill: true,
+        backgroundColor: "rgba(0, 123, 255, 0.1)",
+        borderColor: "rgba(0, 123, 255, 0.7)",
+        tension: 0.4,
+        pointRadius: 4,
+        pointBackgroundColor: "#fff",
+        pointBorderColor: "rgba(0, 123, 255, 0.7)",
+        pointBorderWidth: 2,
+      },
+    ],
+  };
+
+  const options = {
+    responsive: true,
+    plugins: {
+      legend: {
+        display: false,
+      },
+      tooltip: {
+        backgroundColor: "rgba(0, 0, 0, 0.8)",
+        padding: 12,
+        titleColor: "#fff",
+        bodyColor: "#fff",
+        borderColor: "rgba(255, 255, 255, 0.1)",
+        borderWidth: 1,
+        callbacks: {
+          label: (context) =>
+            `Pendapatan: Rp ${new Intl.NumberFormat("id-ID").format(
+              context.raw
+            )}`,
+        },
+      },
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        grid: {
+          color: "rgba(0, 0, 0, 0.05)",
+        },
+        ticks: {
+          callback: (value) =>
+            `Rp ${new Intl.NumberFormat("id-ID").format(value)}`,
+        },
+      },
+      x: {
+        grid: {
+          display: false,
+        },
+      },
+    },
+  };
+
+  return <Line data={chartData} options={options} />;
+};
 
 const PemilikDashboard = () => {
   const [stats, setStats] = useState({
@@ -21,6 +144,10 @@ const PemilikDashboard = () => {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [chartData, setChartData] = useState({
+    labels: [],
+    values: [],
+  });
 
   useEffect(() => {
     fetchDashboardData();
@@ -29,36 +156,47 @@ const PemilikDashboard = () => {
   const fetchDashboardData = async () => {
     try {
       const userId = localStorage.getItem("userId");
-      if (!userId) {
-        throw new Error("User ID not found");
-      }
+      if (!userId) throw new Error("User ID not found");
 
-      // Fetch kos data owned by the user
-      const kosResponse = await API.get(`/kosans/owner/${userId}`);
+      const [kosResponse, paymentsResponse] = await Promise.all([
+        API.get(`/kosans/owner/${userId}`),
+        API.get(`/pembayarans/accepted/${userId}`),
+      ]);
+
       const kosData = kosResponse.data.data || [];
-
-      // Fetch payments data
-      const paymentsResponse = await API.get(`/pembayarans/accepted/${userId}`);
       const paymentsData = paymentsResponse.data.data || [];
 
-      // Calculate statistics
-      const totalKos = kosData.length;
-      const totalPendapatan = paymentsData.reduce(
-        (sum, payment) => sum + payment.total_harga,
-        0
-      );
-      const totalPenghuni = paymentsData.filter(
-        (payment) => payment.status === "diterima"
-      ).length;
-      const bookingPending = paymentsData.filter(
-        (payment) => payment.status === "pending"
-      ).length;
+      // Process monthly revenue data
+      const monthlyData = processMonthlyRevenue(paymentsData);
+
+      setChartData({
+        labels: monthlyData.months,
+        values: monthlyData.values,
+      });
+
+      // Calculate growth percentages
+      const previousMonthRevenue =
+        monthlyData.values[monthlyData.values.length - 2] || 0;
+      const currentMonthRevenue =
+        monthlyData.values[monthlyData.values.length - 1] || 0;
+      const revenueGrowth = previousMonthRevenue
+        ? ((currentMonthRevenue - previousMonthRevenue) / previousMonthRevenue) *
+          100
+        : 0;
 
       setStats({
-        totalKos,
-        totalPenghuni,
-        totalPendapatan,
-        bookingPending,
+        totalKos: kosData.length,
+        totalPenghuni: paymentsData.filter(
+          (payment) => payment.status === "diterima"
+        ).length,
+        totalPendapatan: paymentsData.reduce(
+          (sum, payment) => sum + payment.total_harga,
+          0
+        ),
+        bookingPending: paymentsData.filter(
+          (payment) => payment.status === "pending"
+        ).length,
+        revenueGrowth: Math.round(revenueGrowth),
       });
 
       setError(null);
@@ -71,6 +209,34 @@ const PemilikDashboard = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const processMonthlyRevenue = (payments) => {
+    const months = [];
+    const values = [];
+    const today = new Date();
+
+    for (let i = 5; i >= 0; i--) {
+      const month = new Date(today.getFullYear(), today.getMonth() - i, 1);
+      months.push(
+        month.toLocaleString("id-ID", { month: "short", year: "2-digit" })
+      );
+
+      const monthlyRevenue = payments
+        .filter((payment) => {
+          const paymentDate = new Date(payment.createdAt);
+          return (
+            paymentDate.getMonth() === month.getMonth() &&
+            paymentDate.getFullYear() === month.getFullYear() &&
+            payment.status === "diterima"
+          );
+        })
+        .reduce((sum, payment) => sum + payment.total_harga, 0);
+
+      values.push(monthlyRevenue);
+    }
+
+    return { months, values };
   };
 
   if (loading) {
@@ -93,97 +259,92 @@ const PemilikDashboard = () => {
   }
 
   return (
-    <Container fluid className="py-4">
+    <Container fluid className="py-4 bg-light min-vh-100">
       <Row className="mb-4">
         <Col>
-          <h2 className="mb-4">Dashboard Pemilik Kos</h2>
+          <div className="d-flex justify-content-between align-items-center mb-4">
+            <div>
+              <h2 className="mb-1">Dashboard Pemilik Kos</h2>
+              <p className="text-muted mb-0">
+                Selamat datang kembali di panel kontrol Anda
+              </p>
+            </div>
+            <div>
+              <Button
+                as={Link}
+                to="/pemilik/kos/add"
+                variant="primary"
+                className="d-flex align-items-center gap-2"
+              >
+                <FaPlus /> Tambah Kos Baru
+              </Button>
+            </div>
+          </div>
 
-          <Row>
-            {/* Stats Cards */}
-            <Col md={3} className="mb-4">
-              <Card className="h-100 shadow-sm hover-shadow">
-                <Card.Body className="d-flex align-items-center">
-                  <div className="rounded-circle p-3 bg-primary bg-opacity-10 me-3">
-                    <FaHome className="text-primary" size={24} />
-                  </div>
-                  <div>
-                    <h6 className="mb-1">Total Kos</h6>
-                    <h4 className="mb-0">{stats.totalKos}</h4>
-                  </div>
-                </Card.Body>
-              </Card>
-            </Col>
-
-            <Col md={3} className="mb-4">
-              <Card className="h-100 shadow-sm hover-shadow">
-                <Card.Body className="d-flex align-items-center">
-                  <div className="rounded-circle p-3 bg-success bg-opacity-10 me-3">
-                    <FaUsers className="text-success" size={24} />
-                  </div>
-                  <div>
-                    <h6 className="mb-1">Total Penghuni</h6>
-                    <h4 className="mb-0">{stats.totalPenghuni}</h4>
-                  </div>
-                </Card.Body>
-              </Card>
-            </Col>
-
-            <Col md={3} className="mb-4">
-              <Card className="h-100 shadow-sm hover-shadow">
-                <Card.Body className="d-flex align-items-center">
-                  <div className="rounded-circle p-3 bg-info bg-opacity-10 me-3">
-                    <FaMoneyBillWave className="text-info" size={24} />
-                  </div>
-                  <div>
-                    <h6 className="mb-1">Total Pendapatan</h6>
-                    <h4 className="mb-0">
-                      Rp{" "}
-                      {new Intl.NumberFormat("id-ID").format(
-                        stats.totalPendapatan
-                      )}
-                    </h4>
-                  </div>
-                </Card.Body>
-              </Card>
-            </Col>
-
-            <Col md={3} className="mb-4">
-              <Card className="h-100 shadow-sm hover-shadow">
-                <Card.Body className="d-flex align-items-center">
-                  <div className="rounded-circle p-3 bg-warning bg-opacity-10 me-3">
-                    <FaClock className="text-warning" size={24} />
-                  </div>
-                  <div>
-                    <h6 className="mb-1">Booking Pending</h6>
-                    <h4 className="mb-0">{stats.bookingPending}</h4>
-                  </div>
-                </Card.Body>
-              </Card>
-            </Col>
+          <Row className="g-3">
+            <StatsCard
+              icon={FaHome}
+              title="Total Kos"
+              value={stats.totalKos}
+              color="primary"
+            />
+            <StatsCard
+              icon={FaUsers}
+              title="Total Penghuni"
+              value={stats.totalPenghuni}
+              color="success"
+            />
+            <StatsCard
+              icon={FaMoneyBillWave}
+              title="Total Pendapatan"
+              value={`Rp ${new Intl.NumberFormat("id-ID").format(
+                stats.totalPendapatan
+              )}`}
+              color="info"
+              percentage={stats.revenueGrowth}
+            />
+            <StatsCard
+              icon={FaClock}
+              title="Booking Pending"
+              value={stats.bookingPending}
+              color="warning"
+            />
           </Row>
 
-          {/* Quick Actions */}
           <Row className="mt-4">
-            <Col md={12}>
-              <Card className="shadow-sm">
+            <Col lg={8}>
+              <Card className="border-0 shadow-sm">
                 <Card.Body>
-                  <h5 className="mb-4">Quick Actions</h5>
-                  <div className="d-flex gap-3">
+                  <div className="d-flex justify-content-between align-items-center mb-4">
+                    <h5 className="mb-0">
+                      <FaChartLine className="me-2" />
+                      Statistik Pendapatan
+                    </h5>
+                  </div>
+                  <RevenueChart data={chartData} />
+                </Card.Body>
+              </Card>
+            </Col>
+            <Col lg={4}>
+              <Card className="border-0 shadow-sm h-100">
+                <Card.Body>
+                  <h5 className="mb-4">Aksi Cepat</h5>
+                  <div className="d-grid gap-3">
                     <Button
                       as={Link}
-                      to="/pemilik/kos/add"
-                      variant="primary"
-                      className="d-flex align-items-center gap-2"
+                      to="/pemilik/kos"
+                      variant="outline-primary"
+                      className="d-flex align-items-center justify-content-center gap-2"
                     >
-                      <FaHome /> Tambah Kos
+                      <FaHome /> Kelola Kos
                     </Button>
                     <Button
                       as={Link}
                       to="/pemilik/bookings"
-                      variant="outline-primary"
-                      className="d-flex align-items-center gap-2"
+                      variant="outline-success"
+                      className="d-flex align-items-center justify-content-center gap-2"
                     >
-                      <FaUsers /> Lihat Booking
+                      <FaBookmark /> Kelola Booking
                     </Button>
                   </div>
                 </Card.Body>

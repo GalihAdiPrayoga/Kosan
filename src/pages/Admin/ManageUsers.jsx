@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import Swal from 'sweetalert2'
+import Swal from "sweetalert2";
 import {
   Container,
   Table,
@@ -55,15 +55,15 @@ const ManageUsers = () => {
 
   const handleDelete = async (id) => {
     const result = await Swal.fire({
-      title: 'Apakah Anda yakin?',
+      title: "Apakah Anda yakin?",
       text: "Pengguna yang dihapus tidak dapat dikembalikan!",
-      icon: 'warning',
+      icon: "warning",
       showCancelButton: true,
-      confirmButtonColor: '#dc3545',
-      cancelButtonColor: '#6c757d',
-      confirmButtonText: 'Ya, hapus!',
-      cancelButtonText: 'Batal',
-      reverseButtons: true
+      confirmButtonColor: "#dc3545",
+      cancelButtonColor: "#6c757d",
+      confirmButtonText: "Ya, hapus!",
+      cancelButtonText: "Batal",
+      reverseButtons: true,
     });
 
     if (result.isConfirmed) {
@@ -71,20 +71,20 @@ const ManageUsers = () => {
         setLoading(true);
         await API.delete(`/users/${id}`);
         setUsers(users.filter((user) => user.id !== id));
-        
+
         Swal.fire({
-          title: 'Terhapus!',
-          text: 'Pengguna berhasil dihapus.',
-          icon: 'success',
+          title: "Terhapus!",
+          text: "Pengguna berhasil dihapus.",
+          icon: "success",
           timer: 1500,
-          showConfirmButton: false
+          showConfirmButton: false,
         });
       } catch (err) {
         Swal.fire({
-          title: 'Error!',
-          text: 'Gagal menghapus pengguna.',
-          icon: 'error',
-          confirmButtonColor: '#dc3545'
+          title: "Error!",
+          text: "Gagal menghapus pengguna.",
+          icon: "error",
+          confirmButtonColor: "#dc3545",
         });
         setError("Gagal menghapus pengguna");
       } finally {
@@ -250,6 +250,8 @@ const ManageUsers = () => {
                             size="sm"
                             onClick={() => handleDelete(user.id)}
                             disabled={loading}
+                            className="rounded-circle d-flex align-items-center justify-content-center"
+                            style={{ width: "35px", height: "35px" }}
                             title="Hapus"
                           >
                             {loading ? (
@@ -261,7 +263,7 @@ const ManageUsers = () => {
                                 aria-hidden="true"
                               />
                             ) : (
-                              <FaTrash />
+                              <FaTrash size={14} />
                             )}
                           </Button>
                         </div>

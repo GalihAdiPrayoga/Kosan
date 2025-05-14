@@ -183,9 +183,6 @@ const PaymentsAdmin = () => {
         <Card.Body>
           <div className="d-flex justify-content-between align-items-center mb-4">
             <h2 className="mb-0">Manajemen Pembayaran</h2>
-            <Button variant="outline-secondary" size="sm" onClick={handleReset}>
-              Reset Filter
-            </Button>
           </div>
 
           {error && (
@@ -270,7 +267,10 @@ const PaymentsAdmin = () => {
                     <th>Tanggal Bayar</th>
                     <th>Bukti Pembayaran</th>
                     <th>Status</th>
-                    <th>Aksi</th>
+                    {/* Only show action column header if there are pending payments */}
+                    {paginatedPayments.some(
+                      (payment) => payment.status === "pending"
+                    ) && <th>Aksi</th>}
                   </tr>
                 </thead>
                 <tbody>
@@ -343,8 +343,9 @@ const PaymentsAdmin = () => {
                           )}
                         </div>
                       </td>
-                      <td>
-                        {payment.status === "pending" && (
+                      {/* Only render action column if payment is pending */}
+                      {payment.status === "pending" && (
+                        <td>
                           <div className="d-flex gap-2">
                             <Button
                               variant="outline-success"
@@ -356,9 +357,11 @@ const PaymentsAdmin = () => {
                                 )
                               }
                               disabled={loading}
+                              className="rounded-circle d-flex align-items-center justify-content-center"
+                              style={{ width: "35px", height: "35px" }}
                               title="Terima Pembayaran"
                             >
-                              <FaCheck />
+                              <FaCheck size={14} />
                             </Button>
                             <Button
                               variant="outline-danger"
@@ -367,35 +370,90 @@ const PaymentsAdmin = () => {
                                 handleUpdatePaymentStatus(payment.id, "ditolak")
                               }
                               disabled={loading}
+                              className="rounded-circle d-flex align-items-center justify-content-center"
+                              style={{ width: "35px", height: "35px" }}
                               title="Tolak Pembayaran"
                             >
-                              <FaTimes />
+                              <FaTimes size={14} />
                             </Button>
                           </div>
-                        )}
-                      </td>
+                        </td>
+                      )}
                     </tr>
                   ))}
                 </tbody>
               </Table>
 
               {filteredPayments.length > ITEMS_PER_PAGE && (
-                <div className="d-flex justify-content-center mt-4">
-                  <Pagination>
-                    {[
-                      ...Array(
-                        Math.ceil(filteredPayments.length / ITEMS_PER_PAGE)
-                      ),
-                    ].map((_, idx) => (
-                      <Pagination.Item
-                        key={idx + 1}
-                        active={currentPage === idx + 1}
-                        onClick={() => setCurrentPage(idx + 1)}
-                      >
-                        {idx + 1}
-                      </Pagination.Item>
-                    ))}
-                  </Pagination>
+                <div className="d-flex justify-content-center mt-4 gap-2">
+                  <Button
+                    variant="outline-primary"
+                    size="sm"
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.max(prev - 1, 1))
+                    }
+                    disabled={currentPage === 1}
+                    className="rounded-circle d-flex align-items-center justify-content-center"
+                    style={{ width: "35px", height: "35px" }}
+                  >
+                    &lt;
+                  </Button>
+
+                  {(() => {
+                    const totalPages = Math.ceil(
+                      filteredPayments.length / ITEMS_PER_PAGE
+                    );
+                    let startPage = Math.max(1, currentPage - 2);
+                    let endPage = Math.min(totalPages, startPage + 4);
+
+                    if (endPage - startPage < 4) {
+                      startPage = Math.max(1, endPage - 4);
+                    }
+
+                    return Array.from(
+                      { length: endPage - startPage + 1 },
+                      (_, idx) => {
+                        const pageNumber = startPage + idx;
+                        return (
+                          <Button
+                            key={pageNumber}
+                            variant={
+                              currentPage === pageNumber
+                                ? "primary"
+                                : "outline-primary"
+                            }
+                            size="sm"
+                            onClick={() => setCurrentPage(pageNumber)}
+                            className="rounded-circle d-flex align-items-center justify-content-center"
+                            style={{ width: "35px", height: "35px" }}
+                          >
+                            {pageNumber}
+                          </Button>
+                        );
+                      }
+                    );
+                  })()}
+
+                  <Button
+                    variant="outline-primary"
+                    size="sm"
+                    onClick={() =>
+                      setCurrentPage((prev) =>
+                        Math.min(
+                          prev + 1,
+                          Math.ceil(filteredPayments.length / ITEMS_PER_PAGE)
+                        )
+                      )
+                    }
+                    disabled={
+                      currentPage ===
+                      Math.ceil(filteredPayments.length / ITEMS_PER_PAGE)
+                    }
+                    className="rounded-circle d-flex align-items-center justify-content-center"
+                    style={{ width: "35px", height: "35px" }}
+                  >
+                    &gt;
+                  </Button>
                 </div>
               )}
             </>
