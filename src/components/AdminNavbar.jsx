@@ -12,6 +12,7 @@ import {
   FaSignOutAlt,
 } from "react-icons/fa";
 import EditProfileModal from "./EditProfileModal";
+import Swal from 'sweetalert2'
 
 const AdminNavbar = () => {
   const [expanded, setExpanded] = useState(false);
@@ -20,11 +21,26 @@ const AdminNavbar = () => {
   const location = useLocation();
   const adminName = localStorage.getItem("userName") || "Admin";
 
-  const handleLogout = () => {
-    const confirmLogout = window.confirm("Apakah Anda yakin ingin keluar?");
-    if (confirmLogout) {
+  const handleLogout = async () => {
+    const result = await Swal.fire({
+      title: 'Apakah Anda yakin?',
+      text: "Anda akan keluar dari akun ini",
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Ya, keluar!',
+      cancelButtonText: 'Batal'
+    });
+
+    if (result.isConfirmed) {
       localStorage.clear();
-      navigate("/user/dashboard", { replace: true }); // Change from "/" to "/user/dashboard"
+      navigate("/user/dashboard", { replace: true });
+      Swal.fire(
+        'Berhasil Keluar!',
+        'Anda telah keluar dari akun.',
+        'success'
+      );
     }
   };
 

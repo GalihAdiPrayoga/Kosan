@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Navbar, Container, Nav, NavDropdown } from "react-bootstrap";
 import { Link, useNavigate, useLocation } from "react-router-dom";
+import Swal from 'sweetalert2'
 import {
   FaHome,
   FaClipboardList,
@@ -18,11 +19,26 @@ const PemilikNavbar = () => {
   const location = useLocation();
   const pemilikName = localStorage.getItem("userName") || "Pemilik";
 
-  const handleLogout = () => {
-    const confirmLogout = window.confirm("Apakah Anda yakin ingin keluar?");
-    if (confirmLogout) {
+  const handleLogout = async () => {
+    const result = await Swal.fire({
+      title: 'Apakah Anda yakin?',
+      text: "Anda akan keluar dari akun ini",
+      icon: 'question', 
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Ya, keluar!',
+      cancelButtonText: 'Batal'
+    });
+
+    if (result.isConfirmed) {
       localStorage.clear();
-      navigate("/user/dashboard", { replace: true }); // Change from "/" to "/user/dashboard"
+      navigate("/user/dashboard", { replace: true });
+      Swal.fire(
+        'Berhasil Keluar!',
+        'Anda telah keluar dari akun.',
+        'success'
+      );
     }
   };
 

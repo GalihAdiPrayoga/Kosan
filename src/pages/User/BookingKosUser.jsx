@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import Swal from 'sweetalert2';
 import {
   Container,
   Row,
@@ -100,6 +101,17 @@ const BookingKosUser = () => {
 
       const totalHarga = calculateTotal();
 
+      // Show loading
+      Swal.fire({
+        title: 'Memproses Pemesanan',
+        html: 'Mohon tunggu sebentar...',
+        allowOutsideClick: false,
+        showConfirmButton: false,
+        willOpen: () => {
+          Swal.showLoading();
+        },
+      });
+
       const formData = new FormData();
       formData.append("user_id", user.user.id);
       formData.append("kosan_id", kosDetail.id);
@@ -117,25 +129,32 @@ const BookingKosUser = () => {
         },
       });
 
-      // Show success toast
-      setToastMessage("Berhasil membuat pesanan!");
-      setShowToast(true);
-
-      // Reset form
-      setBookingData({
-        startDate: new Date().toISOString().split("T")[0],
-        duration: 1,
-        paymentProof: null,
+      // Close loading and show success
+      await Swal.fire({
+        icon: 'success',
+        title: 'Pemesanan Berhasil!',
+        text: 'Pesanan Anda sedang diproses. Anda akan dialihkan ke halaman dashboard.',
+        timer: 2000,
+        showConfirmButton: false,
+        backdrop: `
+          rgba(0,123,255,0.4)
+          left top
+          no-repeat
+        `,
+        customClass: {
+          popup: 'animated fadeInDown'
+        }
       });
 
-      // Reset file input
-      const fileInput = document.querySelector('input[type="file"]');
-      if (fileInput) fileInput.value = "";
+      navigate("/user/dashboard", { replace: true });
     } catch (err) {
-      setError(
-        "Gagal melakukan pemesanan: " +
-          (err.response?.data?.message || err.message)
-      );
+      // Show error alert
+      Swal.fire({
+        icon: 'error',
+        title: 'Pemesanan Gagal',
+        text: err.response?.data?.message || err.message || 'Terjadi kesalahan saat memproses pemesanan',
+        confirmButtonColor: '#dc3545'
+      });
     }
   };
 

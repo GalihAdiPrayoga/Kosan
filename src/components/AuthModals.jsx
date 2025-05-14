@@ -10,6 +10,7 @@ import {
 } from "react-icons/fa";
 import { API } from "../api/config";
 import { useNavigate } from "react-router-dom";
+import Swal from "sweetalert2"; // Import Swal
 
 const AuthModals = ({
   showLogin,
@@ -73,6 +74,19 @@ const AuthModals = ({
       API.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 
       handleClose();
+      
+      // Show success alert
+      await Swal.fire({
+        icon: 'success',
+        title: 'Login Berhasil!',
+        text: `Selamat datang kembali, ${user.name}!`,
+        showConfirmButton: false,
+        timer: 1500,
+        customClass: {
+          popup: 'animated fadeInDown'
+        }
+      });
+
       if (onLoginSuccess) {
         onLoginSuccess();
       }
@@ -83,15 +97,25 @@ const AuthModals = ({
       } else if (user.role === "admin") {
         navigate("/admin/dashboard");
       } else if (user.role === "user") {
-        navigate("/user/dashboard"); // Add this line
+        navigate("/user/dashboard");
       } else {
         navigate("/");
       }
     } catch (err) {
       if (err.response?.status === 401) {
-        setError("Email atau password salah");
+        Swal.fire({
+          icon: 'error',
+          title: 'Login Gagal!',
+          text: 'Email atau password salah',
+          confirmButtonColor: '#dc3545'
+        });
       } else {
-        setError(err.response?.data?.message || err.message || "Login gagal");
+        Swal.fire({
+          icon: 'error',
+          title: 'Login Gagal!',
+          text: err.response?.data?.message || err.message || "Terjadi kesalahan saat login",
+          confirmButtonColor: '#dc3545'
+        });
       }
     } finally {
       setLoading(false);

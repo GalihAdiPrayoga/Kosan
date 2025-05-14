@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import AuthModals from "./AuthModals";
 import { FaUserCircle } from "react-icons/fa";
 import EditProfileModal from "./EditProfileModal";
+import Swal from "sweetalert2";
 
 const UserNavbar = () => {
   const navigate = useNavigate();

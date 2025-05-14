@@ -6,6 +6,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { FaEnvelope, FaLock, FaUserCircle } from "react-icons/fa";
 import { CSSTransition } from "react-transition-group";
 import axios from "axios";
+import Swal from "sweetalert2";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -39,19 +40,42 @@ const Login = () => {
         localStorage.setItem("isAdmin", user.role === "admin" ? "true" : "false");
         localStorage.setItem("isPemilik", user.role === "pemilik" ? "true" : "false");
 
+        // Show success alert
+        await Swal.fire({
+          icon: 'success',
+          title: 'Login Berhasil!',
+          text: `Selamat datang kembali, ${user.name}!`,
+          showConfirmButton: false,
+          timer: 1500,
+          backdrop: `
+            rgba(0,0,123,0.4)
+            url("/path-to-your-loading-image.gif")
+            center top
+            no-repeat
+          `,
+          customClass: {
+            popup: 'animated fadeInDown'
+          }
+        });
+
         if (user.role === "admin") {
           navigate("/admin/dashboard", { replace: true });
         } else if (user.role === "pemilik") {
           navigate("/pemilik/dashboard", { replace: true });
         } else if (user.role === "user") {
-          navigate("/user/dashboard", { replace: true }); // Add this line
+          navigate("/user/dashboard", { replace: true });
         } else {
           navigate("/");
         }
       }
     } catch (error) {
       console.error("Login error:", error);
-      setError(error.response?.data?.message || "Login gagal. Silakan coba lagi.");
+      Swal.fire({
+        icon: 'error',
+        title: 'Login Gagal!',
+        text: error.response?.data?.message || "Login gagal. Silakan coba lagi.",
+        confirmButtonColor: '#dc3545'
+      });
     } finally {
       setLoading(false);
     }

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import Swal from 'sweetalert2'
 import {
   Container,
   Table,
@@ -53,14 +54,40 @@ const ManageUsers = () => {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm("Apakah Anda yakin ingin menghapus pengguna ini?")) {
+    const result = await Swal.fire({
+      title: 'Apakah Anda yakin?',
+      text: "Pengguna yang dihapus tidak dapat dikembalikan!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#dc3545',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Ya, hapus!',
+      cancelButtonText: 'Batal',
+      reverseButtons: true
+    });
+
+    if (result.isConfirmed) {
       try {
         setLoading(true);
         await API.delete(`/users/${id}`);
         setUsers(users.filter((user) => user.id !== id));
-        setLoading(false);
+        
+        Swal.fire({
+          title: 'Terhapus!',
+          text: 'Pengguna berhasil dihapus.',
+          icon: 'success',
+          timer: 1500,
+          showConfirmButton: false
+        });
       } catch (err) {
+        Swal.fire({
+          title: 'Error!',
+          text: 'Gagal menghapus pengguna.',
+          icon: 'error',
+          confirmButtonColor: '#dc3545'
+        });
         setError("Gagal menghapus pengguna");
+      } finally {
         setLoading(false);
       }
     }

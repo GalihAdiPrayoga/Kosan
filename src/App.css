@@ -672,3 +672,46 @@ a.text-primary:hover {
     transform: scale(1);
   }
 }
+
+/* Custom SweetAlert2 Styles */
+.swal2-popup {
+  font-family: inherit;
+  border-radius: 1rem;
+}
+
+.swal2-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.swal2-html-container {
+  font-size: 1rem;
+}
+
+.swal2-confirm,
+.swal2-cancel {
+  font-size: 1rem;
+  font-weight: 500;
+  padding: 0.5rem 1.5rem;
+  border-radius: 0.5rem;
+}
+
+/* Animasi untuk SweetAlert */
+.swal2-popup {
+  animation: swal2-show 0.3s;
+}
+
+.swal2-icon {
+  animation: swal2-icon-show 0.5s;
+}
+
+@keyframes swal2-icon-show {
+  from {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}

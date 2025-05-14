@@ -15,6 +15,7 @@ import {
 import { Link, useNavigate } from "react-router-dom";
 import { FaTrash, FaEye, FaSearch, FaFolder, FaHome } from "react-icons/fa";
 import { API } from "../../api/config";
+import Swal from "sweetalert2";
 
 const ItemListAdmin = () => {
   const navigate = useNavigate();
@@ -67,15 +68,28 @@ const ItemListAdmin = () => {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm("Apakah Anda yakin ingin menghapus kos ini?")) {
+    const result = await Swal.fire({
+      title: "Apakah Anda yakin?",
+      text: "Data kos yang dihapus tidak dapat dikembalikan!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Ya, hapus!",
+      cancelButtonText: "Batal",
+    });
+
+    if (result.isConfirmed) {
       try {
         setLoading(true);
         await API.delete(`/kosans/${id}`);
-        // Refresh data after successful deletion
         await fetchAllKos();
         setError(null);
+
+        // Tampilkan pesan sukses
+        Swal.fire("Terhapus!", "Data kos berhasil dihapus.", "success");
       } catch (err) {
-        setError("Gagal menghapus data kos");
+        Swal.fire("Error!", "Gagal menghapus data kos", "error");
         console.error("Error:", err);
       } finally {
         setLoading(false);

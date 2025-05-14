@@ -14,6 +14,7 @@ import { FaPlus, FaEllipsisV, FaMapMarkerAlt } from "react-icons/fa";
 import { API } from "../../api/config"; // Pastikan API ini dikonfigurasi dengan benar
 import { getImageUrl } from "../../utils/imageUtils";
 import ImageWithFallback from "../../components/ImageWithFallback";
+import Swal from 'sweetalert2'
 
 const ManageKos = () => {
   const [kosList, setKosList] = useState([]);
@@ -84,21 +85,46 @@ const ManageKos = () => {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm("Apakah Anda yakin ingin menghapus kos ini?")) {
+    const result = await Swal.fire({
+      title: 'Apakah Anda yakin?',
+      text: "Data kos yang dihapus tidak dapat dikembalikan!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#dc3545',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Ya, hapus!',
+      cancelButtonText: 'Batal',
+      reverseButtons: true
+    });
+
+    if (result.isConfirmed) {
       try {
         const userId = localStorage.getItem("userId");
         const kosToDelete = kosList.find((kos) => kos.id === id);
 
-        // Verify ownership
         if (!kosToDelete || kosToDelete.user_id.toString() !== userId) {
           throw new Error("Anda tidak memiliki izin untuk menghapus kos ini");
         }
 
         await API.delete(`/kosans/${id}`);
-
-        // Update list after successful deletion
         setKosList((prevList) => prevList.filter((kos) => kos.id !== id));
+
+        // Tampilkan pesan sukses
+        await Swal.fire({
+          title: 'Berhasil!',
+          text: 'Data kos telah dihapus.',
+          icon: 'success',
+          timer: 1500,
+          showConfirmButton: false
+        });
       } catch (err) {
+        // Tampilkan pesan error
+        await Swal.fire({
+          title: 'Error!',
+          text: err.message || 'Gagal menghapus data kos',
+          icon: 'error',
+          confirmButtonColor: '#dc3545'
+        });
         setError(err.message || "Gagal menghapus kos");
       }
     }
