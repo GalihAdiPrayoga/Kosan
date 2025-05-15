@@ -143,6 +143,7 @@ const PaymentsAdmin = () => {
     setCurrentPage(1);
   };
 
+  // Tambahkan style untuk status dibatalkan
   const getBadgeStyles = (status) => {
     const styles = {
       diterima: {
@@ -155,8 +156,8 @@ const PaymentsAdmin = () => {
         display: "inline-flex",
         alignItems: "center",
         gap: "6px",
-        borderRadius: "50px", // Add this line
-        transition: "all 0.2s ease", // Add smooth transition
+        borderRadius: "50px",
+        transition: "all 0.2s ease",
       },
       ditolak: {
         backgroundColor: "rgba(239, 68, 68, 0.1)",
@@ -168,8 +169,8 @@ const PaymentsAdmin = () => {
         display: "inline-flex",
         alignItems: "center",
         gap: "6px",
-        borderRadius: "50px", // Add this line
-        transition: "all 0.2s ease", // Add smooth transition
+        borderRadius: "50px",
+        transition: "all 0.2s ease",
       },
       pending: {
         backgroundColor: "rgba(245, 158, 11, 0.1)",
@@ -181,8 +182,21 @@ const PaymentsAdmin = () => {
         display: "inline-flex",
         alignItems: "center",
         gap: "6px",
-        borderRadius: "50px", // Add this line
-        transition: "all 0.2s ease", // Add smooth transition
+        borderRadius: "50px",
+        transition: "all 0.2s ease",
+      },
+      dibatalkan: {
+        backgroundColor: "rgba(107, 114, 128, 0.1)",
+        color: "#6B7280",
+        border: "1px solid #6B7280",
+        fontWeight: "500",
+        padding: "8px 16px",
+        fontSize: "0.85rem",
+        display: "inline-flex",
+        alignItems: "center",
+        gap: "6px",
+        borderRadius: "50px",
+        transition: "all 0.2s ease",
       },
     };
 
@@ -230,6 +244,7 @@ const PaymentsAdmin = () => {
                 <option value="pending">Menunggu</option>
                 <option value="diterima">Diterima</option>
                 <option value="ditolak">Ditolak</option>
+                <option value="dibatalkan">Dibatalkan</option>
               </Form.Select>
             </Col>
             <Col md={8}>
@@ -375,6 +390,12 @@ const PaymentsAdmin = () => {
                             <>
                               <span className="spinner-grow spinner-grow-sm" />
                               Menunggu
+                            </>
+                          )}
+                          {payment.status === "dibatalkan" && (
+                            <>
+                              <FaFolder size={14} />
+                              Dibatalkan
                             </>
                           )}
                         </div>

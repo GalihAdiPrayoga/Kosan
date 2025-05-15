@@ -10,6 +10,7 @@ import {
 } from "react-bootstrap";
 import { API } from "../../api/config";
 import { getImageUrl } from "../../utils/imageUtils";
+import Swal from "sweetalert2";
 
 const PaymentHistory = () => {
   const [payments, setPayments] = useState([]);
@@ -52,12 +53,14 @@ const PaymentHistory = () => {
       pending: "warning",
       diterima: "success",
       ditolak: "danger",
+      dibatalkan: "secondary", // Tambahkan ini
     };
 
     const statusText = {
       pending: "Menunggu",
       diterima: "Diterima",
       ditolak: "Ditolak",
+      dibatalkan: "Dibatalkan", // Tambahkan ini
     };
 
     return (
@@ -65,6 +68,40 @@ const PaymentHistory = () => {
         {statusText[status] || status}
       </Badge>
     );
+  };
+
+  const handleCancel = async (id) => {
+    const confirm = await Swal.fire({
+      title: "Batalkan Pesanan?",
+      text: "Pesanan yang dibatalkan tidak dapat dikembalikan.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Ya, batalkan",
+      cancelButtonText: "Batal",
+    });
+    if (confirm.isConfirmed) {
+      try {
+        const token = localStorage.getItem("token");
+        API.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+        const res = await API.put(`/pembayarans/${id}/cancel`);
+        if (res.data.status === "success") {
+          Swal.fire("Berhasil!", "Pesanan berhasil dibatalkan.", "success");
+          fetchPayments(); // refresh data
+        } else {
+          Swal.fire(
+            "Gagal",
+            res.data.message || "Gagal membatalkan pesanan",
+            "error"
+          );
+        }
+      } catch (err) {
+        Swal.fire(
+          "Gagal",
+          err.response?.data?.message || "Gagal membatalkan pesanan",
+          "error"
+        );
+      }
+    }
   };
 
   if (loading) {
@@ -91,18 +128,19 @@ const PaymentHistory = () => {
                 <tr>
                   <th>No</th>
                   <th>Kos</th>
-                  <th>Kode Pembayaran</th> {/* Tambahkan kolom ini */}
+                  <th>Kode Pembayaran</th>
                   <th>Tanggal Bayar</th>
                   <th>Durasi</th>
                   <th>Bukti</th>
                   <th>Total Pembayaran</th>
                   <th>Status</th>
+                  <th>Aksi</th> {/* Tambahkan kolom aksi */}
                 </tr>
               </thead>
               <tbody>
                 {payments.length === 0 ? (
                   <tr>
-                    <td colSpan="8" className="text-center py-4">
+                    <td colSpan="9" className="text-center py-4">
                       Belum ada riwayat pembayaran
                     </td>
                   </tr>
@@ -151,6 +189,16 @@ const PaymentHistory = () => {
                         )}
                       </td>
                       <td>{getStatusBadge(payment.status)}</td>
+                      <td>
+                        {payment.status === "pending" && (
+                          <button
+                            className="btn btn-danger btn-sm"
+                            onClick={() => handleCancel(payment.id)}
+                          >
+                            Batalkan
+                          </button>
+                        )}
+                      </td>
                     </tr>
                   ))
                 )}
