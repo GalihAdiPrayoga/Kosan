@@ -199,24 +199,64 @@ const SearchUser = () => {
 
   const renderPagination = () => {
     const total = Math.ceil(filteredKos.length / ITEMS_PER_PAGE);
+    if (total <= 1) return null;
+
+    const handlePrev = () => setCurrentPage((prev) => Math.max(prev - 1, 1));
+    const handleNext = () =>
+      setCurrentPage((prev) => Math.min(prev + 1, total));
+
+    // Logic untuk menampilkan max 6 halaman
+    let start = 1;
+    let end = total;
+    if (total > 6) {
+      if (currentPage <= 3) {
+        start = 1;
+        end = 6;
+      } else if (currentPage + 2 >= total) {
+        start = total - 5;
+        end = total;
+      } else {
+        start = currentPage - 2;
+        end = currentPage + 3;
+      }
+    }
+
     return (
-      <nav>
-        <ul className="pagination">
-          {[...Array(total)].map((_, i) => (
-            <li
-              key={i}
-              className={`page-item ${currentPage === i + 1 ? "active" : ""}`}
-            >
+      <div className="pagination-container d-flex align-items-center gap-3">
+        <button
+          className="btn btn-light px-3 py-2 rounded-pill shadow-sm border"
+          onClick={handlePrev}
+          disabled={currentPage === 1}
+        >
+          <span className="me-1">&laquo;</span> Prev
+        </button>
+        <div className="d-flex align-items-center gap-2">
+          {Array.from({ length: end - start + 1 }, (_, i) => {
+            const page = start + i;
+            return (
               <button
-                className="page-link"
-                onClick={() => setCurrentPage(i + 1)}
+                key={page}
+                className={`btn rounded-circle d-flex align-items-center justify-content-center p-0 ${
+                  currentPage === page
+                    ? "btn-primary shadow"
+                    : "btn-light shadow-sm border"
+                }`}
+                style={{ width: "35px", height: "35px" }}
+                onClick={() => setCurrentPage(page)}
               >
-                {i + 1}
+                {page}
               </button>
-            </li>
-          ))}
-        </ul>
-      </nav>
+            );
+          })}
+        </div>
+        <button
+          className="btn btn-light px-3 py-2 rounded-pill shadow-sm border"
+          onClick={handleNext}
+          disabled={currentPage === total}
+        >
+          Next <span className="ms-1">&raquo;</span>
+        </button>
+      </div>
     );
   };
 

@@ -91,6 +91,7 @@ const PaymentHistory = () => {
                 <tr>
                   <th>No</th>
                   <th>Kos</th>
+                  <th>Kode Pembayaran</th> {/* Tambahkan kolom ini */}
                   <th>Tanggal Bayar</th>
                   <th>Durasi</th>
                   <th>Bukti</th>
@@ -101,7 +102,7 @@ const PaymentHistory = () => {
               <tbody>
                 {payments.length === 0 ? (
                   <tr>
-                    <td colSpan="7" className="text-center py-4">
+                    <td colSpan="8" className="text-center py-4">
                       Belum ada riwayat pembayaran
                     </td>
                   </tr>
@@ -115,6 +116,7 @@ const PaymentHistory = () => {
                           {payment.kosan?.alamat}
                         </small>
                       </td>
+                      <td>{payment.kode_pembayaran || "-"}</td>
                       <td>
                         {new Date(payment.tanggal_bayar).toLocaleDateString(
                           "id-ID"

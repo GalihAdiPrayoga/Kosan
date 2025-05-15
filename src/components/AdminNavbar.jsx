@@ -13,7 +13,7 @@ import {
   FaSignOutAlt,
 } from "react-icons/fa";
 import EditProfileModal from "./EditProfileModal";
-import Swal from 'sweetalert2'
+import Swal from "sweetalert2";
 
 const AdminNavbar = () => {
   const [expanded, setExpanded] = useState(false);
@@ -24,24 +24,20 @@ const AdminNavbar = () => {
 
   const handleLogout = async () => {
     const result = await Swal.fire({
-      title: 'Apakah Anda yakin?',
+      title: "Apakah Anda yakin?",
       text: "Anda akan keluar dari akun ini",
-      icon: 'question',
+      icon: "question",
       showCancelButton: true,
-      confirmButtonColor: '#3085d6',
-      cancelButtonColor: '#d33',
-      confirmButtonText: 'Ya, keluar!',
-      cancelButtonText: 'Batal'
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Ya, keluar!",
+      cancelButtonText: "Batal",
     });
 
     if (result.isConfirmed) {
       localStorage.clear();
       navigate("/user/dashboard", { replace: true });
-      Swal.fire(
-        'Berhasil Keluar!',
-        'Anda telah keluar dari akun.',
-        'success'
-      );
+      Swal.fire("Berhasil Keluar!", "Anda telah keluar dari akun.", "success");
     }
   };
 
@@ -58,29 +54,29 @@ const AdminNavbar = () => {
     visible: {
       opacity: 1,
       y: 0,
-      transition: { duration: 0.3 }
-    }
+      transition: { duration: 0.3 },
+    },
   };
 
   const linkVariants = {
     hover: { scale: 1.05 },
-    tap: { scale: 0.95 }
+    tap: { scale: 0.95 },
   };
 
   return (
     <>
-      <motion.div
-        initial="hidden"
-        animate="visible"
-        variants={navVariants}
-      >
+      <motion.div initial="hidden" animate="visible" variants={navVariants}>
         <Navbar
           bg="dark"
           variant="dark"
           expand="lg"
-          className="shadow fixed-top transition-all duration-300 ease-in-out"
+          className="shadow-sm fixed-top navbar-admin"
           expanded={expanded}
           onToggle={(value) => setExpanded(value)}
+          style={{
+            background: "rgba(33, 37, 41, 0.95)",
+            backdropFilter: "blur(10px)",
+          }}
         >
           <Container>
             <motion.div
@@ -94,7 +90,10 @@ const AdminNavbar = () => {
                 onClick={handleNavigation}
                 className="d-flex align-items-center hover:opacity-80 transition-opacity"
               >
-                <FaHome className="me-2 transform transition-transform" size={24} />
+                <FaHome
+                  className="me-2 transform transition-transform"
+                  size={24}
+                />
                 <span className="fw-bold">Admin Panel</span>
               </Navbar.Brand>
             </motion.div>
@@ -105,9 +104,13 @@ const AdminNavbar = () => {
                 {[
                   { path: "dashboard", icon: FaChartBar, label: "Dashboard" },
                   { path: "kos", icon: FaHome, label: "Kelola Kos" },
-                  { path: "payments", icon: FaMoneyBillWave, label: "Pembayaran" },
+                  {
+                    path: "payments",
+                    icon: FaMoneyBillWave,
+                    label: "Pembayaran",
+                  },
                   { path: "users", icon: FaUsers, label: "Pengguna" },
-                  { path: "feedback", icon: FaComments, label: "Feedback" }
+                  { path: "feedback", icon: FaComments, label: "Feedback" },
                 ].map(({ path, icon: Icon, label }) => (
                   <motion.div
                     key={path}
@@ -120,7 +123,9 @@ const AdminNavbar = () => {
                       to={`/admin/${path}`}
                       onClick={handleNavigation}
                       className={`nav-link px-3 hover:bg-gray-800 hover:text-gray-200 rounded-md transition-all duration-200 ${
-                        isActive(path) ? 'bg-gray-700 text-white' : 'text-gray-300'
+                        isActive(path)
+                          ? "bg-gray-700 text-white"
+                          : "text-gray-300"
                       }`}
                     >
                       <Icon className="me-2 transform transition-transform" />
@@ -145,7 +150,7 @@ const AdminNavbar = () => {
                   align="end"
                   className="px-2 hover:bg-transparent"
                 >
-                  <NavDropdown.Item 
+                  <NavDropdown.Item
                     onClick={() => setShowEditProfile(true)}
                     className="hover:bg-gray-100 transition-colors duration-200"
                   >
@@ -161,7 +166,7 @@ const AdminNavbar = () => {
                     Kelola Pembayaran
                   </NavDropdown.Item>
                   <NavDropdown.Divider />
-                  <NavDropdown.Item 
+                  <NavDropdown.Item
                     onClick={handleLogout}
                     className="hover:bg-gray-100 transition-colors duration-200"
                   >

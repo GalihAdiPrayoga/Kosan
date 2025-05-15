@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Navbar, Container, Nav, NavDropdown } from "react-bootstrap";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import Swal from 'sweetalert2'
+import Swal from "sweetalert2";
 import {
   FaHome,
   FaClipboardList,
@@ -21,24 +21,20 @@ const PemilikNavbar = () => {
 
   const handleLogout = async () => {
     const result = await Swal.fire({
-      title: 'Apakah Anda yakin?',
+      title: "Apakah Anda yakin?",
       text: "Anda akan keluar dari akun ini",
-      icon: 'question', 
+      icon: "question",
       showCancelButton: true,
-      confirmButtonColor: '#3085d6',
-      cancelButtonColor: '#d33',
-      confirmButtonText: 'Ya, keluar!',
-      cancelButtonText: 'Batal'
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Ya, keluar!",
+      cancelButtonText: "Batal",
     });
 
     if (result.isConfirmed) {
       localStorage.clear();
       navigate("/user/dashboard", { replace: true });
-      Swal.fire(
-        'Berhasil Keluar!',
-        'Anda telah keluar dari akun.',
-        'success'
-      );
+      Swal.fire("Berhasil Keluar!", "Anda telah keluar dari akun.", "success");
     }
   };
 
@@ -56,9 +52,13 @@ const PemilikNavbar = () => {
         bg="primary"
         variant="dark"
         expand="lg"
-        className="shadow fixed-top"
+        className="shadow-sm fixed-top navbar-pemilik"
         expanded={expanded}
         onToggle={(value) => setExpanded(value)}
+        style={{
+          background: "rgba(13, 110, 253, 0.95)",
+          backdropFilter: "blur(10px)",
+        }}
       >
         <Container>
           <Navbar.Brand
@@ -116,21 +116,29 @@ const PemilikNavbar = () => {
                 className="px-2"
               >
                 <NavDropdown.Item onClick={() => setShowEditProfile(true)}>
-                  <i className="bi bi-person me-2"></i>
-                  Edit Profil
+                  <div className="d-flex align-items-center">
+                    <FaUser className="me-2" />
+                    <span>Edit Profil</span>
+                  </div>
                 </NavDropdown.Item>
                 <NavDropdown.Item as={Link} to="/pemilik/kos">
-                  <i className="bi bi-house me-2"></i>
-                  Kelola Kos
+                  <div className="d-flex align-items-center">
+                    <FaHome className="me-2" />
+                    <span>Kelola Kos</span>
+                  </div>
                 </NavDropdown.Item>
                 <NavDropdown.Item as={Link} to="/pemilik/bookings">
-                  <i className="bi bi-receipt me-2"></i>
-                  Pesanan
+                  <div className="d-flex align-items-center">
+                    <FaClipboardList className="me-2" />
+                    <span>Pesanan</span>
+                  </div>
                 </NavDropdown.Item>
                 <NavDropdown.Divider />
                 <NavDropdown.Item onClick={handleLogout}>
-                  <i className="bi bi-box-arrow-right me-2"></i>
-                  Keluar
+                  <div className="d-flex align-items-center">
+                    <FaSignOutAlt className="me-2" />
+                    <span>Keluar</span>
+                  </div>
                 </NavDropdown.Item>
               </NavDropdown>
             </Nav>

@@ -14,6 +14,7 @@ import {
 } from "react-bootstrap";
 import { useParams, useNavigate } from "react-router-dom";
 import { API } from "../../api/config";
+import qrImage from "../../assets/qr.jpg";
 
 const BookingKosUser = () => {
   const { id } = useParams();
@@ -32,6 +33,10 @@ const BookingKosUser = () => {
 
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
+  const [lastKodePembayaran, setLastKodePembayaran] = useState(""); // Tambahkan state baru
+
+  // Tambahkan state untuk preview gambar
+  const [previewImage, setPreviewImage] = useState(null);
 
   // Fetch kos detail and user data
   useEffect(() => {
@@ -75,10 +80,19 @@ const BookingKosUser = () => {
   const handleInputChange = (e) => {
     const { name, value, files } = e.target;
     if (name === "paymentProof") {
+      const file = files[0];
       setBookingData((prev) => ({
         ...prev,
-        paymentProof: files[0],
+        paymentProof: file,
       }));
+      // Preview gambar
+      if (file) {
+        const reader = new FileReader();
+        reader.onloadend = () => setPreviewImage(reader.result);
+        reader.readAsDataURL(file);
+      } else {
+        setPreviewImage(null);
+      }
     } else {
       setBookingData((prev) => ({
         ...prev,
@@ -92,6 +106,11 @@ const BookingKosUser = () => {
     return kosDetail.harga_per_bulan * parseInt(bookingData.duration);
   };
 
+  const generatePaymentCode = () => {
+    // Hasil: 100 + 3 digit random, misal 100123
+    return "100" + Math.floor(100 + Math.random() * 900);
+  };
+
   // Update the handleSubmit function
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -101,6 +120,8 @@ const BookingKosUser = () => {
       }
 
       const totalHarga = calculateTotal();
+      const kodePembayaran = generatePaymentCode();
+      setLastKodePembayaran(kodePembayaran); // Simpan kode pembayaran ke state
 
       // Show loading with new style
       Swal.fire({
@@ -128,6 +149,7 @@ const BookingKosUser = () => {
       formData.append("total_harga", totalHarga);
       formData.append("bukti_pembayaran", bookingData.paymentProof);
       formData.append("status", "pending");
+      formData.append("kode_pembayaran", kodePembayaran);
 
       const token = localStorage.getItem("token");
       await API.post("/pembayarans", formData, {
@@ -137,13 +159,18 @@ const BookingKosUser = () => {
         },
       });
 
-      // Close loading and show success
+      // Tampilkan kode booking di alert sukses
       await Swal.fire({
         icon: "success",
         title: "Pemesanan Berhasil!",
-        text: "Pesanan Anda sedang diproses. Anda akan dialihkan ke halaman dashboard.",
-        timer: 2000,
-        showConfirmButton: false,
+        html: `<div>
+          Pesanan Anda sedang diproses.<br/>
+          <strong>Kode Booking Anda:</strong><br/>
+          <span style="font-size:1.5rem;color:#007bff">${kodePembayaran}</span>
+          <br/><br/>Simpan kode ini untuk pengecekan status pembayaran.
+        </div>`,
+        showConfirmButton: true, // User harus klik OK
+        confirmButtonText: "OK",
         backdrop: `
           rgba(0,123,255,0.4)
           left top
@@ -156,7 +183,6 @@ const BookingKosUser = () => {
 
       navigate("/user/dashboard", { replace: true });
     } catch (err) {
-      // Show error alert
       Swal.fire({
         icon: "error",
         title: "Pemesanan Gagal",
@@ -167,6 +193,15 @@ const BookingKosUser = () => {
         confirmButtonColor: "#dc3545",
       });
     }
+  };
+
+  // Tambahkan fungsi hapus preview
+  const handleRemovePreview = () => {
+    setPreviewImage(null);
+    setBookingData((prev) => ({
+      ...prev,
+      paymentProof: null,
+    }));
   };
 
   if (loading) {
@@ -235,6 +270,33 @@ const BookingKosUser = () => {
                 </Row>
 
                 <Form.Group className="mb-3">
+                  {/* QR Code dan info rekening ... */}
+                  <div className="text-center mb-3">
+                    <img
+                      src={qrImage}
+                      alt="QR Code Pembayaran"
+                      style={{
+                        width: "220px",
+                        height: "220px",
+                        objectFit: "contain",
+                        display: "block",
+                        margin: "0 auto",
+                      }}
+                    />
+                    <div
+                      className="text-muted mt-2"
+                      style={{ fontSize: "1rem" }}
+                    >
+                      Scan QR untuk transfer pembayaran
+                    </div>
+                    <div
+                      className="mt-2"
+                      style={{ fontSize: "1rem", color: "#333" }}
+                    >
+                      <strong>No. Rekening:</strong> 1234567890
+                      
+                    </div>
+                  </div>
                   <Form.Label>Bukti Pembayaran</Form.Label>
                   <Form.Control
                     type="file"
@@ -243,6 +305,43 @@ const BookingKosUser = () => {
                     accept="image/*"
                     required
                   />
+                  {/* Preview gambar di bawah input file, bisa klik & hapus */}
+                  {previewImage && (
+                    <div className="text-center mt-3 position-relative d-inline-block">
+                      <img
+                        src={previewImage}
+                        alt="Preview Bukti Pembayaran"
+                        style={{
+                          maxWidth: "200px",
+                          maxHeight: "200px",
+                          objectFit: "contain",
+                          borderRadius: "8px",
+                          border: "1px solid #eee",
+                          cursor: "pointer",
+                        }}
+                        title="Klik untuk memperbesar"
+                        onClick={() => window.open(previewImage, "_blank")}
+                      />
+                      {/* Tombol hapus di pojok kanan atas */}
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        className="position-absolute top-0 end-0 m-1 rounded-circle p-0"
+                        style={{
+                          width: "24px",
+                          height: "24px",
+                          lineHeight: "20px",
+                        }}
+                        onClick={handleRemovePreview}
+                        title="Hapus gambar"
+                      >
+                        ×
+                      </Button>
+                      <div className="text-muted small mt-1">
+                        Preview Bukti Pembayaran
+                      </div>
+                    </div>
+                  )}
                   <Form.Text className="text-muted">
                     Upload bukti transfer pembayaran (Max: 2MB)
                   </Form.Text>

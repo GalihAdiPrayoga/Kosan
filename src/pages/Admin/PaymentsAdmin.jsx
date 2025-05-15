@@ -295,7 +295,7 @@ const PaymentsAdmin = () => {
                 <thead>
                   <tr>
                     <th>No</th>
-                    <th>ID Pembayaran</th>
+                    <th>Kode Pembayaran</th> {/* Ganti dari ID Pembayaran */}
                     <th>Nama Penyewa</th>
                     <th>Nama Kos</th>
                     <th>Total Harga</th>
@@ -312,7 +312,8 @@ const PaymentsAdmin = () => {
                   {paginatedPayments.map((payment, index) => (
                     <tr key={payment.id}>
                       <td>{index + 1}</td>
-                      <td>{payment.id}</td>
+                      <td>{payment.kode_pembayaran || "-"}</td>{" "}
+                      {/* Ganti dari payment.id */}
                       <td>{payment.user?.name}</td>
                       <td>{payment.kosan?.nama_kosan}</td>
                       <td>
@@ -336,7 +337,7 @@ const PaymentsAdmin = () => {
                               height: "100px",
                               objectFit: "cover",
                               cursor: "pointer",
-                              borderRadius: "8px", // Tambahan untuk tampilan lebih baik
+                              borderRadius: "8px",
                             }}
                             onClick={() =>
                               window.open(
