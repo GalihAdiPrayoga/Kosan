@@ -13,6 +13,7 @@ import {
 import { useParams, useNavigate } from "react-router-dom";
 import { API } from "../../api/config";
 import { getImageUrl } from "../../utils/imageUtils";
+import Swal from "sweetalert2"; // Pastikan import ini ada di bagian atas file
 
 const EditKos = () => {
   const { id } = useParams();
@@ -162,8 +163,9 @@ const EditKos = () => {
     }
   };
 
+  // Perbaiki fungsi handleSubmit
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     try {
       setLoading(true);
       setError(null);
@@ -214,14 +216,48 @@ const EditKos = () => {
       );
 
       if (response.data) {
-        navigate("/pemilik/kos");
+        await Swal.fire({
+          title: "Berhasil!",
+          text: "Data kos berhasil diubah",
+          icon: "success",
+          timer: 1500,
+          showConfirmButton: false,
+        });
+
+        // Navigasi ke halaman manage kos
+        navigate("/pemilik/kos", { replace: true });
       }
     } catch (err) {
       console.error("Error updating kos:", err);
       setError(err.response?.data?.message || "Gagal mengupdate data kos");
+      Swal.fire({
+        title: "Error!",
+        text: err.response?.data?.message || "Gagal mengupdate data kos",
+        icon: "error",
+      });
     } finally {
       setLoading(false);
     }
+  };
+
+  // Perbaiki fungsi switchAlert
+  const switchAlert = (e) => {
+    e.preventDefault(); // Prevent form submission
+
+    Swal.fire({
+      title: "Konfirmasi Update",
+      text: "Apakah anda yakin ingin mengubah data kos ini?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Ya, Ubah!",
+      cancelButtonText: "Batal",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        handleSubmit();
+      }
+    });
   };
 
   if (loading) {
@@ -247,7 +283,7 @@ const EditKos = () => {
             </Alert>
           )}
 
-          <Form onSubmit={handleSubmit}>
+          <Form onSubmit={switchAlert}>
             <Row>
               <Col md={6}>
                 <Form.Group className="mb-3">
@@ -441,7 +477,8 @@ const EditKos = () => {
               </Button>
               <Button
                 variant="outline-secondary"
-                onClick={() => navigate("/pemilik/kos")}
+                onClick={() => navigate("/pemilik/kos", { replace: true })}
+                type="button"
               >
                 Batal
               </Button>

@@ -1,7 +1,5 @@
 /* Base Styles */
 
-
-
 body {
   padding-top: 76px;
   background: #f8f9fa;
@@ -263,6 +261,12 @@ body {
 }
 
 /* Footer */
+#root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
 footer {
   margin-top: auto;
   background: linear-gradient(to right, #1a1c20, #2d3238);
@@ -296,6 +300,62 @@ footer .social-links a:hover {
 
 footer hr {
   border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Footer Styles */
+.footer-link {
+  color: #6c757d;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  display: inline-block;
+}
+
+.footer-link:hover {
+  color: #0d6efd;
+  transform: translateX(5px);
+}
+
+.footer-link-light {
+  color: #f8f9fa;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  display: inline-block;
+}
+
+.footer-link-light:hover {
+  color: #0d6efd;
+  transform: translateX(5px);
+}
+
+.social-link {
+  color: #f8f9fa;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.social-link:hover {
+  color: #fff;
+  background-color: #0d6efd;
+  transform: translateY(-3px);
+}
+
+.contact-info li {
+  transition: all 0.3s ease;
+}
+
+.contact-info li:hover {
+  transform: translateX(5px);
+}
+
+.footer-bottom {
+  font-size: 0.9rem;
 }
 
 /* Modal Styles */
@@ -738,4 +798,47 @@ a.text-primary:hover {
 
 .pagination-container .rounded-circle {
   font-weight: 500;
+}
+
+/* Add these styles to fix sticky positioning */
+
+/* Base navbar height */
+:root {
+  --navbar-height: 76px;
+}
+
+/* Fix for sticky elements */
+.sticky-top {
+  top: var(--navbar-height) !important; /* Override Bootstrap's default */
+  z-index: 1020;
+}
+
+/* Fix for any fixed-top elements except navbar */
+.fixed-top:not(.navbar) {
+  top: var(--navbar-height) !important;
+}
+
+/* Fix for elements using inline style with position:sticky */
+[style*="position: sticky"] {
+  top: var(--navbar-height) !important;
+}
+
+/* Specific fix for search container in dashboard */
+.search-container {
+  position: sticky;
+  top: var(--navbar-height) !important;
+  z-index: 1020;
+  margin-top: 1rem;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 10px;
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+}
+
+/* Fix for filter sidebar in search page */
+.filter-sidebar {
+  position: sticky;
+  top: calc(var(--navbar-height) + 1rem) !important;
+  max-height: calc(100vh - var(--navbar-height) - 2rem);
+  overflow-y: auto;
 }

@@ -7,135 +7,119 @@ import {
   FaMapMarkerAlt,
   FaPhone,
   FaEnvelope,
+  FaHeart,
 } from "react-icons/fa";
 
 const Footer = () => {
   return (
-    <footer className="bg-white text-dark py-5 mt-auto shadow-sm">
+    <footer className="bg-dark text-light py-5">
       <div className="container">
-        <div className="row g-4">
+        <div className="row g-4 justify-content-between">
+          {/* Brand Column */}
           <div className="col-lg-4 col-md-6">
-            <h5 className="mb-4 text-dark">KosApp</h5>
-            <p className="text-secondary">
+            <h4 className="mb-4 text-white fw-bold">KosApp</h4>
+            <p className="text-light mb-4">
               Platform pencarian kos terpercaya dengan ribuan pilihan kos di
-              seluruh Indonesia.
+              seluruh Indonesia. Temukan kos impian Anda dengan mudah dan aman.
             </p>
-            <div className="d-flex gap-3">
+            <div className="d-flex gap-3 mb-4">
               <a
                 href="https://instagram.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-secondary fs-5 social-link"
+                className="social-link"
               >
-                <FaInstagram />
+                <FaInstagram size={20} />
               </a>
               <a
                 href="https://twitter.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-secondary fs-5 social-link"
+                className="social-link"
               >
-                <FaTwitter />
+                <FaTwitter size={20} />
               </a>
               <a
                 href="https://facebook.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-secondary fs-5 social-link"
+                className="social-link"
               >
-                <FaFacebook />
+                <FaFacebook size={20} />
               </a>
               <a
                 href="https://wa.me/6281234567890"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-secondary fs-5 social-link"
+                className="social-link"
               >
-                <FaWhatsapp />
+                <FaWhatsapp size={20} />
               </a>
             </div>
           </div>
 
+          {/* Quick Links Column */}
           <div className="col-lg-2 col-md-6">
-            <h6 className="mb-4 text-dark">Tautan Cepat</h6>
-            <ul className="list-unstyled">
+            <h5 className="mb-4 text-white fw-semibold">Tautan Cepat</h5>
+            <ul className="list-unstyled footer-links">
               <li className="mb-2">
-                <Link to="/" className="text-secondary text-decoration-none">
+                <Link to="/" className="footer-link">
                   Beranda
                 </Link>
               </li>
               <li className="mb-2">
-                <Link
-                  to="/search"
-                  className="text-secondary text-decoration-none"
-                >
+                <Link to="/search" className="footer-link">
                   Cari Kos
                 </Link>
               </li>
               <li className="mb-2">
-                <Link
-                  to="/about"
-                  className="text-secondary text-decoration-none"
-                >
+                <Link to="/about" className="footer-link">
                   Tentang Kami
+                </Link>
+              </li>
+              <li className="mb-2">
+                <Link to="/contact" className="footer-link">
+                  Hubungi Kami
                 </Link>
               </li>
             </ul>
           </div>
 
-          <div className="col-lg-3 col-md-6">
-            <h6 className="mb-4 text-dark">Hubungi Kami</h6>
-            <ul className="list-unstyled text-secondary">
-              <li className="mb-2">
-                <FaMapMarkerAlt className="me-2" />
-                Jl. Example No. 123, Jakarta
+          {/* Contact Info Column */}
+          <div className="col-lg-4 col-md-6">
+            <h5 className="mb-4 text-white fw-semibold">Hubungi Kami</h5>
+            <ul className="list-unstyled contact-info text-light">
+              <li className="mb-3 d-flex align-items-center">
+                <FaMapMarkerAlt className="me-3 text-primary" size={20} />
+                <span>Jl. Example No. 123, Jakarta</span>
               </li>
-              <li className="mb-2">
-                <FaPhone className="me-2" />
-                (021) 1234-5678
+              <li className="mb-3 d-flex align-items-center">
+                <FaPhone className="me-3 text-primary" size={20} />
+                <span>(021) 1234-5678</span>
               </li>
-              <li className="mb-2">
-                <FaEnvelope className="me-2" />
-                info@kosapp.com
+              <li className="mb-3 d-flex align-items-center">
+                <FaEnvelope className="me-3 text-primary" size={20} />
+                <span>info@kosapp.com</span>
               </li>
             </ul>
           </div>
-
-          <div className="col-lg-3 col-md-6">
-            <h6 className="mb-4 text-dark">Newsletter</h6>
-            <p className="text-secondary">Dapatkan info terbaru dari kami</p>
-            <form className="mb-3">
-              <div className="input-group">
-                <input
-                  type="email"
-                  className="form-control"
-                  placeholder="Email address"
-                  aria-label="Email address"
-                />
-                <button className="btn btn-primary" type="submit">
-                  Subscribe
-                </button>
-              </div>
-            </form>
-          </div>
         </div>
 
-        <hr className="my-4" />
+        <hr className="my-4 border-light" />
 
-        <div className="row">
+        {/* Footer Bottom */}
+        <div className="row align-items-center">
           <div className="col-md-6 text-center text-md-start">
-            <p className="mb-md-0 text-secondary">
-              © {new Date().getFullYear()} KosApp. All rights reserved.
+            <p className="mb-0 text-light">
+              © {new Date().getFullYear()} KosApp. Made with{""}
+              in Indonesia
             </p>
           </div>
           <div className="col-md-6 text-center text-md-end">
-            <Link
-              to="/privacy"
-              className="text-secondary text-decoration-none me-3"
-            >
+            <Link to="/privacy" className="footer-link-light me-3">
               Privacy Policy
             </Link>
-            <Link to="/terms" className="text-secondary text-decoration-none">
+            <Link to="/terms" className="footer-link-light">
               Terms of Service
             </Link>
           </div>

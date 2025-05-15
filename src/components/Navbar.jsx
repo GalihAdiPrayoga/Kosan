@@ -58,7 +58,7 @@ const UserNavbar = () => {
             onClick={handleNavigation}
             className="fw-bold fs-4 py-2"
           >
-            KosApp
+            KosElite
           </Navbar.Brand>
           <Navbar.Toggle aria-controls="basic-navbar-nav" />
           <Navbar.Collapse id="basic-navbar-nav">

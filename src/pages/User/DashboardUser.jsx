@@ -13,7 +13,17 @@ import {
   Carousel,
 } from "react-bootstrap";
 import { Link, useNavigate } from "react-router-dom";
-import { FaShieldAlt, FaMoneyBillWave, FaMapMarkerAlt } from "react-icons/fa";
+import {
+  FaShieldAlt,
+  FaMoneyBillWave,
+  FaMapMarkerAlt,
+  FaHeart,
+  FaHandshake,
+  FaUserFriends,
+  FaPhoneAlt,
+  FaWhatsapp,
+  FaEnvelope,
+} from "react-icons/fa";
 import { getImageUrl } from "../../utils/imageUtils";
 
 // Import hero images
@@ -352,6 +362,49 @@ const DashboardUser = () => {
           </Row>
         </Container>
       </div>
+
+      {/* Why Choose Us Section */}
+      <div className="py-5">
+        <Container>
+          <h2 className="text-center mb-2">Apa yang Kami Tawarkan</h2>
+          <p className="text-center text-muted mb-5">
+            Temukan kenyamanan dan kemudahan dalam mencari kos impian Anda
+          </p>
+          <Row className="g-4">
+            {[
+              {
+                icon: <FaHeart size={32} />,
+                title: "Pelayanan Terbaik",
+                description:
+                  "Kami berkomitmen memberikan pelayanan terbaik untuk kepuasan penghuni",
+              },
+              {
+                icon: <FaHandshake size={32} />,
+                title: "Proses Mudah",
+                description: "Booking dan pembayaran yang simple dan aman",
+              },
+              {
+                icon: <FaUserFriends size={32} />,
+                title: "Komunitas",
+                description: "Bergabung dengan komunitas penghuni kos yang ramah",
+              },
+            ].map((item, index) => (
+              <Col md={4} key={index}>
+                <Card className="h-100 border-0 shadow-sm">
+                  <Card.Body className="text-center p-4">
+                    <div className="text-primary mb-3">{item.icon}</div>
+                    <h5 className="mb-3">{item.title}</h5>
+                    <p className="text-muted mb-0">{item.description}</p>
+                  </Card.Body>
+                </Card>
+              </Col>
+            ))}
+          </Row>
+        </Container>
+      </div>
+
+
+     
     </div>
   );
 };
