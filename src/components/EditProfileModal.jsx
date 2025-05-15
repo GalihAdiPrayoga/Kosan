@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { Modal, Form, Button, Alert, Spinner } from "react-bootstrap";
+import { Modal, Form, Button, Spinner } from "react-bootstrap";
 import { API } from "../api/config";
 import { FaUser, FaEnvelope, FaPhone } from "react-icons/fa";
+import Swal from "sweetalert2";
 
 const EditProfileModal = ({ show, handleClose }) => {
   const [formData, setFormData] = useState({
@@ -44,25 +45,42 @@ const EditProfileModal = ({ show, handleClose }) => {
     setSuccess("");
 
     try {
-      // Update profile using the /me endpoint
       const response = await API.put("/me/update", formData);
 
       if (response.data.status === "success") {
-        // Update localStorage with new user data
         localStorage.setItem("userName", formData.name);
 
         setSuccess("Profil berhasil diperbarui");
+        Swal.fire({
+          icon: "success",
+          title: "Berhasil!",
+          text: "Profil berhasil diperbarui.",
+          timer: 1500,
+          showConfirmButton: false,
+          background: "#fff",
+        });
         setTimeout(() => {
           handleClose();
-          // Reload component instead of full page
           window.dispatchEvent(new Event("userUpdated"));
         }, 1500);
       } else {
         setError("Gagal memperbarui profil");
+        Swal.fire({
+          icon: "error",
+          title: "Gagal",
+          text: "Gagal memperbarui profil.",
+          background: "#fff",
+        });
       }
     } catch (err) {
       console.error("Update error:", err);
       setError(err.response?.data?.message || "Gagal memperbarui profil");
+      Swal.fire({
+        icon: "error",
+        title: "Gagal",
+        text: err.response?.data?.message || "Gagal memperbarui profil.",
+        background: "#fff",
+      });
     } finally {
       setLoading(false);
     }
@@ -70,13 +88,13 @@ const EditProfileModal = ({ show, handleClose }) => {
 
   return (
     <Modal show={show} onHide={handleClose} centered>
-      <Modal.Header closeButton>
-        <Modal.Title>Edit Profil</Modal.Title>
+      <Modal.Header
+        closeButton
+        style={{ background: "#fff", borderBottom: "1px solid #f0f0f0" }}
+      >
+        <Modal.Title style={{ color: "#222" }}>Edit Profil</Modal.Title>
       </Modal.Header>
-      <Modal.Body>
-        {error && <Alert variant="danger">{error}</Alert>}
-        {success && <Alert variant="success">{success}</Alert>}
-
+      <Modal.Body style={{ background: "#fff" }}>
         <Form onSubmit={handleSubmit}>
           <div className="mb-3">
             <div className="input-group">

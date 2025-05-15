@@ -377,7 +377,12 @@ const EditKos = () => {
                     <Form.Check
                       type="checkbox"
                       id={`facility-${facility.id}`}
-                      label={facility.nama_fasilitas}
+                      label={
+                        <span>
+                          <i className={`fas ${facility.icon} me-2`}></i>
+                          {facility.nama_fasilitas}
+                        </span>
+                      }
                       checked={selectedFacilities.includes(Number(facility.id))}
                       onChange={() => handleFacilityChange(Number(facility.id))}
                       className="user-select-none"

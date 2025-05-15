@@ -12,13 +12,7 @@ import {
 } from "react-bootstrap";
 import { API } from "../../api/config";
 import { useNavigate } from "react-router-dom";
-import {
-  FaHome,
-  FaBed,
-  FaMoneyBillWave,
-  FaImages,
-  FaList,
-} from "react-icons/fa";
+import Swal from "sweetalert2";
 
 const AddKos = () => {
   const navigate = useNavigate();
@@ -155,12 +149,10 @@ const AddKos = () => {
     formDataToSend.append("jumlah_kamar", formData.jumlah_kamar);
     formDataToSend.append("harga_per_bulan", formData.price);
 
-    // Append each image to FormData
     uploadedImages.forEach((image, index) => {
       formDataToSend.append(`galeri[]`, image);
     });
 
-    // Add facilities
     formData.facilities.forEach((facilityId) => {
       formDataToSend.append("fasilitas[]", facilityId);
     });
@@ -173,14 +165,18 @@ const AddKos = () => {
       });
 
       if (response.status === 201) {
-        setSuccess("Kos berhasil ditambahkan!");
+        Swal.fire({
+          icon: "success",
+          title: "Berhasil!",
+          text: "Kos berhasil ditambahkan!",
+          timer: 1500,
+          showConfirmButton: false,
+        });
 
-        // Add slight delay before redirect
         setTimeout(() => {
-          navigate("/pemilik/kos"); // Redirect to ManageKos page
+          navigate("/pemilik/kos");
         }, 1500);
 
-        // Reset form
         setFormData({
           user_id: formData.user_id,
           kategori_id: "",
@@ -194,13 +190,20 @@ const AddKos = () => {
         setUploadedImages([]);
         setImagePreviews([]);
       } else {
-        setError("Gagal menambahkan kos.");
+        Swal.fire({
+          icon: "error",
+          title: "Gagal",
+          text: "Gagal menambahkan kos.",
+        });
       }
     } catch (err) {
       console.error("Error adding kos:", err);
-      setError(
-        err.response?.data?.message || "Terjadi kesalahan saat menambah kos"
-      );
+      Swal.fire({
+        icon: "error",
+        title: "Terjadi Kesalahan",
+        text:
+          err.response?.data?.message || "Terjadi kesalahan saat menambah kos",
+      });
     } finally {
       setLoading(false);
     }
@@ -214,31 +217,19 @@ const AddKos = () => {
   };
 
   return (
-    <Container className="py-5">
+    <Container className="py-4">
       <Row className="justify-content-center">
         <Col md={10} lg={8}>
-          <Card className="shadow border-0 rounded-lg overflow-hidden">
-            <div
-              className="text-white p-4"
-              style={{
-                background: "linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%)",
-              }}
-            >
-              <h2 className="mb-2 d-flex align-items-center gap-2">
-                <FaHome /> Tambah Kos Baru
-              </h2>
-              <p className="mb-0 opacity-75">
-                Isi informasi detail tentang kos Anda
-              </p>
-            </div>
-
-            <Card.Body className="p-4">
+          <Card className="shadow-sm">
+            <Card.Header className="bg-primary text-white">
+              <h2 className="mb-0">Tambah Kos Baru</h2>
+            </Card.Header>
+            <Card.Body>
               {error && (
                 <Alert
                   variant="danger"
                   onClose={() => setError("")}
                   dismissible
-                  className="animate__animated animate__fadeIn"
                 >
                   {error}
                 </Alert>
@@ -248,249 +239,215 @@ const AddKos = () => {
                   variant="success"
                   onClose={() => setSuccess("")}
                   dismissible
-                  className="animate__animated animate__fadeIn"
                 >
                   {success}
                 </Alert>
               )}
 
               <Form onSubmit={handleSubmit}>
-                <div className="mb-4 p-3 bg-light rounded-3">
-                  <h5 className="mb-3 d-flex align-items-center gap-2">
-                    <FaList /> Informasi Dasar
-                  </h5>
-                  <Row className="mb-3">
-                    <Col md={6}>
-                      <FloatingLabel
-                        controlId="kategori_id"
-                        label="Kategori Kos"
-                        className="mb-3"
+                <Row className="mb-3">
+                  <Col md={6}>
+                    <FloatingLabel
+                      controlId="kategori_id"
+                      label="Kategori Kos"
+                      className="mb-3"
+                    >
+                      <Form.Select
+                        name="kategori_id"
+                        value={formData.kategori_id}
+                        onChange={handleChange}
+                        required
                       >
-                        <Form.Select
-                          name="kategori_id"
-                          value={formData.kategori_id}
-                          onChange={handleChange}
-                          required
-                          className="border-0 shadow-sm"
-                        >
-                          <option value="">Pilih Kategori</option>
-                          {categories.map((kategori) => (
-                            <option key={kategori.id} value={kategori.id}>
-                              {kategori.name || kategori.nama_kategori}
-                            </option>
-                          ))}
-                        </Form.Select>
-                      </FloatingLabel>
-                    </Col>
-                    <Col md={6}>
-                      <FloatingLabel
-                        controlId="name"
-                        label="Nama Kosan"
-                        className="mb-3"
-                      >
-                        <Form.Control
-                          type="text"
-                          name="name"
-                          value={formData.name}
-                          onChange={handleChange}
-                          placeholder=" "
-                          required
-                          className="border-0 shadow-sm"
+                        <option value="">Pilih Kategori</option>
+                        {categories.map((kategori) => (
+                          <option key={kategori.id} value={kategori.id}>
+                            {kategori.name || kategori.nama_kategori}
+                          </option>
+                        ))}
+                      </Form.Select>
+                    </FloatingLabel>
+                  </Col>
+                  <Col md={6}>
+                    <FloatingLabel
+                      controlId="name"
+                      label="Nama Kosan"
+                      className="mb-3"
+                    >
+                      <Form.Control
+                        type="text"
+                        name="name"
+                        value={formData.name}
+                        onChange={handleChange}
+                        placeholder=" "
+                        required
+                      />
+                    </FloatingLabel>
+                  </Col>
+                </Row>
+
+                <FloatingLabel
+                  controlId="location"
+                  label="Alamat Lengkap"
+                  className="mb-3"
+                >
+                  <Form.Control
+                    as="textarea"
+                    style={{ height: "100px" }}
+                    name="location"
+                    value={formData.location}
+                    onChange={handleChange}
+                    placeholder=" "
+                    required
+                  />
+                </FloatingLabel>
+
+                <FloatingLabel
+                  controlId="description"
+                  label="Deskripsi"
+                  className="mb-3"
+                >
+                  <Form.Control
+                    as="textarea"
+                    style={{ height: "100px" }}
+                    name="description"
+                    value={formData.description}
+                    onChange={handleChange}
+                    placeholder=" "
+                  />
+                </FloatingLabel>
+
+                {/* Add this facilities section */}
+                <Form.Group className="mb-3">
+                  <Form.Label>Fasilitas Kos</Form.Label>
+                  <Row className="g-3">
+                    {facilities.map((facility) => (
+                      <Col md={4} key={facility.id}>
+                        <Form.Check
+                          type="checkbox"
+                          id={`facility-${facility.id}`}
+                          label={
+                            <span>
+                              <i className={`fas ${facility.icon} me-2`}></i>
+                              {facility.nama_fasilitas}
+                            </span>
+                          }
+                          checked={formData.facilities.includes(facility.id)}
+                          onChange={() => handleFacilityChange(facility.id)}
+                          disabled={loading}
                         />
-                      </FloatingLabel>
-                    </Col>
+                      </Col>
+                    ))}
                   </Row>
+                </Form.Group>
 
-                  <FloatingLabel
-                    controlId="location"
-                    label="Alamat Lengkap"
-                    className="mb-3"
-                  >
-                    <Form.Control
-                      as="textarea"
-                      style={{ height: "100px" }}
-                      name="location"
-                      value={formData.location}
-                      onChange={handleChange}
-                      placeholder=" "
-                      required
-                      className="border-0 shadow-sm"
-                    />
-                  </FloatingLabel>
+                <Row className="mb-3">
+                  <Col md={6}>
+                    <FloatingLabel
+                      controlId="jumlah_kamar"
+                      label="Jumlah Kamar Tersedia"
+                      className="mb-3"
+                    >
+                      <Form.Control
+                        type="number"
+                        name="jumlah_kamar"
+                        min="1"
+                        value={formData.jumlah_kamar}
+                        onChange={handleChange}
+                        placeholder=" "
+                        required
+                      />
+                    </FloatingLabel>
+                  </Col>
+                  <Col md={6}>
+                    <FloatingLabel
+                      controlId="price"
+                      label="Harga per Bulan (Rp)"
+                      className="mb-3"
+                    >
+                      <Form.Control
+                        type="number"
+                        name="price"
+                        min="0"
+                        step="100000" // hanya kelipatan 100000
+                        value={formData.price}
+                        onChange={handleChange}
+                        placeholder=" "
+                        required
+                      />
+                    </FloatingLabel>
+                  </Col>
+                </Row>
 
-                  <FloatingLabel
-                    controlId="description"
-                    label="Deskripsi"
-                    className="mb-3"
-                  >
-                    <Form.Control
-                      as="textarea"
-                      style={{ height: "100px" }}
-                      name="description"
-                      value={formData.description}
-                      onChange={handleChange}
-                      placeholder=" "
-                      className="border-0 shadow-sm"
-                    />
-                  </FloatingLabel>
-                </div>
+                <Form.Group controlId="galeri" className="mb-4">
+                  <Form.Label>Upload Foto Kos</Form.Label>
+                  <div className="mb-2">
+                    <small className="text-muted">
+                      Format yang didukung: JPG, JPEG, PNG (Maks. 2MB per foto)
+                    </small>
+                  </div>
+                  <Form.Control
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    max={5}
+                  />
 
-                <div className="mb-4 p-3 bg-light rounded-3">
-                  <h5 className="mb-3 d-flex align-items-center gap-2">
-                    <FaBed /> Fasilitas dan Kamar
-                  </h5>
-                  <Form.Group className="mb-4">
-                    <Row className="g-3">
-                      {facilities.map((facility) => (
-                        <Col md={4} key={facility.id}>
-                          <div
-                            className={`p-3 rounded-3 shadow-sm ${
-                              formData.facilities.includes(facility.id)
-                                ? "bg-primary bg-opacity-10"
-                                : "bg-white"
-                            }`}
-                          >
-                            <Form.Check
-                              type="checkbox"
-                              id={`facility-${facility.id}`}
-                              label={
-                                <span className="d-flex align-items-center gap-2">
-                                  <i className={`fas ${facility.icon}`}></i>
-                                  {facility.nama_fasilitas}
-                                </span>
-                              }
-                              checked={formData.facilities.includes(
-                                facility.id
-                              )}
-                              onChange={() => handleFacilityChange(facility.id)}
-                              disabled={loading}
-                            />
-                          </div>
-                        </Col>
-                      ))}
-                    </Row>
-                  </Form.Group>
-
-                  <Row>
-                    <Col md={6}>
-                      <FloatingLabel
-                        controlId="jumlah_kamar"
-                        label="Jumlah Kamar Tersedia"
-                        className="mb-3"
-                      >
-                        <Form.Control
-                          type="number"
-                          name="jumlah_kamar"
-                          min="1"
-                          value={formData.jumlah_kamar}
-                          onChange={handleChange}
-                          placeholder=" "
-                          required
-                          className="border-0 shadow-sm"
-                        />
-                      </FloatingLabel>
-                    </Col>
-                    <Col md={6}>
-                      <FloatingLabel
-                        controlId="price"
-                        label="Harga per Bulan (Rp)"
-                        className="mb-3"
-                      >
-                        <Form.Control
-                          type="number"
-                          name="price"
-                          min="0"
-                          value={formData.price}
-                          onChange={handleChange}
-                          placeholder=" "
-                          required
-                          className="border-0 shadow-sm"
-                        />
-                      </FloatingLabel>
-                    </Col>
-                  </Row>
-                </div>
-
-                <div className="mb-4 p-3 bg-light rounded-3">
-                  <h5 className="mb-3 d-flex align-items-center gap-2">
-                    <FaImages /> Galeri Foto
-                  </h5>
-                  <Form.Group controlId="galeri">
-                    <div className="mb-3">
-                      <div className="p-3 border border-dashed rounded-3 text-center">
-                        <Form.Control
-                          type="file"
-                          multiple
-                          accept="image/*"
-                          onChange={handleFileChange}
-                          max={5}
-                          className="d-none"
-                          id="file-upload"
-                        />
-                        <label
-                          htmlFor="file-upload"
-                          className="btn btn-outline-primary mb-2"
-                        >
-                          <FaImages className="me-2" />
-                          Pilih Foto
-                        </label>
-                        <div className="text-muted small">
-                          Format: JPG, JPEG, PNG (Maks. 2MB per foto)
-                        </div>
-                      </div>
-                    </div>
-
-                    {imagePreviews.length > 0 && (
+                  {imagePreviews.length > 0 && (
+                    <div className="mt-3">
                       <Row className="g-2">
                         {imagePreviews.map((preview, index) => (
                           <Col key={index} xs={6} md={4} lg={3}>
-                            <Card className="position-relative h-100 border-0 shadow-sm">
-                              <div style={{ paddingTop: "75%" }}>
+                            <Card className="position-relative h-100">
+                              <div
+                                style={{
+                                  width: "100%",
+                                  paddingTop: "75%" /* 4:3 Aspect Ratio */,
+                                  position: "relative",
+                                }}
+                              >
                                 <img
                                   src={preview}
                                   alt={`Preview ${index + 1}`}
-                                  className="position-absolute top-0 start-0 w-100 h-100 object-fit-cover rounded"
+                                  style={{
+                                    position: "absolute",
+                                    top: 0,
+                                    left: 0,
+                                    width: "100%",
+                                    height: "100%",
+                                    objectFit: "cover",
+                                  }}
                                 />
                               </div>
-                              <Button
-                                variant="danger"
-                                size="sm"
-                                className="position-absolute top-0 end-0 m-1 rounded-circle p-0"
-                                onClick={() => removeImage(index)}
-                                style={{ width: "24px", height: "24px" }}
-                              >
-                                ×
-                              </Button>
+                              {/* Hapus Button removeImage di dalam Card */}
                             </Card>
                           </Col>
                         ))}
                       </Row>
-                    )}
-                  </Form.Group>
-                </div>
+                    </div>
+                  )}
+                </Form.Group>
 
-                <div className="d-grid">
+                <div className="d-grid gap-2">
                   <Button
                     variant="primary"
                     size="lg"
                     type="submit"
                     disabled={loading}
-                    className="rounded-pill"
-                    style={{
-                      background:
-                        "linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%)",
-                    }}
                   >
                     {loading ? (
                       <>
-                        <Spinner size="sm" className="me-2" />
-                        Memproses...
+                        <Spinner
+                          as="span"
+                          animation="border"
+                          size="sm"
+                          role="status"
+                          aria-hidden="true"
+                        />
+                        <span className="ms-2">Memproses...</span>
                       </>
                     ) : (
-                      <>
-                        <FaHome className="me-2" />
-                        Simpan Data Kos
-                      </>
+                      "Simpan Data Kos"
                     )}
                   </Button>
                 </div>

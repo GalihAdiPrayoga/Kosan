@@ -40,6 +40,7 @@ const SearchUser = () => {
   });
   const [currentPage, setCurrentPage] = useState(1);
   const [debouncedFilters, setDebouncedFilters] = useState(filters);
+  const [facilityOptions, setFacilityOptions] = useState([]);
 
   const fetchKos = async () => {
     try {
@@ -167,6 +168,21 @@ const SearchUser = () => {
   useEffect(() => {
     setCurrentPage(1);
   }, [filters]);
+
+  // Ambil data fasilitas dari API
+  useEffect(() => {
+    const fetchFacilities = async () => {
+      try {
+        const res = await API.get("/fasilitas");
+        if (Array.isArray(res.data)) {
+          setFacilityOptions(res.data);
+        }
+      } catch (err) {
+        setFacilityOptions([]);
+      }
+    };
+    fetchFacilities();
+  }, []);
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
@@ -410,23 +426,17 @@ const SearchUser = () => {
                 <Form.Group className="mb-3">
                   <Form.Label>Fasilitas</Form.Label>
                   <div className="d-flex flex-wrap gap-2">
-                    {[
-                      "WiFi",
-                      "AC",
-                      "Kamar Mandi Dalam",
-                      "Parkir Motor",
-                      "Parkir Mobil",
-                      "Dapur",
-                      "Lemari",
-                      "Meja",
-                      "Kasur",
-                    ].map((facility) => (
+                    {facilityOptions.map((facility) => (
                       <Form.Check
-                        key={facility}
+                        key={facility.id}
                         type="checkbox"
-                        label={facility}
-                        checked={filters.facilities.includes(facility)}
-                        onChange={() => handleFacilityChange(facility)}
+                        label={facility.nama_fasilitas}
+                        checked={filters.facilities.includes(
+                          facility.nama_fasilitas
+                        )}
+                        onChange={() =>
+                          handleFacilityChange(facility.nama_fasilitas)
+                        }
                         className="me-3"
                       />
                     ))}

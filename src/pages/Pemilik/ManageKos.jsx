@@ -93,9 +93,9 @@ const ManageKos = () => {
       showCancelButton: true,
       confirmButtonColor: "#dc3545",
       cancelButtonColor: "#6c757d",
-      confirmButtonText: "Ya, hapus!",
       cancelButtonText: "Batal",
-      reverseButtons: true,
+      confirmButtonText: "Ya, hapus!",
+      reverseButtons: false, // <-- ubah ke false atau bisa dihapus saja
     });
 
     if (result.isConfirmed) {
@@ -215,178 +215,173 @@ const ManageKos = () => {
                     baru.
                   </p>
                 </div>
-              
               </div>
             </div>
           ) : (
             <Row className="g-4">
               {currentItems.map((kos, index) => (
                 <Col lg={3} md={4} sm={6} key={kos.id || index}>
-                  <Link
-                    to={`/pemilik/kos/edit/${kos.id}`}
-                    className="text-decoration-none"
+                  {/* Hapus Link di sini */}
+                  <Card
+                    className="h-100 border hover-card"
+                    style={{ cursor: "pointer" }}
                   >
-                    <Card
-                      className="h-100 border hover-card"
-                      style={{ cursor: "pointer" }}
-                    >
-                      <div style={{ position: "relative" }}>
-                        <Card.Img
-                          variant="top"
-                          src={
-                            kos.galeri?.[0] ? getImageUrl(kos.galeri[0]) : null
-                          }
-                          style={{
-                            height: "160px",
-                            objectFit: "cover",
-                            backgroundColor: "#f8f9fa",
-                          }}
-                          onError={(e) => {
-                            console.log("Failed to load image:", e.target.src);
-                            // Try next image only once to prevent infinite loop
-                            const currentIndex = kos.galeri.findIndex(
-                              (img) => getImageUrl(img) === e.target.src
+                    <div style={{ position: "relative" }}>
+                      <Card.Img
+                        variant="top"
+                        src={
+                          kos.galeri?.[0] ? getImageUrl(kos.galeri[0]) : null
+                        }
+                        style={{
+                          height: "160px",
+                          objectFit: "cover",
+                          backgroundColor: "#f8f9fa",
+                        }}
+                        onError={(e) => {
+                          console.log("Failed to load image:", e.target.src);
+                          // Try next image only once to prevent infinite loop
+                          const currentIndex = kos.galeri.findIndex(
+                            (img) => getImageUrl(img) === e.target.src
+                          );
+                          if (
+                            currentIndex >= 0 &&
+                            currentIndex < kos.galeri.length - 1
+                          ) {
+                            e.target.src = getImageUrl(
+                              kos.galeri[currentIndex + 1]
                             );
-                            if (
-                              currentIndex >= 0 &&
-                              currentIndex < kos.galeri.length - 1
-                            ) {
-                              e.target.src = getImageUrl(
-                                kos.galeri[currentIndex + 1]
-                              );
+                          }
+                        }}
+                      />
+                      <div
+                        style={{
+                          position: "absolute",
+                          top: "8px",
+                          right: "8px",
+                          zIndex: 2,
+                        }}
+                      >
+                        <div className="position-relative">
+                          <button
+                            className="p-0 border-0 shadow-none"
+                            onClick={() =>
+                              setActiveMenuId(
+                                activeMenuId === kos.id ? null : kos.id
+                              )
                             }
-                          }}
-                        />
-                        <div
-                          style={{
-                            position: "absolute",
-                            top: "8px",
-                            right: "8px",
-                            zIndex: 2,
-                          }}
-                        >
-                          <div className="position-relative">
-                            <button
-                              className="p-0 border-0 shadow-none"
-                              onClick={() =>
-                                setActiveMenuId(
-                                  activeMenuId === kos.id ? null : kos.id
-                                )
-                              }
+                            style={{
+                              width: "28px",
+                              height: "28px",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              background: "rgba(255, 255, 255, 0.9)",
+                              borderRadius: "50%",
+                              color: "#444",
+                              cursor: "pointer",
+                            }}
+                          >
+                            <FaEllipsisV size={12} />
+                          </button>
+                          {activeMenuId === kos.id && (
+                            <div
+                              className="position-absolute bg-white rounded shadow-sm py-1"
                               style={{
-                                width: "28px",
-                                height: "28px",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                background: "rgba(255, 255, 255, 0.9)",
-                                borderRadius: "50%",
-                                color: "#444",
-                                cursor: "pointer",
+                                top: "100%",
+                                right: 0,
+                                marginTop: "4px",
+                                minWidth: "120px",
+                                zIndex: 3,
                               }}
                             >
-                              <FaEllipsisV size={12} />
-                            </button>
-                            {activeMenuId === kos.id && (
-                              <div
-                                className="position-absolute bg-white rounded shadow-sm py-1"
-                                style={{
-                                  top: "100%",
-                                  right: 0,
-                                  marginTop: "4px",
-                                  minWidth: "120px",
-                                  zIndex: 3,
-                                }}
+                              <Link
+                                to={`/pemilik/kos/edit/${kos.id}`}
+                                className="d-flex align-items-center px-3 py-2 text-decoration-none text-dark hover-bg-light"
+                                style={{ fontSize: "0.9rem" }}
                               >
-                                <Link
-                                  to={`/pemilik/kos/edit/${kos.id}`}
-                                  className="d-flex align-items-center px-3 py-2 text-decoration-none text-dark hover-bg-light"
-                                  style={{ fontSize: "0.9rem" }}
-                                >
-                                  <i className="bi bi-pencil me-2"></i>Edit
-                                </Link>
-                                <button
-                                  onClick={() => handleDelete(kos.id)}
-                                  className="d-flex align-items-center px-3 py-2 text-danger border-0 bg-transparent w-100 text-start"
-                                  style={{ fontSize: "0.9rem" }}
-                                >
-                                  <i className="bi bi-trash me-2"></i>Hapus
-                                </button>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                        <Badge
-                          bg={
-                            kos.kategori?.nama_kategori?.toLowerCase() ===
-                            "putra"
-                              ? "primary"
-                              : kos.kategori?.nama_kategori?.toLowerCase() ===
-                                "putri"
-                              ? "danger"
-                              : "success"
-                          }
-                          className="position-absolute"
-                          style={{
-                            top: "12px",
-                            left: "12px",
-                            padding: "8px 12px",
-                            fontSize: "0.85rem",
-                          }}
-                        >
-                          {kos.kategori?.nama_kategori || "Campuran"}
-                        </Badge>
-                      </div>
-                      <Card.Body className="p-3">
-                        <Card.Title className="h6 mb-2 fw-bold text-truncate">
-                          {kos.nama_kosan || "Nama tidak tersedia"}
-                        </Card.Title>
-                        <div className="d-flex align-items-center mb-2 text-muted">
-                          <FaMapMarkerAlt className="me-1" size={12} />
-                          <small className="text-truncate">
-                            {kos.alamat || "Alamat tidak tersedia"}
-                          </small>
-                        </div>
-
-                        {/* Facilities */}
-                        <div className="mb-2">
-                          {kos.fasilitas &&
-                            Array.isArray(kos.fasilitas) &&
-                            kos.fasilitas.slice(0, 2).map((facility, index) => (
-                              <Badge
-                                bg="light"
-                                text="dark"
-                                className="me-1 mb-1 py-1 px-2"
-                                key={index}
-                                style={{ fontSize: "0.7rem" }}
+                                <i className="bi bi-pencil me-2"></i>Edit
+                              </Link>
+                              <button
+                                onClick={() => handleDelete(kos.id)}
+                                className="d-flex align-items-center px-3 py-2 text-danger border-0 bg-transparent w-100 text-start"
+                                style={{ fontSize: "0.9rem" }}
                               >
-                                {facility.nama_fasilitas}
-                              </Badge>
-                            ))}
-                        </div>
-
-                        {/* Price */}
-                        <div className="mt-2 pt-2 border-top">
-                          <div className="d-flex justify-content-between align-items-center">
-                            <div>
-                              <span className="h6 text-primary mb-0">
-                                Rp{" "}
-                                {new Intl.NumberFormat("id-ID").format(
-                                  kos.harga_per_bulan || 0
-                                )}
-                              </span>
-                              <span
-                                className="text-muted ms-1"
-                                style={{ fontSize: "0.8rem" }}
-                              >
-                                /bulan
-                              </span>
+                                <i className="bi bi-trash me-2"></i>Hapus
+                              </button>
                             </div>
+                          )}
+                        </div>
+                      </div>
+                      <Badge
+                        bg={
+                          kos.kategori?.nama_kategori?.toLowerCase() === "putra"
+                            ? "primary"
+                            : kos.kategori?.nama_kategori?.toLowerCase() ===
+                              "putri"
+                            ? "danger"
+                            : "success"
+                        }
+                        className="position-absolute"
+                        style={{
+                          top: "12px",
+                          left: "12px",
+                          padding: "8px 12px",
+                          fontSize: "0.85rem",
+                        }}
+                      >
+                        {kos.kategori?.nama_kategori || "Campuran"}
+                      </Badge>
+                    </div>
+                    <Card.Body className="p-3">
+                      <Card.Title className="h6 mb-2 fw-bold text-truncate">
+                        {kos.nama_kosan || "Nama tidak tersedia"}
+                      </Card.Title>
+                      <div className="d-flex align-items-center mb-2 text-muted">
+                        <FaMapMarkerAlt className="me-1" size={12} />
+                        <small className="text-truncate">
+                          {kos.alamat || "Alamat tidak tersedia"}
+                        </small>
+                      </div>
+
+                      {/* Facilities */}
+                      <div className="mb-2">
+                        {kos.fasilitas &&
+                          Array.isArray(kos.fasilitas) &&
+                          kos.fasilitas.slice(0, 2).map((facility, index) => (
+                            <Badge
+                              bg="light"
+                              text="dark"
+                              className="me-1 mb-1 py-1 px-2"
+                              key={index}
+                              style={{ fontSize: "0.7rem" }}
+                            >
+                              {facility.nama_fasilitas}
+                            </Badge>
+                          ))}
+                      </div>
+
+                      {/* Price */}
+                      <div className="mt-2 pt-2 border-top">
+                        <div className="d-flex justify-content-between align-items-center">
+                          <div>
+                            <span className="h6 text-primary mb-0">
+                              Rp{" "}
+                              {new Intl.NumberFormat("id-ID").format(
+                                kos.harga_per_bulan || 0
+                              )}
+                            </span>
+                            <span
+                              className="text-muted ms-1"
+                              style={{ fontSize: "0.8rem" }}
+                            >
+                              /bulan
+                            </span>
                           </div>
                         </div>
-                      </Card.Body>
-                    </Card>
-                  </Link>
+                      </div>
+                    </Card.Body>
+                  </Card>
+                  {/* Hapus penutup Link di sini */}
                 </Col>
               ))}
             </Row>
