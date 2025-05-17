@@ -10,14 +10,8 @@ const NavbarManager = () => {
   const isPemilikRoute = location.pathname.startsWith("/pemilik");
   const userType = localStorage.getItem("userType");
 
-  if (isAdminRoute && userType === "admin") {
-    return <AdminNavbar />;
-  }
-
-  if (isPemilikRoute && userType === "pemilik") {
-    return <PemilikNavbar />;
-  }
-
+  if (isAdminRoute && userType === "admin") return <AdminNavbar />;
+  if (isPemilikRoute && userType === "pemilik") return <PemilikNavbar />;
   return <UserNavbar />;
 };
 

@@ -8,6 +8,7 @@ import {
   FaUserCircle,
 } from "react-icons/fa";
 import { API } from "../api/config";
+import { useNavigate } from "react-router-dom";
 
 const AuthModals = ({
   showLogin,
@@ -16,6 +17,7 @@ const AuthModals = ({
   handleSwitch,
   onLoginSuccess, // Add this prop
 }) => {
+  const navigate = useNavigate();
   const [loginData, setLoginData] = useState({ email: "", password: "" });
   const [registerData, setRegisterData] = useState({
     name: "",
@@ -39,94 +41,109 @@ const AuthModals = ({
     return true;
   };
 
- const handleLoginSubmit = async (e) => {
-  e.preventDefault();
-  try {
-    setLoading(true);
-    setError("");
+  const handleLoginSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      setLoading(true);
+      setError("");
 
-    const response = await API.post("/login", {
-      email: loginData.email,
-      password: loginData.password,
-    });
+      const response = await API.post("/login", {
+        email: loginData.email,
+        password: loginData.password,
+      });
 
-    const user = response.data.user;
-    const token = response.data.token;
+      const user = response.data.user;
+      const token = response.data.token;
 
-    // Simpan token dan data user
-    localStorage.setItem("isLoggedIn", "true");
-    localStorage.setItem("userId", user.id);
-    localStorage.setItem("userName", user.name);
-    localStorage.setItem("userType", user.role);
-    localStorage.setItem("token", token);
+      // Save token and user data
+      localStorage.setItem("isLoggedIn", "true");
+      localStorage.setItem("userId", user.id);
+      localStorage.setItem("userName", user.name);
+      localStorage.setItem("userType", user.role);
+      localStorage.setItem("token", token);
 
-    // Set token ke header Authorization
-    API.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+      // Set token to Authorization header
+      API.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 
-    handleClose();
-    if (onLoginSuccess) {
-      onLoginSuccess();
+      handleClose();
+      if (onLoginSuccess) {
+        onLoginSuccess();
+      }
+
+      // Redirect based on user role
+      if (user.role === "pemilik") {
+        navigate("/pemilik-dashboard");
+      } else {
+        navigate("/user-dashboard");
+      }
+    } catch (err) {
+      if (err.response?.status === 401) {
+        setError("Invalid credentials, please try again.");
+      } else {
+        setError(err.response?.data?.message || err.message || "Login failed");
+      }
+    } finally {
+      setLoading(false);
     }
+  };
 
-    // Jika ingin reload UI setelah login:
-    // window.location.reload();
+  const handleRegisterSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      if (!validateRegisterData()) return;
 
-  } catch (err) {
-    if (err.response?.status === 401) {
-      setError("Invalid credentials, please try again.");
-    } else {
-      setError(err.response?.data?.message || err.message || "Login failed");
+      setLoading(true);
+      setError("");
+
+      const response = await API.post("/register", {
+        name: registerData.name,
+        email: registerData.email,
+        password: registerData.password,
+        password_confirmation: registerData.confirmPassword,
+        role: registerData.role,
+      });
+
+      const user = response.data.user;
+      const token = response.data.token;
+
+      // Save user data and token
+      localStorage.setItem("isLoggedIn", "true");
+      localStorage.setItem("userId", user.id);
+      localStorage.setItem("userName", user.name);
+      localStorage.setItem("userType", user.role);
+      localStorage.setItem("token", token); // for auth requests
+
+      handleClose();
+      window.location.reload(); // Reload to update UI
+    } catch (err) {
+      // Handle error from backend
+      if (err.response?.status === 422) {
+        const errors = err.response.data.errors;
+        const firstError = errors[Object.keys(errors)[0]][0];
+        setError(firstError);
+      } else {
+        setError(err.response?.data?.message || err.message || "Registration failed");
+      }
+    } finally {
+      setLoading(false);
     }
-  } finally {
-    setLoading(false);
-  }
-};
-
- const handleRegisterSubmit = async (e) => {
-  e.preventDefault();
-  try {
-    if (!validateRegisterData()) return;
-
-    setLoading(true);
-    setError("");
-
-    const response = await API.post("/register", {
-      name: registerData.name,
-      email: registerData.email,
-      password: registerData.password,
-      password_confirmation: registerData.confirmPassword,
-      role: registerData.role,
-    });
-
-    const user = response.data.user;
-    const token = response.data.token;
-
-    // Simpan data user dan token
-    localStorage.setItem("isLoggedIn", "true");
-    localStorage.setItem("userId", user.id);
-    localStorage.setItem("userName", user.name);
-    localStorage.setItem("userType", user.role);
-    localStorage.setItem("token", token); // untuk request yang butuh auth
-
-    handleClose();
-    window.location.reload(); // reload untuk update UI
-  } catch (err) {
-    // Tangkap pesan error dari backend
-    if (err.response?.status === 422) {
-      // Laravel validation error
-      const errors = err.response.data.errors;
-      const firstError = errors[Object.keys(errors)[0]][0];
-      setError(firstError);
-    } else {
-      setError(err.response?.data?.message || err.message || "Registration failed");
-    }
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   const resetError = () => {
     setError("");
+  };
+
+  const handleCloseAndReset = () => {
+    // Reset data when modal is closed
+    setLoginData({ email: "", password: "" });
+    setRegisterData({
+      name: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+      role: "user",
+    });
+    handleClose();
   };
 
   return (
@@ -134,7 +151,7 @@ const AuthModals = ({
       {/* Login Modal */}
       <Modal
         show={showLogin}
-        onHide={handleClose}
+        onHide={handleCloseAndReset}
         onExited={resetError}
         centered
       >
@@ -213,7 +230,7 @@ const AuthModals = ({
       {/* Register Modal */}
       <Modal
         show={showRegister}
-        onHide={handleClose}
+        onHide={handleCloseAndReset}
         onExited={resetError}
         centered
       >
@@ -331,7 +348,7 @@ const AuthModals = ({
               {loading ? (
                 <Spinner animation="border" size="sm" className="me-2" />
               ) : null}
-              Create Account
+              Sign Up
             </Button>
           </Form>
           <div className="text-center">

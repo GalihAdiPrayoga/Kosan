@@ -22,6 +22,7 @@ const Register = () => {
     email: "",
     password: "",
     confirmPassword: "",
+    role: "user", // Default role
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -51,35 +52,43 @@ const Register = () => {
         throw new Error("Format email tidak valid");
       }
 
-      const payload = {
+      const response = await API.post("/register", {
         name: formData.name.trim(),
         email: formData.email.toLowerCase().trim(),
         password: formData.password,
-      };
+        role: formData.role,
+      });
 
-      const response = await API.post("/register", payload);
+      const { user, token, roles } = response.data;
 
-      if (response.data?.token && response.data?.user) {
-        // Simpan token ke localStorage
-        localStorage.setItem("token", response.data.token);
+      // Simpan data ke localStorage
+      localStorage.setItem("token", token);
+      localStorage.setItem("userId", user.id);
+      localStorage.setItem("userName", user.name);
+      localStorage.setItem("userType", roles[0]);
+      localStorage.setItem(
+        "isAdmin",
+        roles.includes("admin") ? "true" : "false"
+      );
+      localStorage.setItem(
+        "isPemilik",
+        roles.includes("pemilik") ? "true" : "false"
+      );
+      localStorage.setItem("isUser", roles.includes("user") ? "true" : "false");
 
-        // Redirect ke halaman sebelumnya atau dashboard
-        navigate(-1, {
-          replace: true,
-          state: { message: "Registrasi berhasil!" },
-        });
+      // Set token untuk request selanjutnya
+      API.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+
+      // Redirect berdasarkan role
+      if (roles.includes("admin")) {
+        navigate("/admin/dashboard");
+      } else if (roles.includes("pemilik")) {
+        navigate("/pemilik/dashboard");
       } else {
-        throw new Error("Registrasi gagal, coba lagi");
+        navigate("/");
       }
     } catch (err) {
-      // Handle specific API errors
-      if (err.response?.data?.message) {
-        setError(err.response.data.message);
-      } else if (err.message) {
-        setError(err.message);
-      } else {
-        setError("Terjadi kesalahan, silakan coba lagi");
-      }
+      setError(err.response?.data?.message || "Registrasi gagal");
     } finally {
       setLoading(false);
     }
@@ -178,6 +187,24 @@ const Register = () => {
                           required
                           disabled={loading}
                         />
+                      </div>
+                    </div>
+
+                    <div className="auth-input-group">
+                      <div className="input-group">
+                        <span className="input-group-text">
+                          <FaUser />
+                        </span>
+                        <Form.Select
+                          value={formData.role}
+                          onChange={(e) =>
+                            setFormData({ ...formData, role: e.target.value })
+                          }
+                          disabled={loading}
+                        >
+                          <option value="user">User</option>
+                          <option value="pemilik">Pemilik Kos</option>
+                        </Form.Select>
                       </div>
                     </div>
 

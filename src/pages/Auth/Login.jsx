@@ -1,3 +1,4 @@
+// src/pages/Login.js
 import React, { useState } from "react";
 import {
   Container,
@@ -18,7 +19,7 @@ const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const from = location.state?.from || "/";
-  const message = location.state?.message;4
+  const message = location.state?.message;
 
   const [formData, setFormData] = useState({
     email: "",
@@ -27,27 +28,40 @@ const Login = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Tambahkan fungsi clearSession
-  const clearSession = () => {
-    localStorage.clear();
-    console.log("Session cleared");
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    setError("");
 
     try {
-      const res = await axios.post(`${import.meta.env.VITE_API_URL}/login`, {formData}) 
-      console.log("SUCCESS LOGIN", res);
-      if (res.data.status === "success") {
+      const res = await axios.post(`${import.meta.env.VITE_API_URL}/login`, formData);
+
+      if (res.data.token && res.data.user) {
         const { token, user } = res.data;
+
         localStorage.setItem("token", token);
+        localStorage.setItem("isLoggedIn", "true");
+        localStorage.setItem("userId", user.id);
+        localStorage.setItem("userName", user.name);
+        localStorage.setItem("userType", user.role); // penting
+
+        if (user.role === "pemilik") {
+          navigate("/pemilik/dashboard", { replace: true });
+        } else if (user.role === "admin") {
+          navigate("/admin/dashboard", { replace: true });
+        } else {
+          navigate("/");
+        }
       }
-      navigate("/dashboard/user")
     } catch (error) {
-      console.log(error);
+      console.error("Login error:", error);
+      setError(
+        error.response?.data?.message || "Login gagal. Silakan coba lagi."
+      );
+    } finally {
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <CSSTransition in={true} appear={true} timeout={300} classNames="auth-page">
@@ -72,7 +86,7 @@ const Login = () => {
                   {error && <Alert variant="danger">{error}</Alert>}
 
                   <Form onSubmit={handleSubmit}>
-                    <div className="auth-input-group">
+                    <div className="auth-input-group mb-3">
                       <div className="input-group">
                         <span className="input-group-text">
                           <FaEnvelope />
@@ -93,7 +107,7 @@ const Login = () => {
                       </div>
                     </div>
 
-                    <div className="auth-input-group">
+                    <div className="auth-input-group mb-3">
                       <div className="input-group">
                         <span className="input-group-text">
                           <FaLock />

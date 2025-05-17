@@ -1,4 +1,6 @@
-import { Route, Navigate } from "react-router-dom";
+// src/routes/PemilikRoutes.jsx
+import { Route } from "react-router-dom";
+import ProtectedRoute from "../components/ProtectedRoute";
 import PemilikDashboard from "../pages/Pemilik/PemilikDashboard";
 import ManageKos from "../pages/Pemilik/ManageKos";
 import AddKos from "../pages/Pemilik/AddKos";
@@ -6,75 +8,61 @@ import EditKos from "../pages/Pemilik/EditKos";
 import BookingList from "../pages/Pemilik/BookingList";
 import PaymentHistory from "../pages/Pemilik/PaymentHistory";
 
-
-const PemilikGuard = ({ children }) => {
-  const userType = localStorage.getItem("userType");
-  const isPemilik = localStorage.getItem("isPemilik") === "true";
-
-  if (!isPemilik || userType !== "pemilik") {
-    return <Navigate to="/login" />;
-  }
-
-  return children;
-};
-
 const PemilikRoutes = [
   <Route
     key="pemilik-dashboard"
     path="/pemilik/dashboard"
     element={
-      <PemilikGuard>
+      <ProtectedRoute allowedRoles={["pemilik"]}>
         <PemilikDashboard />
-      </PemilikGuard>
+      </ProtectedRoute>
     }
   />,
   <Route
-    key="pemilik-kos"
+    key="manage-kos"
     path="/pemilik/kos"
     element={
-      <PemilikGuard>
+      <ProtectedRoute allowedRoles={["pemilik"]}>
         <ManageKos />
-      </PemilikGuard>
+      </ProtectedRoute>
     }
   />,
   <Route
-    key="pemilik-kos-add"
+    key="add-kos"
     path="/pemilik/kos/add"
     element={
-      <PemilikGuard>
+      <ProtectedRoute allowedRoles={["pemilik"]}>
         <AddKos />
-      </PemilikGuard>
+      </ProtectedRoute>
     }
   />,
   <Route
-    key="pemilik-kos-edit"
+    key="edit-kos"
     path="/pemilik/kos/edit/:id"
     element={
-      <PemilikGuard>
+      <ProtectedRoute allowedRoles={["pemilik"]}>
         <EditKos />
-      </PemilikGuard>
+      </ProtectedRoute>
     }
   />,
   <Route
-    key="pemilik-bookings"
+    key="bookings"
     path="/pemilik/bookings"
     element={
-      <PemilikGuard>
+      <ProtectedRoute allowedRoles={["pemilik"]}>
         <BookingList />
-      </PemilikGuard>
+      </ProtectedRoute>
     }
   />,
   <Route
-    key="pemilik-payments"
+    key="payments"
     path="/pemilik/payments"
     element={
-      <PemilikGuard>
+      <ProtectedRoute allowedRoles={["pemilik"]}>
         <PaymentHistory />
-      </PemilikGuard>
+      </ProtectedRoute>
     }
   />,
- 
- 
 ];
 
 export default PemilikRoutes;
