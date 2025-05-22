@@ -12,6 +12,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { API } from "../../api/config";
 import AuthModals from "../../components/AuthModals";
+import Swal from "sweetalert2"; // Tambahkan import ini di bagian atas
 
 const Contact = () => {
   const navigate = useNavigate();
@@ -28,6 +29,7 @@ const Contact = () => {
 
   useEffect(() => {
     checkAuth();
+    // eslint-disable-next-line
   }, []);
 
   const checkAuth = () => {
@@ -64,9 +66,8 @@ const Contact = () => {
         throw new Error("Silakan login terlebih dahulu");
       }
 
-      // Add timeout for better error handling
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
 
       const response = await API.get("/kosans", {
         headers: {
@@ -84,12 +85,11 @@ const Contact = () => {
         throw new Error("Data kos tidak ditemukan");
       }
     } catch (err) {
-      console.error("Error fetching kos list:", err);
-
       if (err.name === "AbortError") {
         setError("Koneksi timeout. Silakan coba lagi.");
       } else if (err.response?.status === 401) {
         setError("Sesi anda telah berakhir. Silakan login kembali.");
+        setShowLogin(true);
       } else if (err.response?.status === 404) {
         setError("Data kos tidak ditemukan.");
       } else if (err.response?.data?.message) {
@@ -104,6 +104,7 @@ const Contact = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (loading) return;
     setLoading(true);
     setError("");
     setSuccess("");
@@ -111,19 +112,40 @@ const Contact = () => {
     try {
       const userId = localStorage.getItem("userId");
       if (!userId) {
-        throw new Error("User ID not found");
+        setError("User ID tidak ditemukan. Silakan login ulang.");
+        setShowLogin(true);
+        setLoading(false);
+        return;
       }
 
-      const response = await API.post("/pengaduans", {
+      if (!formData.kosan_id || !formData.isi_pengaduan) {
+        setError("Semua field harus diisi.");
+        setLoading(false);
+        return;
+      }
+
+      await API.post("/pengaduans", {
         ...formData,
         user_id: userId,
         status: "menunggu",
       });
 
-      setSuccess("Feedback berhasil dikirim!");
-      setFormData({ kosan_id: "", isi_pengaduan: "" });
+      // Tampilkan SweetAlert dan redirect ke dashboard user setelah submit sukses
+      await Swal.fire({
+        icon: "success",
+        title: "Feedback berhasil dikirim!",
+        text: "Terima kasih atas feedback Anda.",
+        timer: 1500,
+        showConfirmButton: false,
+      });
+
+      navigate("/user/dashboard");
     } catch (err) {
-      setError(err.response?.data?.message || "Gagal mengirim pengaduan");
+      setError(
+        err?.response?.data?.message ||
+          err?.message ||
+          "Gagal mengirim pengaduan"
+      );
     } finally {
       setLoading(false);
     }
@@ -153,6 +175,7 @@ const Contact = () => {
                         }))
                       }
                       required
+                      disabled={loading || kosanList.length === 0}
                     >
                       <option value="">Pilih Kos</option>
                       {kosanList.map((kos) => (
@@ -177,10 +200,15 @@ const Contact = () => {
                       }
                       placeholder="Tulis pengaduan Anda di sini..."
                       required
+                      disabled={loading}
                     />
                   </Form.Group>
 
-                  <Button type="submit" disabled={loading} className="w-100">
+                  <Button
+                    type="submit"
+                    disabled={loading || kosanList.length === 0}
+                    className="w-100"
+                  >
                     {loading ? (
                       <>
                         <Spinner size="sm" className="me-2" />

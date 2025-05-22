@@ -24,7 +24,7 @@ const AddKos = () => {
     description: "",
     jumlah_kamar: 1,
     price: "",
-    facilities: [], // Array for facility IDs
+    facilities: [], 
   });
   const [uploadedImages, setUploadedImages] = useState([]);
   const [imagePreviews, setImagePreviews] = useState([]);

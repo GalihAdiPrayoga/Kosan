@@ -200,11 +200,6 @@ const EditKos = () => {
         });
       }
 
-      // Debug untuk melihat isi FormData
-      // for (let pair of formDataToSend.entries()) {
-      //   console.log(pair[0] + ': ' + pair[1]);
-      // }
-
       const response = await API.post(
         `/kosans/${id}?_method=PUT`,
         formDataToSend,
