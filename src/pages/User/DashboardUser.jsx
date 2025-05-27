@@ -35,11 +35,37 @@ const DashboardUser = () => {
     try {
       setLoading(true);
       setError(null);
-      const kosData = await getFeaturedKos();
-      setFeaturedKos(kosData);
+
+      const response = await API.get("/kosans");
+
+      if (!response.data?.data) {
+        throw new Error("Data tidak valid");
+      }
+
+      const transformedData = response.data.data.map((kos) => ({
+        id: kos.id,
+        name: kos.nama_kosan,
+        location: kos.alamat,
+        price: kos.harga_per_bulan,
+        type: kos.kategori?.nama_kategori || kos.kategori?.nama || "Tidak Ada",
+        facilities: kos.fasilitas
+          ? typeof kos.fasilitas === "string"
+            ? kos.fasilitas.split(",").map((f) => f.trim())
+            : kos.fasilitas
+          : [],
+        images: kos.galeri
+          ? typeof kos.galeri === "string"
+            ? JSON.parse(kos.galeri)
+            : kos.galeri
+          : [],
+      }));
+
+      // Get top 6 kos for featured section
+      const featuredData = transformedData.slice(0, 6);
+      setFeaturedKos(featuredData);
     } catch (err) {
-      setError(err.message || "Gagal memuat data kos");
       console.error("Error fetching featured kos:", err);
+      setError(err.response?.data?.message || "Gagal memuat data kos unggulan");
     } finally {
       setLoading(false);
     }
@@ -52,45 +78,6 @@ const DashboardUser = () => {
   const handleSearchClick = () => {
     navigate("/search");
   };
-
-  useEffect(() => {
-    const isAdmin = localStorage.getItem("isAdmin") === "true";
-    const isPemilik = localStorage.getItem("isPemilik") === "true";
-    const userType = localStorage.getItem("userType");
-
-    if (isAdmin && userType === "admin") {
-      navigate("/admin/dashboard", { replace: true });
-    } else if (isPemilik && userType === "pemilik") {
-      navigate("/pemilik/dashboard", { replace: true });
-    }
-  }, [navigate]);
-
-  if (loading) {
-    return (
-      <Container className="py-5 text-center">
-        <Spinner animation="border" role="status">
-          <span className="visually-hidden">Loading...</span>
-        </Spinner>
-      </Container>
-    );
-  }
-
-  if (error) {
-    return (
-      <Container className="py-5">
-        <Alert variant="danger">
-          <Alert.Heading>Error</Alert.Heading>
-          <p>{error}</p>
-          <hr />
-          <div className="d-flex justify-content-end">
-            <Button onClick={handleRetry} variant="outline-danger">
-              Coba Lagi
-            </Button>
-          </div>
-        </Alert>
-      </Container>
-    );
-  }
 
   const heroSlides = [
     {
@@ -244,14 +231,28 @@ const DashboardUser = () => {
                 <div style={{ position: "relative" }}>
                   <Card.Img
                     variant="top"
-                    src={kos.images[0]}
-                    style={{ height: "200px", objectFit: "cover" }}
+                    src={
+                      kos.images && kos.images.length > 0
+                        ? kos.images[0]
+                        : "/images/default-kos.jpg"
+                    }
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = "/images/default-kos.jpg";
+                    }}
+                    style={{
+                      height: "200px",
+                      objectFit: "cover",
+                      borderTopLeftRadius: "0.375rem",
+                      borderTopRightRadius: "0.375rem",
+                    }}
+                    alt={`${kos.name} thumbnail`}
                   />
                   <Badge
                     bg={
-                      kos.type === "Putra"
+                      kos.type?.toLowerCase().includes("putra")
                         ? "primary"
-                        : kos.type === "Putri"
+                        : kos.type?.toLowerCase().includes("putri")
                         ? "danger"
                         : "success"
                     }
@@ -260,6 +261,7 @@ const DashboardUser = () => {
                       top: "10px",
                       right: "10px",
                       padding: "8px 12px",
+                      zIndex: 1,
                     }}
                   >
                     {kos.type}
@@ -272,16 +274,17 @@ const DashboardUser = () => {
                     {kos.location}
                   </Card.Text>
                   <div className="mb-2">
-                    {kos.facilities.slice(0, 3).map((facility, index) => (
-                      <Badge
-                        bg="light"
-                        text="dark"
-                        className="me-2 mb-2"
-                        key={index}
-                      >
-                        {facility}
-                      </Badge>
-                    ))}
+                    {kos.facilities &&
+                      kos.facilities.slice(0, 3).map((facility, index) => (
+                        <Badge
+                          bg="light"
+                          text="dark"
+                          className="me-2 mb-2"
+                          key={index}
+                        >
+                          {facility}
+                        </Badge>
+                      ))}
                   </div>
                   <div className="mt-3">
                     <span className="h5 text-primary mb-0">

@@ -1,3 +1,4 @@
+// src/routes/AdminRoutes.jsx
 import { Route, Navigate, Outlet, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import DashboardAdmin from "../pages/Admin/DashboardAdmin";
@@ -5,33 +6,39 @@ import ItemListAdmin from "../pages/Admin/ItemListAdmin";
 import AddKosAdmin from "../pages/Admin/AddKosAdmin";
 import EditKosAdmin from "../pages/Admin/EditKosAdmin";
 import PaymentsAdmin from "../pages/Admin/PaymentsAdmin";
-import ManageUsers from "../pages/admin/ManageUsers";
+import ManageUsers from "../pages/Admin/ManageUsers";
 import AdminNavbar from "../components/AdminNavbar";
-import AuthModals from "../components/AuthModals";
 
-// Define AdminGuard component first
-const AdminGuard = ({ children }) => {
-  const userType = localStorage.getItem("userType");
-  const isAdmin = localStorage.getItem("isAdmin") === "true";
-  const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
-  const navigate = useNavigate();
-  const [showLoginModal, setShowLoginModal] = useState(false);
+// Reusable ProtectedRoute like PemilikRoutes
+const ProtectedRoute = ({ allowedRoles, children }) => {
+  const [checked, setChecked] = useState(false);
+  const [authorized, setAuthorized] = useState(false);
 
   useEffect(() => {
-    if (!isLoggedIn || !isAdmin) {
-      console.log("Admin access denied - clearing session");
-      localStorage.clear();
-      setShowLoginModal(true); // Show login modal instead of redirecting
-    }
-  }, [isLoggedIn, isAdmin]);
+    const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
+    const userType = localStorage.getItem("userType");
 
-  if (!isLoggedIn || !isAdmin) {
+    console.log("ProtectedRoute check:", { isLoggedIn, userType });
+
+    if (isLoggedIn && allowedRoles.includes(userType)) {
+      setAuthorized(true);
+    } else {
+     localStorage.removeItem("token");
+     localStorage.removeItem("isLoggedIn");
+
+    }
+
+    setChecked(true);
+  }, []);
+
+  if (!checked) return null;
+
+  if (!authorized) {
     return (
-      <AuthModals
-        showLogin={showLoginModal}
-        showRegister={false}
-        handleClose={() => navigate("/")}
-        handleSwitch={() => {}}
+      <Navigate
+        to="/login"
+        state={{ message: "Akses ditolak. Silakan login sebagai admin." }}
+        replace
       />
     );
   }
@@ -39,28 +46,25 @@ const AdminGuard = ({ children }) => {
   return children;
 };
 
-// Create AdminLayout component
-const AdminLayout = () => {
-  return (
-    <>
-      <AdminNavbar />
-      <div className="admin-layout">
-        <div className="admin-content container py-4">
-          <Outlet />
-        </div>
+const AdminLayout = () => (
+  <>
+    <AdminNavbar />
+    <div className="admin-layout">
+      <div className="admin-content container py-4">
+        <Outlet />
       </div>
-    </>
-  );
-};
+    </div>
+  </>
+);
 
 const AdminRoutes = [
   <Route
     key="admin"
     path="/admin"
     element={
-      <AdminGuard>
+      <ProtectedRoute allowedRoles={["admin"]}>
         <AdminLayout />
-      </AdminGuard>
+      </ProtectedRoute>
     }
   >
     <Route index element={<Navigate to="dashboard" replace />} />

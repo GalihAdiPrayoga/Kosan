@@ -1,12 +1,13 @@
 // src/components/ProtectedRoute.jsx
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 
-const ProtectedRoute = ({ allowedRoles, children }) => {
+const ProtectedRoute = ({ children }) => {
   const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
-  const userRole = localStorage.getItem("userType");
+  const location = useLocation();
 
-  if (!isLoggedIn || !allowedRoles.includes(userRole)) {
-    return <Navigate to="/login" replace />;
+  if (!isLoggedIn) {
+    // Simpan halaman yang dicoba diakses
+    return <Navigate to="/login" state={{ from: location.pathname }} replace />;
   }
 
   return children;

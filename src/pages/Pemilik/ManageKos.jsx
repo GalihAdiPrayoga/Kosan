@@ -11,7 +11,7 @@ import {
 } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import { FaPlus, FaEllipsisV, FaMapMarkerAlt } from "react-icons/fa";
-import { API } from "../../api/config";
+import { API } from "../../api/config"; // Pastikan API ini dikonfigurasi dengan benar
 
 const ManageKos = () => {
   const [kosList, setKosList] = useState([]);
@@ -28,10 +28,12 @@ const ManageKos = () => {
   const fetchKosList = async () => {
     try {
       const userId = localStorage.getItem("userId");
-      const response = await API.get("/db.json");
 
-      // Filter kos based on pemilikId matching the logged-in user's ID
-      const ownerKos = response.data.kos.filter(
+      // Gantilah URL API dengan URL API yang sesuai dengan API kosans
+      const response = await API.get("/kosans");  // Sesuaikan dengan endpoint yang benar
+
+      // Pastikan API kosans memberikan data dalam format yang benar
+      const ownerKos = response.data.filter(
         (kos) => kos.pemilikId.toString() === userId
       );
 
@@ -49,12 +51,13 @@ const ManageKos = () => {
         const userId = localStorage.getItem("userId");
         const kosToDelete = kosList.find((kos) => kos.id === id);
 
-        // Verify ownership before deletion
+        // Verifikasi kepemilikan sebelum menghapus
         if (kosToDelete.pemilikId.toString() !== userId) {
           throw new Error("Anda tidak memiliki izin untuk menghapus kos ini");
         }
 
-        await API.delete(`/kos/${id}`);
+        // Gantilah URL API dengan URL API untuk menghapus data kos
+        await API.delete(`/kosans/${id}`);  // Sesuaikan dengan endpoint penghapusan yang benar
         setKosList(kosList.filter((kos) => kos.id !== id));
       } catch (err) {
         setError(err.message || "Gagal menghapus kos");
@@ -133,17 +136,17 @@ const ManageKos = () => {
                       <Card.Img
                         variant="top"
                         src={kos.images?.[0]}
-                        style={{ 
-                          height: "160px", 
-                          objectFit: "cover"
+                        style={{
+                          height: "160px",
+                          objectFit: "cover",
                         }}
                       />
-                      <div 
-                        style={{ 
-                          position: "absolute", 
-                          top: "8px", 
+                      <div
+                        style={{
+                          position: "absolute",
+                          top: "8px",
                           right: "8px",
-                          zIndex: 2 
+                          zIndex: 2,
                         }}
                       >
                         <div className="position-relative">
@@ -159,20 +162,20 @@ const ManageKos = () => {
                               background: "rgba(255, 255, 255, 0.9)",
                               borderRadius: "50%",
                               color: "#444",
-                              cursor: "pointer"
+                              cursor: "pointer",
                             }}
                           >
                             <FaEllipsisV size={12} />
                           </button>
                           {activeMenuId === kos.id && (
-                            <div 
+                            <div
                               className="position-absolute bg-white rounded shadow-sm py-1"
                               style={{
                                 top: "100%",
                                 right: 0,
                                 marginTop: "4px",
                                 minWidth: "120px",
-                                zIndex: 3
+                                zIndex: 3,
                               }}
                             >
                               <Link

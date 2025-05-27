@@ -17,6 +17,10 @@ API.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+  // Remove Content-Type if sending FormData
+  if (config.headers["Content-Type"] === "multipart/form-data") {
+    delete config.headers["Content-Type"];
+  }
   return config;
 });
 
@@ -29,56 +33,68 @@ API.interceptors.response.use(
       window.location.href = "/login";
     }
 
-    // Handle registration specific errors
+    // Handle validation errors
     if (error.response?.status === 422) {
       const message = error.response.data?.message || "Validation error";
       error.message = message;
+    }
+
+    // Handle other errors
+    if (!error.response) {
+      error.message = "Network error or server is down.";
     }
 
     return Promise.reject(error);
   }
 );
 
-// Fetch kos data with proper error handling
-export const fetchKosData = async (adminId = null) => {
+// Modified fetchKosData function
+export const fetchKosData = async () => {
   try {
     const response = await API.get("/kosans");
-
-    if (!response.data?.data) {
-      throw new Error("Invalid response format");
-    }
-
-    const kosData = response.data.data;
-
-    if (adminId) {
-      return kosData.filter((kos) => String(kos.admin_id) === String(adminId));
-    }
-
-    return kosData;
+    return response.data.data;
   } catch (error) {
     console.error("Failed to fetch kos data:", error);
     throw error;
   }
 };
 
+// Modified getFeaturedKos function
 export const getFeaturedKos = async () => {
   try {
-    const kosData = await fetchKosData();
-    if (!Array.isArray(kosData) || kosData.length === 0) {
-      console.warn("No kos data available");
+    const response = await API.get("/kosans");
+    const kosData = response.data.data;
+    
+    if (!Array.isArray(kosData)) {
+      console.warn("Invalid kos data format");
       return [];
     }
 
-    // Urutkan berdasarkan harga tertinggi
-    return [...kosData].sort((a, b) => b.price - a.price).slice(0, 3);
+    const processedKosData = kosData.map(kos => ({
+      id: kos.id,
+      name: kos.nama_kosan,
+      type: kos.kategori?.nama || 'Unknown', // Get kategori name
+      location: kos.alamat,
+      price: kos.harga_per_bulan,
+      facilities: kos.deskripsi ? kos.deskripsi.split(',').map(f => f.trim()) : [],
+      images: kos.galeri ? JSON.parse(kos.galeri) : [],
+      kategori: kos.kategori, // Add full kategori object
+      deskripsi: kos.deskripsi
+    }));
+
+    return processedKosData;
   } catch (error) {
     console.error("Error in getFeaturedKos:", error);
     return [];
   }
 };
 
+// Delete kosan
 export const deleteKos = async (id) => {
   try {
+    if (!id) {
+      throw new Error("Kos ID is required to delete");
+    }
     const response = await API.delete(`/kosans/${id}`);
     return response.data;
   } catch (error) {
@@ -87,6 +103,7 @@ export const deleteKos = async (id) => {
   }
 };
 
+// Check if admin is authenticated
 export const checkAdminAuth = async () => {
   try {
     const response = await API.get("/auth/check-admin");

@@ -70,12 +70,14 @@ const AuthModals = ({
         onLoginSuccess();
       }
 
-      // Redirect based on user role
-      if (user.role === "pemilik") {
-        navigate("/pemilik-dashboard");
-      } else {
-        navigate("/user-dashboard");
-      }
+          // Redirect based on user role
+       if (user.role === "pemilik") {
+    navigate("/pemilik/dashboard");
+    } else if (user.role === "admin") {
+    navigate("/admin/dashboard");
+    } else {
+    navigate("/user/dashboard");
+    }
     } catch (err) {
       if (err.response?.status === 401) {
         setError("Invalid credentials, please try again.");

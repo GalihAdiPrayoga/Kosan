@@ -1,26 +1,11 @@
-import { Route, Navigate } from "react-router-dom";
+import { Route } from "react-router-dom";
 import DashboardUser from "../pages/User/DashboardUser";
 import SearchUser from "../pages/User/SearchUser";
 import DetailKosUser from "../pages/User/DetailKosUser";
 import BookingKosUser from "../pages/User/BookingKosUser";
 import PaymentUser from "../pages/User/PaymentUser";
 import Contact from "../pages/User/Contact";
-
-const UserGuard = ({ children }) => {
-  const userType = localStorage.getItem("userType");
-  const isAdmin = localStorage.getItem("isAdmin") === "true";
-  const isPemilik = localStorage.getItem("isPemilik") === "true";
-
-  if (isAdmin && userType === "admin") {
-    return <Navigate to="/admin/dashboard" replace />;
-  }
-
-  if (isPemilik && userType === "pemilik") {
-    return <Navigate to="/pemilik/dashboard" replace />;
-  }
-
-  return children;
-};
+import UserGuard from "./UserGuard"; // Make sure the path to UserGuard is correct
 
 const UserRoutes = [
   <Route

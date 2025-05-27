@@ -1,14 +1,6 @@
-// src/pages/Login.js
 import React, { useState } from "react";
 import {
-  Container,
-  Row,
-  Col,
-  Card,
-  Form,
-  Button,
-  Alert,
-  Spinner,
+  Container, Row, Col, Card, Form, Button, Alert, Spinner
 } from "react-bootstrap";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { FaEnvelope, FaLock, FaUserCircle } from "react-icons/fa";
@@ -21,10 +13,7 @@ const Login = () => {
   const from = location.state?.from || "/";
   const message = location.state?.message;
 
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-  });
+  const [formData, setFormData] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -43,21 +32,22 @@ const Login = () => {
         localStorage.setItem("isLoggedIn", "true");
         localStorage.setItem("userId", user.id);
         localStorage.setItem("userName", user.name);
-        localStorage.setItem("userType", user.role); // penting
+        localStorage.setItem("userType", user.role);
+        localStorage.setItem("isAdmin", user.role === "admin" ? "true" : "false");
+        localStorage.setItem("isPemilik", user.role === "pemilik" ? "true" : "false");
 
-        if (user.role === "pemilik") {
-          navigate("/pemilik/dashboard", { replace: true });
-        } else if (user.role === "admin") {
+
+        if (user.role === "admin") {
           navigate("/admin/dashboard", { replace: true });
+        } else if (user.role === "pemilik") {
+          navigate("/pemilik/dashboard", { replace: true });
         } else {
           navigate("/");
         }
       }
     } catch (error) {
       console.error("Login error:", error);
-      setError(
-        error.response?.data?.message || "Login gagal. Silakan coba lagi."
-      );
+      setError(error.response?.data?.message || "Login gagal. Silakan coba lagi.");
     } finally {
       setLoading(false);
     }
@@ -75,90 +65,54 @@ const Login = () => {
                 <p className="text-white-50">Silakan masuk ke akun Anda</p>
               </div>
 
-              {message && (
-                <Alert variant="info" className="mb-4">
-                  {message}
-                </Alert>
-              )}
+              {message && <Alert variant="info">{message}</Alert>}
 
               <Card className="auth-card">
-                <Card.Body className="p-4">
+                <Card.Body>
                   {error && <Alert variant="danger">{error}</Alert>}
 
                   <Form onSubmit={handleSubmit}>
-                    <div className="auth-input-group mb-3">
+                    <Form.Group className="mb-3">
                       <div className="input-group">
-                        <span className="input-group-text">
-                          <FaEnvelope />
-                        </span>
+                        <span className="input-group-text"><FaEnvelope /></span>
                         <Form.Control
                           type="text"
-                          placeholder="Email atau Username"
+                          placeholder="Email"
                           value={formData.email}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              email: e.target.value.trim(),
-                            })
-                          }
+                          onChange={(e) => setFormData({ ...formData, email: e.target.value.trim() })}
                           required
                           disabled={loading}
                         />
                       </div>
-                    </div>
+                    </Form.Group>
 
-                    <div className="auth-input-group mb-3">
+                    <Form.Group className="mb-3">
                       <div className="input-group">
-                        <span className="input-group-text">
-                          <FaLock />
-                        </span>
+                        <span className="input-group-text"><FaLock /></span>
                         <Form.Control
                           type="password"
-                          placeholder="Masukkan password Anda"
+                          placeholder="Password"
                           value={formData.password}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              password: e.target.value,
-                            })
-                          }
+                          onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                           required
                           disabled={loading}
                         />
                       </div>
-                    </div>
+                    </Form.Group>
 
-                    <Button
-                      type="submit"
-                      className="auth-btn w-100 mb-3"
-                      disabled={loading}
-                    >
+                    <Button type="submit" className="w-100" disabled={loading}>
                       {loading ? (
                         <>
-                          <Spinner
-                            as="span"
-                            animation="border"
-                            size="sm"
-                            role="status"
-                            aria-hidden="true"
-                            className="me-2"
-                          />
+                          <Spinner animation="border" size="sm" role="status" className="me-2" />
                           Sedang Masuk...
                         </>
-                      ) : (
-                        "Masuk"
-                      )}
+                      ) : "Masuk"}
                     </Button>
-
-                    <div className="text-center">
-                      <p className="mb-0">
-                        Belum punya akun?{" "}
-                        <Link to="/register" className="text-primary fw-bold">
-                          Daftar Sekarang
-                        </Link>
-                      </p>
-                    </div>
                   </Form>
+
+                  <div className="text-center mt-3">
+                    <p>Belum punya akun? <Link to="/register">Daftar Sekarang</Link></p>
+                  </div>
                 </Card.Body>
               </Card>
             </Col>

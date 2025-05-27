@@ -35,22 +35,63 @@ const DetailKosUser = () => {
       setLoading(true);
       setError(null);
 
-      const response = await API.get("/db.json");
-      const kosData = response.data.kos.find((k) => k.id === id);
+      const response = await API.get(`/kosans/${id}`);
 
-      if (!kosData) {
-        throw new Error("Kos not found");
+      if (!response.data?.data) {
+        throw new Error("Data kos tidak ditemukan");
       }
 
-      const pemilikData = response.data.users.find(
-        (user) =>
-          user.id === String(kosData.pemilikId) && user.role === "pemilik"
-      );
+      const kosData = response.data.data;
 
-      setKos(kosData);
-      setPemilik(pemilikData);
+      // Transform API data to match component structure
+      const transformedKos = {
+        id: kosData.id,
+        name: kosData.nama_kosan,
+        location: kosData.alamat,
+        price: kosData.harga_per_bulan,
+        description: kosData.deskripsi || "",
+        type: kosData.kategori?.nama || "Unknown",
+        facilities: kosData.fasilitas
+          ? typeof kosData.fasilitas === "string"
+            ? kosData.fasilitas.split(",").map((f) => f.trim())
+            : kosData.fasilitas
+          : [],
+        rules: kosData.peraturan
+          ? typeof kosData.peraturan === "string"
+            ? kosData.peraturan.split(",").map((r) => r.trim())
+            : kosData.peraturan
+          : [],
+        images: kosData.galeri
+          ? typeof kosData.galeri === "string"
+            ? JSON.parse(kosData.galeri)
+            : kosData.galeri
+          : [],
+        jumlah_kamar: kosData.jumlah_kamar || 0,
+        pemilikId: kosData.pemilik_id,
+      };
+
+      setKos(transformedKos);
+
+      // Fetch pemilik data if pemilik_id exists
+      if (kosData.pemilik_id) {
+        try {
+          const pemilikResponse = await API.get(`/users/${kosData.pemilik_id}`);
+          if (pemilikResponse.data?.data) {
+            setPemilik({
+              id: pemilikResponse.data.data.id,
+              name: pemilikResponse.data.data.nama,
+              phone: pemilikResponse.data.data.no_hp,
+              role: pemilikResponse.data.data.role,
+            });
+          }
+        } catch (pemilikErr) {
+          console.error("Error fetching pemilik data:", pemilikErr);
+        }
+      }
     } catch (err) {
-      setError(err.message || "Failed to fetch kos detail");
+      console.error("Error fetching kos detail:", err);
+      setError(err.response?.data?.message || "Gagal mengambil detail kos");
+      setKos(null);
     } finally {
       setLoading(false);
     }
@@ -116,14 +157,16 @@ const DetailKosUser = () => {
 
   if (!kos) return <Alert variant="warning">Kos not found</Alert>;
 
+  // Tampilkan konten yang bisa diakses tanpa login
   return (
     <>
       <Container className="py-5">
         <Row>
           <Col md={8}>
+            {/* Konten detail kos yang bisa dilihat tanpa login */}
             <Card className="mb-4">
               <Carousel>
-                {kos.images.map((image, index) => (
+                {kos?.images?.map((image, index) => (
                   <Carousel.Item key={index}>
                     <img
                       className="d-block w-100"
@@ -176,14 +219,7 @@ const DetailKosUser = () => {
           <Col md={4}>
             <Card className="sticky-top" style={{ top: "20px" }}>
               <Card.Body>
-                <h4>Rp {new Intl.NumberFormat("id-ID").format(kos.price)}</h4>
-                <p className="text-muted">per bulan</p>
-                <hr />
-                <p>
-                  <strong>Tipe:</strong> {kos.type}
-                  <br />
-                  <strong>Lokasi:</strong> {kos.location}
-                </p>
+                {/* Tombol booking dengan kondisional */}
                 <Button
                   variant="primary"
                   className="w-100 mb-3"
@@ -203,30 +239,15 @@ const DetailKosUser = () => {
                   </Button>
                 )}
 
+                {/* Tampilkan opsi login/register jika belum login */}
                 {!isLoggedIn && (
                   <div className="text-center">
                     <p className="text-muted mb-2">Belum punya akun?</p>
                     <Button
-                      variant="link"
-                      className="text-decoration-none p-2 w-100 rounded-pill border border-primary"
-                      style={{
-                        background: "transparent",
-                        transition: "all 0.3s ease",
-                        color: "#4e73df",
-                      }}
+                      variant="outline-primary"
                       onClick={() => setShowRegister(true)}
-                      onMouseOver={(e) => {
-                        e.currentTarget.style.background = "#4e73df";
-                        e.currentTarget.style.color = "white";
-                        e.currentTarget.style.transform = "translateY(-2px)";
-                      }}
-                      onMouseOut={(e) => {
-                        e.currentTarget.style.background = "transparent";
-                        e.currentTarget.style.color = "#4e73df";
-                        e.currentTarget.style.transform = "translateY(0)";
-                      }}
                     >
-                      ✨ Daftar Sekarang
+                      Daftar Sekarang
                     </Button>
                   </div>
                 )}
@@ -236,6 +257,7 @@ const DetailKosUser = () => {
         </Row>
       </Container>
 
+      {/* Modal login/register */}
       <AuthModals
         showLogin={showLogin}
         showRegister={showRegister}

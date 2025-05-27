@@ -34,15 +34,39 @@ const SearchUser = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await API.get("/kosans"); // Menggunakan endpoint /kosans
-      if (response.data?.data) {
-        setKosList(response.data.data);
-      } else {
+
+      const response = await API.get("/kosans");
+
+      if (!response.data?.data) {
         throw new Error("Data tidak valid");
       }
+
+      const transformedData = response.data.data.map((kos) => ({
+        id: kos.id,
+        name: kos.nama_kosan,
+        location: kos.alamat,
+        price: kos.harga_per_bulan,
+        // Perbaikan akses data kategori
+        type: kos.kategori?.nama_kategori || kos.kategori?.nama || "Tidak Ada",
+        facilities: kos.fasilitas
+          ? typeof kos.fasilitas === "string"
+            ? kos.fasilitas.split(",").map((f) => f.trim())
+            : kos.fasilitas
+          : [],
+        images: kos.galeri
+          ? typeof kos.galeri === "string"
+            ? JSON.parse(kos.galeri)
+            : kos.galeri
+          : [],
+      }));
+
+      console.log("Raw API Response:", response.data.data); // untuk debug
+      console.log("Transformed Data:", transformedData); // untuk debug
+
+      setKosList(transformedData);
     } catch (err) {
-      setError("Gagal mengambil data kos: " + err.message);
-      setKosList([]);
+      console.error("Error fetching kos:", err);
+      setError(err.response?.data?.message || "Gagal mengambil data kos");
     } finally {
       setLoading(false);
     }
@@ -50,98 +74,53 @@ const SearchUser = () => {
 
   const filteredKos = React.useMemo(() => {
     return kosList.filter((kos) => {
-      // Location filter
-      if (filters.location && filters.location.trim() !== "") {
-        const searchTerm = filters.location.toLowerCase().trim();
-        if (
-          !kos?.location?.toLowerCase().includes(searchTerm) &&
-          !kos?.name?.toLowerCase().includes(searchTerm)
-        ) {
-          return false;
-        }
-      }
+      const matchLocation = kos.location
+        .toLowerCase()
+        .includes(filters.location.toLowerCase());
 
-      // Type filter
-      if (filters.type !== "all" && kos?.type !== filters.type) {
-        return false;
-      }
+      const matchPrice =
+        (!filters.minPrice || kos.price >= filters.minPrice) &&
+        (!filters.maxPrice || kos.price <= filters.maxPrice);
 
-      // Price range filter
-      const price = parseInt(kos?.price || 0);
-      if (filters.minPrice && price < parseInt(filters.minPrice)) {
-        return false;
-      }
-      if (filters.maxPrice && price > parseInt(filters.maxPrice)) {
-        return false;
-      }
+      const matchType =
+        filters.type === "all" ||
+        kos.type.toLowerCase() === filters.type.toLowerCase();
 
-      // Facilities filter
-      if (filters.facilities.length > 0) {
-        return filters.facilities.every((facility) =>
-          kos?.facilities?.includes(facility)
+      const matchFacilities =
+        filters.facilities.length === 0 ||
+        filters.facilities.every((facility) =>
+          kos.facilities
+            .map((f) => f.toLowerCase())
+            .includes(facility.toLowerCase())
         );
-      }
 
-      return true;
+      return matchLocation && matchPrice && matchType && matchFacilities;
     });
   }, [kosList, filters]);
 
   const paginatedKos = React.useMemo(() => {
-    const sorted = [...filteredKos].sort((a, b) => {
-      const priceA = parseInt(a?.price || 0);
-      const priceB = parseInt(b?.price || 0);
-
-      switch (filters.sortBy) {
-        case "price_asc":
-          return priceA - priceB;
-        case "price_desc":
-          return priceB - priceA;
-        default:
-          return 0;
+    const sortedKos = [...filteredKos].sort((a, b) => {
+      if (filters.sortBy === "price_asc") {
+        return a.price - b.price;
+      } else {
+        return b.price - a.price;
       }
     });
 
-    // Calculate pagination
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-    const endIndex = startIndex + ITEMS_PER_PAGE;
-    return sorted.slice(startIndex, endIndex);
+    return sortedKos.slice(startIndex, startIndex + ITEMS_PER_PAGE);
   }, [filteredKos, filters.sortBy, currentPage]);
 
-  const totalPages = Math.ceil(filteredKos.length / ITEMS_PER_PAGE);
-
   useEffect(() => {
-    fetchKos(); // Langsung memanggil fetchKos tanpa delay
-  }, []); // Hanya dipanggil sekali saat komponen dimount
+    fetchKos();
+  }, []);
 
-  // Reset page when filters change
   useEffect(() => {
     setCurrentPage(1);
   }, [filters]);
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
-
-    if ((name === "minPrice" || name === "maxPrice") && value !== "") {
-      const numValue = parseInt(value);
-      if (numValue < 0) return;
-
-      if (
-        name === "minPrice" &&
-        filters.maxPrice &&
-        numValue > parseInt(filters.maxPrice)
-      ) {
-        return;
-      }
-
-      if (
-        name === "maxPrice" &&
-        filters.minPrice &&
-        numValue < parseInt(filters.minPrice)
-      ) {
-        return;
-      }
-    }
-
     setFilters((prev) => ({
       ...prev,
       [name]: value,
@@ -159,120 +138,41 @@ const SearchUser = () => {
 
   const handlePriceChange = (e) => {
     const { name, value } = e.target;
-
-    // Remove non-numeric characters and dots
-    const numericValue = value.replace(/[^\d]/g, "");
-
-    // Early return if empty
-    if (numericValue === "") {
-      setFilters((prev) => ({
-        ...prev,
-        [name]: "",
-      }));
-      return;
-    }
-
-    const numValue = parseInt(numericValue);
-
-    // Basic validation
-    if (numValue < 0) return;
-
-    // Update the value while preserving the other price input
+    const numericValue = value.replace(/[^0-9]/g, "");
     setFilters((prev) => ({
       ...prev,
       [name]: numericValue,
-      // Keep the other price value unchanged
-      ...(name === "minPrice"
-        ? { maxPrice: prev.maxPrice }
-        : { minPrice: prev.minPrice }),
     }));
-
-    // Additional validation after setting the value
-    if (
-      name === "maxPrice" &&
-      filters.minPrice &&
-      numValue < parseInt(filters.minPrice)
-    ) {
-      // Show optional warning or handle invalid range
-      console.log("Maximum price cannot be less than minimum price");
-    }
-
-    if (
-      name === "minPrice" &&
-      filters.maxPrice &&
-      numValue > parseInt(filters.maxPrice)
-    ) {
-      // Show optional warning or handle invalid range
-      console.log("Minimum price cannot be greater than maximum price");
-    }
   };
 
   const formatPrice = (price) => {
-    if (!price) return "";
     return new Intl.NumberFormat("id-ID").format(price);
   };
 
   const renderPagination = () => {
-    let items = [];
-    const maxVisiblePages = 5;
-    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
-    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+    const totalPages = Math.ceil(filteredKos.length / ITEMS_PER_PAGE);
 
-    if (endPage - startPage + 1 < maxVisiblePages) {
-      startPage = Math.max(1, endPage - maxVisiblePages + 1);
-    }
-
-    items.push(
-      <Pagination.First
-        key="first"
-        disabled={currentPage === 1}
-        onClick={() => setCurrentPage(1)}
-      />
+    return (
+      <nav>
+        <ul className="pagination">
+          {[...Array(totalPages)].map((_, index) => (
+            <li
+              key={index + 1}
+              className={`page-item ${
+                currentPage === index + 1 ? "active" : ""
+              }`}
+            >
+              <button
+                className="page-link"
+                onClick={() => setCurrentPage(index + 1)}
+              >
+                {index + 1}
+              </button>
+            </li>
+          ))}
+        </ul>
+      </nav>
     );
-    items.push(
-      <Pagination.Prev
-        key="prev"
-        disabled={currentPage === 1}
-        onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-      />
-    );
-
-    if (startPage > 1) {
-      items.push(<Pagination.Ellipsis key="ellipsis-start" />);
-    }
-
-    for (let number = startPage; number <= endPage; number++) {
-      items.push(
-        <Pagination.Item
-          key={number}
-          active={number === currentPage}
-          onClick={() => setCurrentPage(number)}
-        >
-          {number}
-        </Pagination.Item>
-      );
-    }
-
-    if (endPage < totalPages) {
-      items.push(<Pagination.Ellipsis key="ellipsis-end" />);
-    }
-
-    items.push(
-      <Pagination.Next
-        key="next"
-        disabled={currentPage === totalPages}
-        onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-      />
-    );
-    items.push(
-      <Pagination.Last
-        key="last"
-        disabled={currentPage === totalPages}
-        onClick={() => setCurrentPage(totalPages)}
-      />
-    );
-
-    return <Pagination>{items}</Pagination>;
   };
 
   return (
@@ -414,7 +314,7 @@ const SearchUser = () => {
               <h4>Hasil Pencarian</h4>
               <p className="text-muted mb-0">
                 Ditemukan {filteredKos.length} kos (Halaman {currentPage} dari{" "}
-                {totalPages})
+                {Math.ceil(filteredKos.length / ITEMS_PER_PAGE)})
               </p>
             </div>
             <Form.Select
@@ -457,14 +357,14 @@ const SearchUser = () => {
                       <div style={{ position: "relative" }}>
                         <Card.Img
                           variant="top"
-                          src={kos.image_url || kos.images?.[0]} // Sesuaikan dengan struktur API
+                          src={kos.images?.[0] || "/default-kos-image.jpg"} // Tambahkan default image
                           style={{ height: "200px", objectFit: "cover" }}
                         />
                         <Badge
                           bg={
-                            kos.type === "Putra"
+                            kos.type?.toLowerCase().includes("putra")
                               ? "primary"
-                              : kos.type === "Putri"
+                              : kos.type?.toLowerCase().includes("putri")
                               ? "danger"
                               : "success"
                           }
@@ -482,29 +382,24 @@ const SearchUser = () => {
                         <Card.Title className="h5 mb-3">{kos.name}</Card.Title>
                         <Card.Text className="text-muted mb-2">
                           <i className="bi bi-geo-alt-fill me-2"></i>
-                          {kos.location || kos.alamat} // Sesuaikan dengan field
-                          API
+                          {kos.location}
                         </Card.Text>
                         <div className="mb-2">
-                          {(kos.facilities || kos.fasilitas || [])
-                            .slice(0, 3)
-                            .map((facility, index) => (
-                              <Badge
-                                bg="light"
-                                text="dark"
-                                className="me-2 mb-2"
-                                key={index}
-                              >
-                                {facility}
-                              </Badge>
-                            ))}
+                          {kos.facilities.slice(0, 3).map((facility, index) => (
+                            <Badge
+                              bg="light"
+                              text="dark"
+                              className="me-2 mb-2"
+                              key={index}
+                            >
+                              {facility}
+                            </Badge>
+                          ))}
                         </div>
                         <div className="mt-3">
                           <span className="h5 text-primary mb-0">
                             Rp{" "}
-                            {new Intl.NumberFormat("id-ID").format(
-                              kos.price || kos.harga
-                            )}
+                            {new Intl.NumberFormat("id-ID").format(kos.price)}
                           </span>
                           <span className="text-muted">/bulan</span>
                         </div>
