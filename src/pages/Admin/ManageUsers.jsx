@@ -10,12 +10,12 @@ import {
   Spinner,
   Form,
   InputGroup,
-  Pagination,
+
   Row,
   Col,
   Modal,
 } from "react-bootstrap";
-import { FaTrash, FaSearch, FaFolder, FaEye, FaEdit } from "react-icons/fa";
+import { FaTrash, FaSearch, FaEdit } from "react-icons/fa";
 import { API } from "../../api/config";
 
 const EditModal = React.memo(

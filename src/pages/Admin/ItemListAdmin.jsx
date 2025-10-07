@@ -17,7 +17,7 @@ import { FaTrash, FaEye, FaSearch, FaFolder, FaHome } from "react-icons/fa";
 import { API } from "../../api/config";
 import Swal from "sweetalert2";
 import { getImageUrl } from "../../utils/imageUtils";
-import notFoundImage from "../../assets/notfound.jpg";  // Replace the existing animation import
+import notFoundImage from "../../assets/notfound.jpg";
 const ItemListAdmin = () => {
   const navigate = useNavigate();
   const [kos, setKos] = useState([]);
@@ -25,9 +25,8 @@ const ItemListAdmin = () => {
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Add these state variables after other useState declarations
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(5); // Changed from 10 to 5
+  const [itemsPerPage] = useState(5);
 
   const filteredKos = useMemo(() => {
     if (!searchTerm) return kos;
@@ -41,7 +40,6 @@ const ItemListAdmin = () => {
     );
   }, [kos, searchTerm]);
 
-  // Update pagination calculations
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = filteredKos.slice(indexOfFirstItem, indexOfLastItem);
@@ -56,7 +54,6 @@ const ItemListAdmin = () => {
       const response = await API.get("/kosans");
       const kosData = response.data.data;
 
-      // Transform the data to match the expected format
       const transformedData = kosData.map((item) => ({
         id: item.id,
         name: item.nama_kosan,
@@ -67,7 +64,7 @@ const ItemListAdmin = () => {
         ownerPhone: item.user.nomor,
         description: item.deskripsi,
         totalRooms: item.jumlah_kamar,
-        image: item.galeri?.[0] || null, // Add image property
+        image: item.galeri?.[0] || null,
       }));
 
       setKos(transformedData);
@@ -98,7 +95,6 @@ const ItemListAdmin = () => {
         await fetchAllKos();
         setError(null);
 
-        // Tampilkan pesan sukses
         Swal.fire("Terhapus!", "Data kos berhasil dihapus.", "success");
       } catch (err) {
         Swal.fire("Error!", "Gagal menghapus data kos", "error");
@@ -192,7 +188,7 @@ const ItemListAdmin = () => {
                 <thead>
                   <tr>
                     <th>No</th>
-                    <th>Gambar</th> {/* Add new column */}
+                    <th>Gambar</th>
                     <th>Nama Kos</th>
                     <th>Pemilik</th>
                     <th>Kontak</th>
@@ -280,7 +276,6 @@ const ItemListAdmin = () => {
                 </tbody>
               </Table>
 
-              {/* Pagination controls */}
               {filteredKos.length > 0 && totalPages > 1 && (
                 <div className="d-flex justify-content-between align-items-center mt-4">
                   <div className="text-muted small">
