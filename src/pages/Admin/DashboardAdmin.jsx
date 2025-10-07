@@ -1,6 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { Container, Row, Col, Card, Spinner, Alert } from "react-bootstrap";
-import { FaHome, FaMoneyBillWave, FaClock, FaChartLine } from "react-icons/fa";
+import {
+  FaHome,
+  FaUsers,
+  FaMoneyBillWave,
+  FaClock,
+  FaChartLine,
+} from "react-icons/fa";
 import { API } from "../../api/config";
 import { Line } from "react-chartjs-2";
 import {
@@ -50,6 +56,18 @@ const SummaryCard = ({ stats }) => (
       <div className="d-flex justify-content-between mb-3">
         <span>Total Kos Aktif</span>
         <span className="fw-bold">{stats.totalKos}</span>
+      </div>
+      <div className="d-flex justify-content-between mb-3">
+        <span>Total Pengguna</span>
+        <span className="fw-bold">{stats.totalUsers}</span>
+      </div>
+      <div className="d-flex justify-content-between mb-3">
+        <span>Pemilik Kos</span>
+        <span className="fw-bold text-danger">{stats.totalPemilik}</span>
+      </div>
+      <div className="d-flex justify-content-between mb-3">
+        <span>Pencari Kos</span>
+        <span className="fw-bold text-info">{stats.totalPencari}</span>
       </div>
       <div className="d-flex justify-content-between mb-3">
         <span>Pembayaran Pending</span>
@@ -123,9 +141,7 @@ const StatisticsCard = ({ payments }) => {
         callbacks: {
           label: (context) => {
             const value = context.raw;
-            return `Pendapatan: Rp ${new Intl.NumberFormat("id-ID").format(
-              value
-            )}`;
+            return `Pendapatan: Rp ${new Intl.NumberFormat("id-ID").format(value)}`;
           },
         },
       },
@@ -134,8 +150,7 @@ const StatisticsCard = ({ payments }) => {
       y: {
         beginAtZero: true,
         ticks: {
-          callback: (value) =>
-            `Rp ${new Intl.NumberFormat("id-ID").format(value)}`,
+          callback: (value) => `Rp ${new Intl.NumberFormat("id-ID").format(value)}`,
         },
         title: {
           display: true,
@@ -153,7 +168,7 @@ const StatisticsCard = ({ payments }) => {
 
   // Calculate total and average income
   const totalIncome = values.reduce((sum, value) => sum + value, 0);
-  const averageIncome = totalIncome / (values.length || 1);
+  const averageIncome = totalIncome / values.length;
 
   return (
     <Card className="shadow-sm">
@@ -185,6 +200,7 @@ const StatisticsCard = ({ payments }) => {
 const DashboardAdmin = () => {
   const [stats, setStats] = useState({
     totalKos: 0,
+    totalUsers: 0,
     totalIncome: 0,
     pendingPayments: 0,
   });
@@ -198,6 +214,12 @@ const DashboardAdmin = () => {
       value: stats.totalKos,
       icon: <FaHome size={24} />,
       color: "primary",
+    },
+    {
+      title: "Total Pengguna",
+      value: stats.totalUsers,
+      icon: <FaUsers size={24} />,
+      color: "success",
     },
     {
       title: "Total Pendapatan",
@@ -220,32 +242,37 @@ const DashboardAdmin = () => {
   const fetchDashboardStats = async () => {
     try {
       setLoading(true);
-      const [kosResponse, paymentsResponse] = await Promise.all([
+      const [kosResponse, usersResponse, paymentsResponse] = await Promise.all([
         API.get("/kosans"),
+        API.get("/users"),
         API.get("/pembayarans"),
       ]);
 
-      const totalKos = kosResponse.data?.data
-        ? kosResponse.data.data.length
-        : Array.isArray(kosResponse.data)
-        ? kosResponse.data.length
-        : 0;
+      const totalKos = kosResponse.data.data.length;
 
-      const paymentsData = paymentsResponse.data ?? [];
-      const totalIncome = paymentsData
-        .filter((payment) => payment.status === "diterima")
-        .reduce((sum, payment) => sum + Number(payment.total_harga), 0);
-
-      const pendingPayments = paymentsData.filter(
-        (payment) => payment.status === "pending"
+      // Count users by role
+      const users = usersResponse.data;
+      const totalPemilik = users.filter(
+        (user) => user.role === "pemilik"
       ).length;
+      const totalPencari = users.filter((user) => user.role === "user").length;
+      const totalUsers = totalPemilik + totalPencari;
+
+      const payments = paymentsResponse.data;
 
       setStats({
         totalKos,
-        totalIncome,
-        pendingPayments,
+        totalUsers,
+        totalPemilik,
+        totalPencari,
+        totalIncome: payments
+          .filter((payment) => payment.status === "diterima")
+          .reduce((sum, payment) => sum + Number(payment.total_harga), 0),
+        pendingPayments: payments.filter(
+          (payment) => payment.status === "pending"
+        ).length,
       });
-      setPayments(paymentsData);
+      setPayments(payments);
       setError(null);
     } catch (err) {
       console.error("Error fetching dashboard stats:", err);
